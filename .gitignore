@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+.env
+data/moment.db
+data/secret.key
+data/*.log
+uploads/*
+!uploads/.gitkeep
+data/.gitkeep

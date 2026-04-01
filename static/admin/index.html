@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MoMent &#xAD00;&#xB9AC;&#xC790;</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="stylesheet" href="/static/css/admin.css?v=20260402-1">
+  <script src="/static/js/admin.js?v=20260402-1" defer></script>
+</head>
+<body>
+  <main class="admin-shell">
+    <header class="admin-header">
+      <p class="admin-kicker">MoMent</p>
+      <h1>&#xC2E0;&#xC6A9;&#xC740;</h1>
+      <a class="back-link" href="/">&#xC804;&#xC2DC;&#xB85C; &#xB3CC;&#xC544;&#xAC00;&#xAE30;</a>
+    </header>
+
+    <section class="setup-note" id="setupNote" hidden>
+      <p>&#xAD00;&#xB9AC;&#xC790; &#xACC4;&#xC815;&#xC774; &#xC544;&#xC9C1; &#xC5C6;&#xC2B5;&#xB2C8;&#xB2E4;.</p>
+      <code>py manage.py init-admin --username yong1109</code>
+    </section>
+
+    <section class="auth-panel" id="loginPanel" hidden>
+      <form class="card" id="loginForm">
+        <h2>&#xAD00;&#xB9AC;&#xC790; &#xB85C;&#xADF8;&#xC778;</h2>
+        <label class="field">
+          <span>&#xC544;&#xC774;&#xB514;</span>
+          <input type="text" name="username" autocomplete="username" required>
+        </label>
+        <label class="field">
+          <span>&#xBE44;&#xBC00;&#xBC88;&#xD638;</span>
+          <input type="password" name="password" autocomplete="current-password" required>
+        </label>
+        <button type="submit" class="primary-button">&#xB85C;&#xADF8;&#xC778;</button>
+      </form>
+    </section>
+
+    <section class="manager" id="managerPanel" hidden>
+      <div class="manager-toolbar">
+        <div>
+          <p class="manager-label">&#xB85C;&#xADF8;&#xC778; &#xACC4;&#xC815;</p>
+          <strong id="sessionUsername"></strong>
+        </div>
+        <button type="button" class="ghost-button" id="logoutButton">&#xB85C;&#xADF8;&#xC544;&#xC6C3;</button>
+      </div>
+
+      <section class="card upload-card">
+        <div class="section-heading">
+          <h2>&#xC0AC;&#xC9C4; &#xCD9C;&#xD488;</h2>
+          <p>&#xD070; &#xC774;&#xBBF8;&#xC9C0;&#xB294; &#xCD9C;&#xD488; &#xC804;&#xC5D0; &#xC790;&#xB3D9;&#xC73C;&#xB85C; &#xCD5C;&#xC801;&#xD654;&#xB429;&#xB2C8;&#xB2E4;.</p>
+        </div>
+
+        <form id="uploadForm" class="upload-form">
+          <label class="field field-wide">
+            <span>&#xC774;&#xBBF8;&#xC9C0;</span>
+            <input type="file" name="photo" accept="image/jpeg,image/png,image/webp,image/gif" required>
+          </label>
+          <label class="field">
+            <span>&#xB0A0;&#xC9DC;</span>
+            <input type="text" name="date" placeholder="2026.01.01" required>
+          </label>
+          <label class="field">
+            <span>&#xC7A5;&#xC18C;</span>
+            <input type="text" name="location" placeholder="&#xB3D9;&#xAD6D;&#xB300;&#xD559;&#xAD50;" required>
+          </label>
+          <label class="field">
+            <span>&#xCD2C;&#xC601;&#xC790;</span>
+            <input type="text" name="photographer" placeholder="&#xC2E0;&#xC6A9;&#xC740;" required>
+          </label>
+          <button type="submit" class="primary-button">&#xCD9C;&#xD488;</button>
+        </form>
+      </section>
+
+      <section class="card security-card">
+        <div class="section-heading">
+          <h2>&#xBE44;&#xBC00;&#xBC88;&#xD638; &#xBCC0;&#xACBD;</h2>
+          <p>&#xD604;&#xC7AC; &#xBE44;&#xBC00;&#xBC88;&#xD638;&#xB97C; &#xD655;&#xC778;&#xD55C; &#xB4A4; &#xC0C8; &#xBE44;&#xBC00;&#xBC88;&#xD638;&#xB85C; &#xBCC0;&#xACBD;&#xD569;&#xB2C8;&#xB2E4;.</p>
+        </div>
+
+        <form id="passwordForm" class="upload-form password-form">
+          <label class="field">
+            <span>&#xD604;&#xC7AC; &#xBE44;&#xBC00;&#xBC88;&#xD638;</span>
+            <input type="password" name="current_password" autocomplete="current-password" required>
+          </label>
+          <label class="field">
+            <span>&#xC0C8; &#xBE44;&#xBC00;&#xBC88;&#xD638;</span>
+            <input type="password" name="new_password" autocomplete="new-password" required>
+          </label>
+          <label class="field">
+            <span>&#xC0C8; &#xBE44;&#xBC00;&#xBC88;&#xD638; &#xD655;&#xC778;</span>
+            <input type="password" name="confirm_password" autocomplete="new-password" required>
+          </label>
+          <div class="password-hint">8&#xC790; &#xC774;&#xC0C1;&#xC73C;&#xB85C; &#xC124;&#xC815;&#xD574; &#xC8FC;&#xC138;&#xC694;.</div>
+          <button type="submit" class="primary-button">&#xBE44;&#xBC00;&#xBC88;&#xD638; &#xBCC0;&#xACBD;</button>
+        </form>
+      </section>
+
+      <section class="card collection-card">
+        <div class="section-heading">
+          <h2>&#xCD9C;&#xD488; &#xAD00;&#xB9AC;</h2>
+          <p>&#xC5C5;&#xB85C;&#xB4DC;&#xD55C; &#xC21C;&#xC11C;&#xB300;&#xB85C; &#xD45C;&#xC2DC;&#xB418;&#xBA70;, &#xC815;&#xBCF4; &#xC218;&#xC815;&#xACFC; &#xC774;&#xBBF8;&#xC9C0; &#xAD50;&#xCCB4;, &#xC0AD;&#xC81C;&#xB97C; &#xD560; &#xC218; &#xC788;&#xC2B5;&#xB2C8;&#xB2E4;.</p>
+        </div>
+
+        <div class="photo-grid" id="adminPhotoList"></div>
+      </section>
+    </section>
+
+    <div class="toast" id="statusToast" hidden></div>
+  </main>
+</body>
+</html>

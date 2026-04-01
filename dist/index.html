@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MoMent</title>
+  <meta name="description" content="MoMent online exhibition">
+  <link rel="stylesheet" href="/static/css/site.css?v=20260402-17">
+  <script src="/static/js/exhibition.js?v=20260402-17" defer></script>
+</head>
+<body>
+  <button
+    class="history-trigger"
+    id="historyTrigger"
+    type="button"
+    aria-haspopup="dialog"
+    aria-controls="historyOverlay"
+    aria-expanded="false"
+  >
+    &#xB3D9;&#xC544;&#xB9AC; &#xC5F0;&#xD601;
+  </button>
+
+  <div class="site-tools">
+    <button class="audio-toggle" id="audioToggle" type="button" aria-pressed="false">
+      BGM OFF
+    </button>
+    <p class="site-credit" aria-hidden="true">&#xC2E0;&#xC6A9;&#xC740; &#xC81C;&#xC791;</p>
+  </div>
+
+  <audio
+    id="backgroundAudio"
+    loop
+    preload="none"
+    playsinline
+    data-src="/static/audio/moment-bgm.mp3?v=20260402-1"
+  ></audio>
+
+  <div class="intro-overlay" id="introOverlay" aria-hidden="true">
+    <div class="intro-copy">
+      <div class="intro-subtitle">&#xACE0;&#xACE0;&#xBBF8;&#xC220;&#xC0AC;&#xD559;&#xACFC; &#xC0AC;&#xC9C4;&#xB2F5;&#xC0AC;&#xB3D9;&#xC544;&#xB9AC;</div>
+      <div class="intro-title">MoMent</div>
+      <div class="intro-lead">&#xD68C;&#xC7A5; &#xC2E0;&#xC6A9;&#xC740;</div>
+    </div>
+  </div>
+
+  <div class="history-overlay" id="historyOverlay" hidden>
+    <div
+      class="history-panel"
+      id="historyPanel"
+      role="dialog"
+      aria-modal="true"
+      aria-label="&#xB3D9;&#xC544;&#xB9AC; &#xC5F0;&#xD601;"
+    >
+      <div class="history-lines">
+        <p class="history-line">2023 &#xCC3D;&#xC124;</p>
+        <p class="history-line">2024 &#xD68C;&#xC7A5; 21&#xC815;&#xD0DC;&#xC6C5;</p>
+        <p class="history-line">2025 &#xD68C;&#xC7A5; 24&#xC2E0;&#xC6A9;&#xC740;</p>
+        <p class="history-line">2026 &#xD68C;&#xC7A5; 24&#xC2E0;&#xC6A9;&#xC740;</p>
+      </div>
+    </div>
+  </div>
+
+  <main class="site-shell">
+    <h1 class="sr-only">MoMent Online Exhibition</h1>
+
+    <header class="exhibition-header">
+      <a class="exhibition-logo" href="/">MoMent</a>
+    </header>
+
+    <section class="exhibition-stream" id="photoStream" aria-live="polite"></section>
+
+    <p class="empty-state" id="emptyState" hidden>&#xC804;&#xC2DC; &#xC900;&#xBE44; &#xC911;&#xC785;&#xB2C8;&#xB2E4;.</p>
+  </main>
+
+  <div class="lightbox" id="lightbox" hidden>
+    <div
+      class="lightbox-content"
+      id="lightboxContent"
+      role="dialog"
+      aria-modal="true"
+      aria-label="&#xC0AC;&#xC9C4; &#xD06C;&#xAC8C; &#xBCF4;&#xAE30;"
+    >
+      <img class="lightbox-image" id="lightboxImage" alt="">
+      <div class="lightbox-meta" id="lightboxMeta"></div>
+    </div>
+  </div>
+</body>
+</html>

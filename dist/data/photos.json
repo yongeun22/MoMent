@@ -1,0 +1,204 @@
+{
+  "photos": [
+    {
+      "id": 14,
+      "imageUrl": "/uploads/05c6245a851441c7bfac90965630eb9e.jpg",
+      "originalName": "당진왜목마을.jpg",
+      "date": "2026.01.01",
+      "location": "당진 왜목마을",
+      "photographer": "신용은",
+      "createdAt": "2026-04-01T12:47:01+00:00",
+      "updatedAt": "2026-04-01T15:31:31+00:00"
+    },
+    {
+      "id": 15,
+      "imageUrl": "/uploads/9d4a89ad80ae41a59dd92358c06858a3.jpg",
+      "originalName": "백운교밑.jpg",
+      "date": "2026.01.15",
+      "location": "경주 불국사",
+      "photographer": "신용은",
+      "createdAt": "2026-04-01T12:50:46+00:00",
+      "updatedAt": "2026-04-01T12:50:46+00:00"
+    },
+    {
+      "id": 16,
+      "imageUrl": "/uploads/b60ed1d4084349ad9b6b5e6d61ba2640.jpg",
+      "originalName": "251113투다리.jpg",
+      "date": "2025.11.13",
+      "location": "경주 석장동",
+      "photographer": "신용은",
+      "createdAt": "2026-04-01T12:56:41+00:00",
+      "updatedAt": "2026-04-01T12:56:41+00:00"
+    },
+    {
+      "id": 17,
+      "imageUrl": "/uploads/8486d517b2cf4bffa3a3fd9507191b8c.jpg",
+      "originalName": "어디울주군.jpg",
+      "date": "2025.11.02",
+      "location": "울산광역시 울주군",
+      "photographer": "신용은",
+      "createdAt": "2026-04-01T12:58:41+00:00",
+      "updatedAt": "2026-04-01T12:58:41+00:00"
+    },
+    {
+      "id": 18,
+      "imageUrl": "/uploads/78af31d263ff44f6bb00214a15cfe5bd.jpg",
+      "originalName": "251108 양산통도사.jpg",
+      "date": "2025.11.08",
+      "location": "양산 통도사",
+      "photographer": "신용은",
+      "createdAt": "2026-04-01T13:05:57+00:00",
+      "updatedAt": "2026-04-01T13:05:57+00:00"
+    },
+    {
+      "id": 19,
+      "imageUrl": "/uploads/10f54c3fac304e29aac67b3c6b129e91.jpg",
+      "originalName": "251108양산통도사1.jpg",
+      "date": "2025.11.08",
+      "location": "양산 통도사",
+      "photographer": "신용은",
+      "createdAt": "2026-04-01T13:06:24+00:00",
+      "updatedAt": "2026-04-01T13:06:24+00:00"
+    },
+    {
+      "id": 20,
+      "imageUrl": "/uploads/c310a19a2dcc4c368b37b2f7eb53fd05.jpg",
+      "originalName": "251108양통.jpg",
+      "date": "2025.11.08",
+      "location": "양산 통도사",
+      "photographer": "신용은",
+      "createdAt": "2026-04-01T13:07:57+00:00",
+      "updatedAt": "2026-04-01T13:07:57+00:00"
+    },
+    {
+      "id": 21,
+      "imageUrl": "/uploads/2b50be85a67b4c6ab5f77ffa82b35535.jpg",
+      "originalName": "251108 통도사.jpg",
+      "date": "2025.11.08",
+      "location": "양산 통도사",
+      "photographer": "신용은",
+      "createdAt": "2026-04-01T13:08:07+00:00",
+      "updatedAt": "2026-04-01T13:08:07+00:00"
+    },
+    {
+      "id": 22,
+      "imageUrl": "/uploads/11710efbdc36453c97ae5abca005865a.jpg",
+      "originalName": "25118통.jpg",
+      "date": "2025.11.08",
+      "location": "양산 통도사",
+      "photographer": "신용은",
+      "createdAt": "2026-04-01T13:10:11+00:00",
+      "updatedAt": "2026-04-01T13:10:11+00:00"
+    },
+    {
+      "id": 23,
+      "imageUrl": "/uploads/ecb3ebc735544b5dac1f3c2f7b96be2c.jpg",
+      "originalName": "ㅌㅌ.jpg",
+      "date": "2025.11.08",
+      "location": "양산 통도사",
+      "photographer": "신용은",
+      "createdAt": "2026-04-01T13:10:26+00:00",
+      "updatedAt": "2026-04-01T13:10:26+00:00"
+    },
+    {
+      "id": 24,
+      "imageUrl": "/uploads/774b1db5a10446c5a047f58111b2617c.jpg",
+      "originalName": "251108,didxd.jpg",
+      "date": "2025.11.08",
+      "location": "양산 통도사",
+      "photographer": "신용은",
+      "createdAt": "2026-04-01T13:10:45+00:00",
+      "updatedAt": "2026-04-01T13:10:45+00:00"
+    },
+    {
+      "id": 25,
+      "imageUrl": "/uploads/387560ece0e445ac9a14fa099adbcc51.jpg",
+      "originalName": "251123 대릉.jpg",
+      "date": "2025.11.23",
+      "location": "경주 대릉원",
+      "photographer": "신용은",
+      "createdAt": "2026-04-01T13:13:37+00:00",
+      "updatedAt": "2026-04-01T15:45:25+00:00"
+    },
+    {
+      "id": 26,
+      "imageUrl": "/uploads/0799210b3c99446ab127ef6bda66a34d.jpg",
+      "originalName": "251123 교촌.jpg",
+      "date": "2025.11.23",
+      "location": "경주 교촌마을",
+      "photographer": "신용은",
+      "createdAt": "2026-04-01T13:13:58+00:00",
+      "updatedAt": "2026-04-01T13:13:58+00:00"
+    },
+    {
+      "id": 27,
+      "imageUrl": "/uploads/71bfe3cef67d4222bb84724e5d1e72ac.jpg",
+      "originalName": "251123 월정교ㅕ.jpg",
+      "date": "2025.11.23",
+      "location": "경주 월정교",
+      "photographer": "신용은",
+      "createdAt": "2026-04-01T13:14:09+00:00",
+      "updatedAt": "2026-04-01T13:14:09+00:00"
+    },
+    {
+      "id": 28,
+      "imageUrl": "/uploads/f29b0ac9a56a41fa8954c0cdea286b2b.jpg",
+      "originalName": "251123 월정교.jpg",
+      "date": "2025.11.23",
+      "location": "경주 월정교",
+      "photographer": "신용은",
+      "createdAt": "2026-04-01T13:14:26+00:00",
+      "updatedAt": "2026-04-01T13:14:26+00:00"
+    },
+    {
+      "id": 29,
+      "imageUrl": "/uploads/a8c606508e8549efb68f910f80cbf5ff.jpg",
+      "originalName": "251129 부산광영ㄳ.jpg",
+      "date": "2025.11.29",
+      "location": "부산광역시",
+      "photographer": "신용은",
+      "createdAt": "2026-04-01T13:14:40+00:00",
+      "updatedAt": "2026-04-01T13:14:40+00:00"
+    },
+    {
+      "id": 30,
+      "imageUrl": "/uploads/1c64ed6b81ce424193a9ea86516e14c5.jpg",
+      "originalName": "대릉원 251123.jpg",
+      "date": "2025.11.23",
+      "location": "경주 대릉원",
+      "photographer": "신용은",
+      "createdAt": "2026-04-01T13:14:54+00:00",
+      "updatedAt": "2026-04-01T13:14:54+00:00"
+    },
+    {
+      "id": 31,
+      "imageUrl": "/uploads/60eb67c5ab2f4f1499af3136ba192490.jpg",
+      "originalName": "20250510_경주월정교9.jpg",
+      "date": "2025.05.10",
+      "location": "경주 월정교",
+      "photographer": "한서연",
+      "createdAt": "2026-04-01T16:30:57+00:00",
+      "updatedAt": "2026-04-01T16:30:57+00:00"
+    },
+    {
+      "id": 32,
+      "imageUrl": "/uploads/1282e5ec9b2c49bfa96bcc23ad4ae46b.jpg",
+      "originalName": "20250328_양양낙산사.jpg",
+      "date": "2025.03.28",
+      "location": "양양 낙산사",
+      "photographer": "한서연",
+      "createdAt": "2026-04-01T16:31:08+00:00",
+      "updatedAt": "2026-04-01T16:31:08+00:00"
+    },
+    {
+      "id": 33,
+      "imageUrl": "/uploads/fddcbf175d8a4305b637ac380c15d325.jpg",
+      "originalName": "20250102_창덕궁설경.jpg",
+      "date": "2025.01.02",
+      "location": "서울 창덕궁",
+      "photographer": "한서연",
+      "createdAt": "2026-04-01T16:31:22+00:00",
+      "updatedAt": "2026-04-01T16:31:22+00:00"
+    }
+  ]
+}
