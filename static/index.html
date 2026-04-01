@@ -4,9 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>MoMent</title>
-  <meta name="description" content="고고미술사학과 사진답사동아리 온라인 전시">
+  <meta name="description" content="MoMent &#xC628;&#xB77C;&#xC778; &#xC804;&#xC2DC;">
   <meta property="og:title" content="MoMent">
-  <meta property="og:description" content="고고미술사학과 사진답사동아리 온라인 전시">
+  <meta property="og:description" content="MoMent &#xC628;&#xB77C;&#xC778; &#xC804;&#xC2DC;">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://moment-exhibition.pages.dev/">
   <meta property="og:image" content="https://moment-exhibition.pages.dev/static/og/moment-share.png">
@@ -15,24 +15,24 @@
   <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="MoMent">
-  <meta name="twitter:description" content="고고미술사학과 사진답사동아리 온라인 전시">
+  <meta name="twitter:description" content="MoMent &#xC628;&#xB77C;&#xC778; &#xC804;&#xC2DC;">
   <meta name="twitter:image" content="https://moment-exhibition.pages.dev/static/og/moment-share.png">
   <link rel="canonical" href="https://moment-exhibition.pages.dev/">
-  <link rel="stylesheet" href="/static/css/site.css?v=20260402-21">
-  <script src="/static/js/exhibition.js?v=20260402-21" defer></script>
+  <link rel="stylesheet" href="/static/css/site.css?v=20260402-27">
+  <script src="/static/js/exhibition.js?v=20260402-26" defer></script>
 </head>
 <body>
   <audio
     id="backgroundAudio"
     preload="none"
     playsinline
-    data-tracks='["/static/audio/moment-bgm.mp3?v=20260402-21"]'
+    data-tracks='["/static/audio/moment-bgm.mp3?v=20260402-26"]'
   ></audio>
 
   <div class="intro-overlay" id="introOverlay" aria-hidden="true">
     <div class="intro-shell">
-      <div class="intro-copy">
-        <div class="intro-subtitle">&#xACE0;&#xACE0;&#xBBF8;&#xC220;&#xC0AC;&#xD559;&#xACFC; &#xC0AC;&#xC9C4;&#xB2F5;&#xC0AC;&#xB3D9;&#xC544;&#xB9AC;</div>
+      <div class="intro-copy" id="introCopy">
+        <div class="intro-subtitle">&#xACE0;&#xACE0;&#xBBF8;&#xC220;&#xC0AC;&#xD559;&#xACFC; &#xBB38;&#xD654;&#xC720;&#xC0B0; &#xC0AC;&#xC9C4; &#xB3D9;&#xC544;&#xB9AC;</div>
         <div class="intro-title">MoMent</div>
         <div class="intro-lead">&#xD68C;&#xC7A5; &#xC2E0;&#xC6A9;&#xC740;</div>
       </div>
@@ -48,6 +48,7 @@
       aria-label="&#xB3D9;&#xC544;&#xB9AC; &#xC5F0;&#xD601;"
     >
       <div class="history-lines">
+        <p class="history-heading">&#xACE0;&#xACE0;&#xBBF8;&#xC220;&#xC0AC;&#xD559;&#xACFC; &#xBB38;&#xD654;&#xC720;&#xC0B0; &#xC0AC;&#xC9C4; &#xB3D9;&#xC544;&#xB9AC; MOMENT</p>
         <p class="history-line">2023 &#xCC3D;&#xC124;</p>
         <p class="history-line">2024 &#xD68C;&#xC7A5; 21&#xC815;&#xD0DC;&#xC6C5;</p>
         <p class="history-line">2025 &#xD68C;&#xC7A5; 24&#xC2E0;&#xC6A9;&#xC740;</p>
@@ -77,9 +78,12 @@
           <p class="site-credit" aria-hidden="true">&#xC2E0;&#xC6A9;&#xC740; &#xC81C;&#xC791;</p>
         </div>
 
-        <button class="audio-toggle" id="audioToggle" type="button" aria-pressed="false">
-          &#xC74C;&#xC545; OFF
-        </button>
+        <div class="site-actions">
+          <div class="visit-counter" id="visitCounter" aria-live="polite">&#xBC29;&#xBB38;&#xC790; -</div>
+          <button class="audio-toggle" id="audioToggle" type="button" aria-pressed="false">
+            &#xC74C;&#xC545; OFF
+          </button>
+        </div>
       </div>
     </header>
 

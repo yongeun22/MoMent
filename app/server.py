@@ -88,6 +88,10 @@ def build_handler(config: AppConfig, database: Database, secret_key: bytes):
                 self._send_json(build_public_payload(database))
                 return
 
+            if path == "/api/visits":
+                self._send_json({"count": database.get_visit_count()})
+                return
+
             if path == "/data/photos.json":
                 self._send_json(build_public_payload(database))
                 return
@@ -142,6 +146,10 @@ def build_handler(config: AppConfig, database: Database, secret_key: bytes):
 
             if path == "/api/admin/login":
                 self._handle_login()
+                return
+
+            if path == "/api/visits":
+                self._send_json({"count": database.increment_visit_count()})
                 return
 
             if path == "/api/admin/logout":

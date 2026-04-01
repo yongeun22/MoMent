@@ -191,7 +191,7 @@ function renderAdminPhoto(photo) {
             <input type="text" name="location" value="${escapeHtml(photo.location)}" required>
           </label>
           <label class="field">
-            <span>\uCD2C\uC601\uC790</span>
+            <span>\uCD2C\uC601</span>
             <input type="text" name="photographer" value="${escapeHtml(photo.photographer)}" required>
           </label>
           <label class="field">

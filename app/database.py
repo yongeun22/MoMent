@@ -28,6 +28,12 @@ CREATE TABLE IF NOT EXISTS photos (
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS site_stats (
+    key TEXT PRIMARY KEY,
+    value INTEGER NOT NULL DEFAULT 0,
+    updated_at TEXT NOT NULL
+);
 """
 
 
@@ -207,3 +213,30 @@ class Database:
         with self.connection() as connection:
             connection.execute("DELETE FROM photos WHERE id = ?", (photo_id,))
         return current
+
+    def get_visit_count(self) -> int:
+        with self.connection() as connection:
+            row = connection.execute(
+                "SELECT value FROM site_stats WHERE key = ?",
+                ("visit_count",),
+            ).fetchone()
+        return int(row["value"]) if row else 0
+
+    def increment_visit_count(self) -> int:
+        timestamp = utc_now_iso()
+        with self.connection() as connection:
+            connection.execute(
+                """
+                INSERT INTO site_stats (key, value, updated_at)
+                VALUES (?, 1, ?)
+                ON CONFLICT(key) DO UPDATE SET
+                    value = value + 1,
+                    updated_at = excluded.updated_at
+                """,
+                ("visit_count", timestamp),
+            )
+            row = connection.execute(
+                "SELECT value FROM site_stats WHERE key = ?",
+                ("visit_count",),
+            ).fetchone()
+        return int(row["value"]) if row else 0

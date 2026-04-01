@@ -1,6 +1,7 @@
 const stream = document.getElementById("photoStream");
 const emptyState = document.getElementById("emptyState");
 const introOverlay = document.getElementById("introOverlay");
+const introCopy = document.getElementById("introCopy");
 const siteTopbar = document.getElementById("siteTopbar");
 const lightbox = document.getElementById("lightbox");
 const lightboxContent = document.getElementById("lightboxContent");
@@ -11,18 +12,59 @@ const historyOverlay = document.getElementById("historyOverlay");
 const historyPanel = document.getElementById("historyPanel");
 const backgroundAudio = document.getElementById("backgroundAudio");
 const audioToggle = document.getElementById("audioToggle");
+const visitCounter = document.getElementById("visitCounter");
 const hoverQuery = window.matchMedia("(hover: hover) and (pointer: fine)");
 
 let activePhotoId = null;
 let introTimeoutId = null;
 let historyCloseTimeoutId = null;
+let lightboxCloseTimeoutId = null;
 let photos = [];
 let audioUnlockBound = false;
 let audioShouldPlay = true;
 let audioTrackIndex = 0;
 let audioPlaylist = [];
+let lightboxGhost = null;
+let lightboxGhostAnimation = null;
+let openLightboxPhotoId = null;
+function pickIntroAnchor(options) {
+  return options[Math.floor(Math.random() * options.length)];
+}
+
+const introAnchor = {
+  x: pickIntroAnchor([0.16, 0.3, 0.7, 0.84]),
+  y: pickIntroAnchor([0.18, 0.34, 0.66, 0.82])
+};
 
 document.body.classList.add("is-intro-active");
+
+function positionIntroCopy() {
+  if (!introOverlay || !introCopy) {
+    return;
+  }
+
+  introCopy.style.setProperty("--intro-left", "50%");
+  introCopy.style.setProperty("--intro-top", "50%");
+
+  const overlayRect = introOverlay.getBoundingClientRect();
+  const copyRect = introCopy.getBoundingClientRect();
+  const marginX = window.innerWidth <= 768 ? 18 : 40;
+  const marginY = window.innerWidth <= 768 ? 20 : 48;
+  const minLeft = copyRect.width / 2 + marginX;
+  const maxLeft = overlayRect.width - copyRect.width / 2 - marginX;
+  const minTop = copyRect.height / 2 + marginY;
+  const maxTop = overlayRect.height - copyRect.height / 2 - marginY;
+
+  const leftPx = maxLeft > minLeft
+    ? minLeft + (maxLeft - minLeft) * introAnchor.x
+    : overlayRect.width / 2;
+  const topPx = maxTop > minTop
+    ? minTop + (maxTop - minTop) * introAnchor.y
+    : overlayRect.height / 2;
+
+  introCopy.style.setProperty("--intro-left", `${(leftPx / overlayRect.width) * 100}%`);
+  introCopy.style.setProperty("--intro-top", `${(topPx / overlayRect.height) * 100}%`);
+}
 
 function fadeIntro() {
   window.clearTimeout(introTimeoutId);
@@ -108,6 +150,35 @@ function updateAudioToggle() {
   const isPlaying = !backgroundAudio.paused && !backgroundAudio.ended;
   audioToggle.textContent = isPlaying ? "\uC74C\uC545 ON" : "\uC74C\uC545 OFF";
   audioToggle.setAttribute("aria-pressed", String(isPlaying));
+}
+
+async function incrementVisitCounter() {
+  if (!visitCounter) {
+    return;
+  }
+
+  try {
+    const response = await fetch("/api/visits", {
+      method: "POST",
+      headers: { Accept: "application/json" },
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok || typeof payload.count !== "number") {
+      throw new Error("counter-unavailable");
+    }
+    visitCounter.textContent = `방문자 ${payload.count}`;
+    visitCounter.title = "전체 방문 횟수";
+    return;
+  } catch (error) {
+    try {
+      const localCount = Number.parseInt(window.localStorage.getItem("moment-local-visit-count") || "0", 10) + 1;
+      window.localStorage.setItem("moment-local-visit-count", String(localCount));
+      visitCounter.textContent = `방문자 ${localCount}`;
+      visitCounter.title = "현재 브라우저 기준 방문 횟수";
+    } catch (storageError) {
+      visitCounter.textContent = "방문자 -";
+    }
+  }
 }
 
 function syncTopbarState() {
@@ -251,7 +322,7 @@ function renderPhoto(photo) {
             <dd class="meta-value">${escapeHtml(photo.location)}</dd>
           </div>
           <div class="meta-block">
-            <dt class="meta-term">\uCD2C\uC601\uC790</dt>
+            <dt class="meta-term">\uCD2C\uC601</dt>
             <dd class="meta-value">${escapeHtml(photo.photographer)}</dd>
           </div>
         </dl>
@@ -272,7 +343,7 @@ function renderLightboxMeta(photo) {
         <dd class="lightbox-meta-value">${escapeHtml(photo.location)}</dd>
       </div>
       <div class="lightbox-meta-item">
-        <dt class="lightbox-meta-term">\uCD2C\uC601\uC790</dt>
+        <dt class="lightbox-meta-term">\uCD2C\uC601</dt>
         <dd class="lightbox-meta-value">${escapeHtml(photo.photographer)}</dd>
       </div>
     </dl>
@@ -300,17 +371,152 @@ function clearActivePhoto() {
   syncActiveState();
 }
 
-function openLightbox(photoId) {
+function cleanupLightboxGhost() {
+  lightboxGhostAnimation?.cancel();
+  lightboxGhostAnimation = null;
+  lightboxGhost?.remove();
+  lightboxGhost = null;
+}
+
+function createGhostImage(sourceImage, rect, radius, shadow) {
+  const ghost = sourceImage.cloneNode(true);
+  ghost.classList.add("lightbox-ghost");
+  ghost.style.left = `${rect.left}px`;
+  ghost.style.top = `${rect.top}px`;
+  ghost.style.width = `${rect.width}px`;
+  ghost.style.height = `${rect.height}px`;
+  ghost.style.borderRadius = radius;
+  ghost.style.boxShadow = shadow;
+  ghost.style.transform = "translate(0px, 0px) scale(1, 1)";
+  return ghost;
+}
+
+function animateGhostBetween(ghost, fromRect, toRect, fromRadius, toRadius, fromShadow, toShadow, duration = 360) {
+  const translateX = toRect.left - fromRect.left;
+  const translateY = toRect.top - fromRect.top;
+  const scaleX = fromRect.width ? toRect.width / fromRect.width : 1;
+  const scaleY = fromRect.height ? toRect.height / fromRect.height : 1;
+
+  return ghost.animate(
+    [
+      {
+        transform: "translate(0px, 0px) scale(1, 1)",
+        borderRadius: fromRadius,
+        boxShadow: fromShadow,
+      },
+      {
+        transform: `translate(${translateX}px, ${translateY}px) scale(${scaleX}, ${scaleY})`,
+        borderRadius: toRadius,
+        boxShadow: toShadow,
+      },
+    ],
+    {
+      duration,
+      easing: "cubic-bezier(0.2, 0.8, 0.2, 1)",
+      fill: "forwards",
+    },
+  );
+}
+
+function waitForImageReady(image) {
+  if (image.complete && image.naturalWidth > 0) {
+    return Promise.resolve();
+  }
+
+  return new Promise((resolve, reject) => {
+    const handleLoad = () => {
+      image.removeEventListener("load", handleLoad);
+      image.removeEventListener("error", handleError);
+      resolve();
+    };
+    const handleError = () => {
+      image.removeEventListener("load", handleLoad);
+      image.removeEventListener("error", handleError);
+      reject(new Error("이미지를 불러오지 못했습니다."));
+    };
+
+    image.addEventListener("load", handleLoad, { once: true });
+    image.addEventListener("error", handleError, { once: true });
+  });
+}
+
+function nextAnimationFrame() {
+  return new Promise((resolve) => {
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(resolve);
+    });
+  });
+}
+
+async function openLightbox(photoId, triggerElement) {
   const photo = photos.find((entry) => String(entry.id) === String(photoId));
   if (!photo) {
     return;
   }
+
+  window.clearTimeout(lightboxCloseTimeoutId);
+  cleanupLightboxGhost();
+  openLightboxPhotoId = String(photoId);
+
+  const sourceImage = triggerElement?.querySelector(".photo-image") || triggerElement?.querySelector("img");
+  const sourceRect = sourceImage?.getBoundingClientRect();
+  const sourceRadius = sourceImage ? window.getComputedStyle(sourceImage).borderTopLeftRadius : "0px";
+  const sourceShadow = sourceImage ? window.getComputedStyle(sourceImage).boxShadow : "0 18px 42px rgba(0, 0, 0, 0.1)";
 
   lightboxImage.src = photo.imageUrl;
   lightboxImage.alt = `${photo.location}, ${photo.date}`;
   lightboxMeta.innerHTML = renderLightboxMeta(photo);
   lightbox.hidden = false;
   document.body.classList.add("is-lightbox-open");
+  lightbox.classList.add("is-opening");
+  lightbox.classList.add("is-visible");
+
+  try {
+    await waitForImageReady(lightboxImage);
+    await nextAnimationFrame();
+  } catch (error) {
+    lightbox.classList.remove("is-opening");
+    lightbox.classList.remove("is-visible");
+    lightbox.hidden = true;
+    document.body.classList.remove("is-lightbox-open");
+    openLightboxPhotoId = null;
+    return;
+  }
+
+  const targetRect = lightboxImage.getBoundingClientRect();
+  if (
+    !sourceRect ||
+    sourceRect.width <= 0 ||
+    sourceRect.height <= 0 ||
+    targetRect.width <= 0 ||
+    targetRect.height <= 0
+  ) {
+    lightbox.classList.remove("is-opening");
+    return;
+  }
+
+  lightboxGhost = createGhostImage(sourceImage, sourceRect, sourceRadius, sourceShadow);
+  document.body.append(lightboxGhost);
+
+  lightboxGhostAnimation = animateGhostBetween(
+    lightboxGhost,
+    sourceRect,
+    targetRect,
+    sourceRadius,
+    "0px",
+    sourceShadow,
+    "0 32px 64px rgba(0, 0, 0, 0.12)",
+    320,
+  );
+
+  try {
+    await lightboxGhostAnimation.finished;
+  } catch (error) {
+    // Ignore cancellations caused by early close/open cycles.
+  } finally {
+    cleanupLightboxGhost();
+    lightbox.classList.remove("is-opening");
+  }
 }
 
 function closeLightbox() {
@@ -318,10 +524,61 @@ function closeLightbox() {
     return;
   }
 
-  lightbox.hidden = true;
+  window.clearTimeout(lightboxCloseTimeoutId);
+  cleanupLightboxGhost();
+  lightbox.classList.remove("is-opening");
+
+  const sourceImage = openLightboxPhotoId
+    ? stream.querySelector(`.photo-item[data-photo-id="${openLightboxPhotoId}"] .photo-image`)
+    : null;
+  const sourceRect = sourceImage?.getBoundingClientRect();
+  const targetRect = lightboxImage.getBoundingClientRect();
+
+  if (
+    sourceImage &&
+    sourceRect &&
+    sourceRect.width > 0 &&
+    sourceRect.height > 0 &&
+    targetRect.width > 0 &&
+    targetRect.height > 0
+  ) {
+    const sourceRadius = window.getComputedStyle(sourceImage).borderTopLeftRadius;
+    const sourceShadow = window.getComputedStyle(sourceImage).boxShadow;
+    const targetShadow = window.getComputedStyle(lightboxImage).boxShadow;
+
+    lightbox.classList.add("is-closing");
+    lightboxGhost = createGhostImage(lightboxImage, targetRect, "0px", targetShadow);
+    document.body.append(lightboxGhost);
+
+    lightboxGhostAnimation = animateGhostBetween(
+      lightboxGhost,
+      targetRect,
+      sourceRect,
+      "0px",
+      sourceRadius,
+      targetShadow,
+      sourceShadow,
+      280,
+    );
+
+    lightboxGhostAnimation.finished
+      .catch(() => {})
+      .finally(() => {
+        cleanupLightboxGhost();
+        lightbox.classList.remove("is-closing");
+      });
+  }
+
+  lightbox.classList.remove("is-visible");
   document.body.classList.remove("is-lightbox-open");
-  lightboxImage.removeAttribute("src");
-  lightboxMeta.innerHTML = "";
+  lightboxCloseTimeoutId = window.setTimeout(() => {
+    cleanupLightboxGhost();
+    lightbox.classList.remove("is-closing");
+    lightbox.hidden = true;
+    lightboxImage.removeAttribute("src");
+    lightboxMeta.innerHTML = "";
+    openLightboxPhotoId = null;
+  }, 320);
 }
 
 function openHistoryOverlay() {
@@ -373,7 +630,7 @@ function bindInteractions() {
     });
 
     button.addEventListener("click", () => {
-      openLightbox(photoId);
+      openLightbox(photoId, button);
     });
 
     item.addEventListener("mouseenter", () => {
@@ -462,12 +719,16 @@ document.addEventListener("keydown", (event) => {
   }
 });
 window.addEventListener("scroll", syncTopbarState, { passive: true });
+window.addEventListener("resize", positionIntroCopy, { passive: true });
 audioToggle?.addEventListener("click", toggleBackgroundAudio);
 backgroundAudio?.addEventListener("play", updateAudioToggle);
 backgroundAudio?.addEventListener("pause", updateAudioToggle);
 backgroundAudio?.addEventListener("ended", playNextTrack);
 
+positionIntroCopy();
+document.fonts?.ready.then(positionIntroCopy).catch(() => {});
 fadeIntro();
 syncTopbarState();
+incrementVisitCounter();
 startBackgroundAudio();
 loadPhotos();

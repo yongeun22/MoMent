@@ -15,13 +15,13 @@ Overall concept:
    When a user first enters the site, show centered text in two lines:
 
 MoMent
-고고미술사학과 사진답사동아리
+고고미술사학과 문화유산 사진 동아리
 
 Requirements:
 
 * Both lines must be center-aligned.
 * “MoMent” should appear large.
-* “고고미술사학과 사진답사동아리” should appear smaller underneath.
+* “고고미술사학과 문화유산 사진 동아리” should appear smaller underneath.
 * This intro should remain briefly, then fade out naturally after 2 seconds.
 * After the fade-out, the photo exhibition should be revealed.
 * This is not a separate landing page, but an intro animation/transition.

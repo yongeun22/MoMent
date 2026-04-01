@@ -85,7 +85,8 @@ img {
 }
 
 .history-trigger,
-.audio-toggle {
+.audio-toggle,
+.visit-counter {
   margin: 0;
   padding: 0.34rem 0.62rem;
   border: 1px solid rgba(0, 0, 0, 0.16);
@@ -104,6 +105,19 @@ img {
 
 .audio-toggle {
   justify-self: end;
+}
+
+.site-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-self: end;
+  gap: 0.48rem;
+}
+
+.visit-counter {
+  justify-self: end;
+  white-space: nowrap;
+  cursor: default;
 }
 
 .history-trigger:hover,
@@ -184,15 +198,18 @@ img {
 }
 
 .intro-shell {
+  position: relative;
   width: min(100%, 1560px);
   min-height: 100vh;
   margin: 0 auto;
   padding: 0.95rem clamp(0.75rem, 2vw, 1.5rem) 2.5rem;
-  display: grid;
-  place-items: center;
 }
 
 .intro-copy {
+  position: absolute;
+  left: var(--intro-left, 50%);
+  top: var(--intro-top, 50%);
+  transform: translate(-50%, -50%);
   display: grid;
   justify-items: center;
   text-align: center;
@@ -267,6 +284,15 @@ img {
   display: grid;
   gap: 0.9rem;
   text-align: center;
+}
+
+.history-heading {
+  margin: 0 0 0.35rem;
+  font-family: var(--title-font);
+  font-size: clamp(1.08rem, 2.15vw, 1.34rem);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  line-height: 1.55;
 }
 
 .history-line {
@@ -388,6 +414,12 @@ img {
   place-items: center;
   padding: 2rem;
   background: rgba(255, 255, 255, 0.96);
+  opacity: 0;
+  transition: opacity 320ms ease;
+}
+
+.lightbox.is-visible {
+  opacity: 1;
 }
 
 .lightbox-content {
@@ -397,6 +429,24 @@ img {
   display: grid;
   gap: 1rem;
   justify-items: stretch;
+  opacity: 0;
+  transform: translateY(0.45rem);
+  transition: opacity 220ms ease, transform 220ms ease;
+}
+
+.lightbox.is-visible .lightbox-content {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.lightbox.is-opening .lightbox-content {
+  opacity: 0;
+  transform: translateY(0.45rem);
+}
+
+.lightbox.is-closing .lightbox-content {
+  opacity: 0;
+  transform: translateY(0.2rem);
 }
 
 .lightbox-image {
@@ -406,6 +456,17 @@ img {
   max-width: 100%;
   max-height: calc(100vh - 11rem);
   box-shadow: 0 32px 64px rgba(0, 0, 0, 0.12);
+}
+
+.lightbox-ghost {
+  position: fixed;
+  z-index: 41;
+  display: block;
+  object-fit: cover;
+  pointer-events: none;
+  user-select: none;
+  transform-origin: top left;
+  will-change: transform;
 }
 
 .lightbox-meta {
@@ -461,9 +522,14 @@ img {
   }
 
   .history-trigger,
-  .audio-toggle {
+  .audio-toggle,
+  .visit-counter {
     padding: 0.28rem 0.48rem;
     font-size: 0.56rem;
+  }
+
+  .site-actions {
+    gap: 0.32rem;
   }
 
   .exhibition-logo {
@@ -481,6 +547,7 @@ img {
   }
 
   .intro-copy {
+    padding: 1.4rem 1.2rem;
     max-width: calc(100vw - 2rem);
   }
 
