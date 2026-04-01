@@ -184,13 +184,14 @@ img {
 }
 
 .intro-copy {
-  display: grid;
-  justify-items: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   text-align: center;
   padding: 2rem;
-  width: min(100%, 52rem);
+  width: fit-content;
+  max-width: min(100%, 52rem);
   margin: 0 auto;
-  transform: translateX(0.05rem);
 }
 
 .intro-title {
@@ -202,6 +203,8 @@ img {
   text-transform: uppercase;
   text-align: center;
   text-shadow: 0.014em 0 currentColor, -0.014em 0 currentColor;
+  width: 100%;
+  margin: 0 auto;
 }
 
 .intro-subtitle {
@@ -213,6 +216,7 @@ img {
   color: rgba(0, 0, 0, 0.72);
   letter-spacing: 0.08em;
   text-align: center;
+  width: 100%;
 }
 
 .intro-lead {
@@ -224,6 +228,7 @@ img {
   color: rgba(0, 0, 0, 0.72);
   letter-spacing: 0.08em;
   text-align: center;
+  width: 100%;
 }
 
 .history-overlay {

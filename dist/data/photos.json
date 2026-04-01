@@ -21,16 +21,6 @@
       "updatedAt": "2026-04-01T17:34:49+00:00"
     },
     {
-      "id": 16,
-      "imageUrl": "/uploads/b60ed1d4084349ad9b6b5e6d61ba2640.jpg",
-      "originalName": "251113투다리.jpg",
-      "date": "2025.11.13",
-      "location": "경주 석장동",
-      "photographer": "24 신용은",
-      "createdAt": "2026-04-01T12:56:41+00:00",
-      "updatedAt": "2026-04-01T17:34:51+00:00"
-    },
-    {
       "id": 17,
       "imageUrl": "/uploads/8486d517b2cf4bffa3a3fd9507191b8c.jpg",
       "originalName": "어디울주군.jpg",
@@ -149,16 +139,6 @@
       "photographer": "24 신용은",
       "createdAt": "2026-04-01T13:14:26+00:00",
       "updatedAt": "2026-04-01T17:35:17+00:00"
-    },
-    {
-      "id": 29,
-      "imageUrl": "/uploads/a8c606508e8549efb68f910f80cbf5ff.jpg",
-      "originalName": "251129 부산광영ㄳ.jpg",
-      "date": "2025.11.29",
-      "location": "부산광역시",
-      "photographer": "24 신용은",
-      "createdAt": "2026-04-01T13:14:40+00:00",
-      "updatedAt": "2026-04-01T17:35:14+00:00"
     },
     {
       "id": 30,
