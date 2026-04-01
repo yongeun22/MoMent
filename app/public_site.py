@@ -39,9 +39,11 @@ def export_static_site(*, root_dir: Path, static_dir: Path, uploads_dir: Path, d
     shutil.copy2(static_dir / "css" / "site.css", output_dir / "static" / "css" / "site.css")
     shutil.copy2(static_dir / "js" / "exhibition.js", output_dir / "static" / "js" / "exhibition.js")
 
-    audio_source = static_dir / "audio" / "moment-bgm.mp3"
-    if audio_source.exists():
-        shutil.copy2(audio_source, output_dir / "static" / "audio" / "moment-bgm.mp3")
+    audio_dir = static_dir / "audio"
+    if audio_dir.exists():
+        for audio_file in audio_dir.iterdir():
+            if audio_file.is_file():
+                shutil.copy2(audio_file, output_dir / "static" / "audio" / audio_file.name)
 
     for item in uploads_dir.iterdir():
         if item.name == ".gitkeep":

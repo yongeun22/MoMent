@@ -18,6 +18,8 @@ let historyCloseTimeoutId = null;
 let photos = [];
 let audioUnlockBound = false;
 let audioShouldPlay = true;
+let audioTrackIndex = 0;
+let audioPlaylist = [];
 
 function fadeIntro() {
   window.clearTimeout(introTimeoutId);
@@ -29,17 +31,69 @@ function fadeIntro() {
   }, 2000);
 }
 
+function getAudioPlaylist() {
+  if (!backgroundAudio) {
+    return [];
+  }
+
+  if (audioPlaylist.length) {
+    return audioPlaylist;
+  }
+
+  const rawTracks = backgroundAudio.dataset.tracks;
+  if (!rawTracks) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(rawTracks);
+    if (Array.isArray(parsed)) {
+      audioPlaylist = parsed.filter((track) => typeof track === "string" && track.length > 0);
+      return audioPlaylist;
+    }
+  } catch (error) {
+    // Fall through to comma-separated parsing for resilience.
+  }
+
+  audioPlaylist = rawTracks
+    .split(",")
+    .map((track) => track.trim())
+    .filter(Boolean);
+
+  return audioPlaylist;
+}
+
+function loadAudioTrack(index, resetTime = true) {
+  if (!backgroundAudio) {
+    return false;
+  }
+
+  const tracks = getAudioPlaylist();
+  if (!tracks.length) {
+    return false;
+  }
+
+  const normalizedIndex = ((index % tracks.length) + tracks.length) % tracks.length;
+  const nextSource = tracks[normalizedIndex];
+  audioTrackIndex = normalizedIndex;
+
+  if (backgroundAudio.getAttribute("src") !== nextSource) {
+    backgroundAudio.src = nextSource;
+  }
+
+  if (resetTime) {
+    backgroundAudio.currentTime = 0;
+  }
+
+  return true;
+}
+
 function ensureAudioSource() {
   if (!backgroundAudio || backgroundAudio.currentSrc) {
     return;
   }
 
-  const sourceUrl = backgroundAudio.dataset.src;
-  if (!sourceUrl) {
-    return;
-  }
-
-  backgroundAudio.src = sourceUrl;
+  loadAudioTrack(audioTrackIndex, false);
 }
 
 function updateAudioToggle() {
@@ -89,6 +143,25 @@ async function startBackgroundAudio() {
 
   backgroundAudio.volume = 0.22;
   ensureAudioSource();
+
+  try {
+    await backgroundAudio.play();
+  } catch (error) {
+    bindAudioUnlock();
+  } finally {
+    updateAudioToggle();
+  }
+}
+
+async function playNextTrack() {
+  if (!backgroundAudio || !audioShouldPlay) {
+    updateAudioToggle();
+    return;
+  }
+
+  if (!loadAudioTrack(audioTrackIndex + 1)) {
+    return;
+  }
 
   try {
     await backgroundAudio.play();
@@ -379,6 +452,7 @@ document.addEventListener("keydown", (event) => {
 audioToggle?.addEventListener("click", toggleBackgroundAudio);
 backgroundAudio?.addEventListener("play", updateAudioToggle);
 backgroundAudio?.addEventListener("pause", updateAudioToggle);
+backgroundAudio?.addEventListener("ended", playNextTrack);
 
 fadeIntro();
 startBackgroundAudio();
