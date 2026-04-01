@@ -22,12 +22,15 @@ let audioShouldPlay = true;
 let audioTrackIndex = 0;
 let audioPlaylist = [];
 
+document.body.classList.add("is-intro-active");
+
 function fadeIntro() {
   window.clearTimeout(introTimeoutId);
   introTimeoutId = window.setTimeout(() => {
     introOverlay.classList.add("is-fading");
     window.setTimeout(() => {
       introOverlay.hidden = true;
+      document.body.classList.remove("is-intro-active");
     }, 950);
   }, 2000);
 }

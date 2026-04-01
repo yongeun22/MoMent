@@ -32,6 +32,7 @@ def export_static_site(*, root_dir: Path, static_dir: Path, uploads_dir: Path, d
     (output_dir / "static" / "css").mkdir(parents=True, exist_ok=True)
     (output_dir / "static" / "js").mkdir(parents=True, exist_ok=True)
     (output_dir / "static" / "audio").mkdir(parents=True, exist_ok=True)
+    (output_dir / "static" / "og").mkdir(parents=True, exist_ok=True)
     (output_dir / "uploads").mkdir(parents=True, exist_ok=True)
     (output_dir / "data").mkdir(parents=True, exist_ok=True)
 
@@ -44,6 +45,12 @@ def export_static_site(*, root_dir: Path, static_dir: Path, uploads_dir: Path, d
         for audio_file in audio_dir.iterdir():
             if audio_file.is_file():
                 shutil.copy2(audio_file, output_dir / "static" / "audio" / audio_file.name)
+
+    og_dir = static_dir / "og"
+    if og_dir.exists():
+        for og_file in og_dir.iterdir():
+            if og_file.is_file():
+                shutil.copy2(og_file, output_dir / "static" / "og" / og_file.name)
 
     for item in uploads_dir.iterdir():
         if item.name == ".gitkeep":
@@ -67,6 +74,9 @@ def export_static_site(*, root_dir: Path, static_dir: Path, uploads_dir: Path, d
                 "  Cache-Control: public, max-age=31536000, immutable",
                 "",
                 "/static/audio/*",
+                "  Cache-Control: public, max-age=31536000, immutable",
+                "",
+                "/static/og/*",
                 "  Cache-Control: public, max-age=31536000, immutable",
                 "",
                 "/uploads/*",

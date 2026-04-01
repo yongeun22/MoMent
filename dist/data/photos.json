@@ -179,6 +179,36 @@
       "photographer": "25 한서연",
       "createdAt": "2026-04-01T16:31:22+00:00",
       "updatedAt": "2026-04-01T17:35:25+00:00"
+    },
+    {
+      "id": 34,
+      "imageUrl": "/uploads/62a8ba1901e24416b1738bf4fc6ba16e.png",
+      "originalName": "IMG_0862.PNG",
+      "date": "2024.12.03",
+      "location": "경상북도 포항",
+      "photographer": "24 신용은",
+      "createdAt": "2026-04-01T17:59:57+00:00",
+      "updatedAt": "2026-04-01T18:00:35+00:00"
+    },
+    {
+      "id": 35,
+      "imageUrl": "/uploads/9636395e57fd42a7a93f286d9f9b0fc8.jpg",
+      "originalName": "IMG_6160.jpg",
+      "date": "2025.03.27",
+      "location": "양양 오산리 선사유적박물관",
+      "photographer": "24 신용은",
+      "createdAt": "2026-04-01T18:03:07+00:00",
+      "updatedAt": "2026-04-01T18:03:07+00:00"
+    },
+    {
+      "id": 36,
+      "imageUrl": "/uploads/b4c9eef30cac4f77911ff02fdca8075d.jpg",
+      "originalName": "IMG_5776.jpg",
+      "date": "2025.03.28",
+      "location": "양양 낙산사",
+      "photographer": "24 신용은",
+      "createdAt": "2026-04-01T18:04:42+00:00",
+      "updatedAt": "2026-04-01T18:04:42+00:00"
     }
   ]
 }

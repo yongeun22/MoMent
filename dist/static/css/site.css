@@ -19,6 +19,7 @@
 
 html {
   scroll-behavior: smooth;
+  scrollbar-gutter: stable both-edges;
 }
 
 body {
@@ -30,7 +31,8 @@ body {
 }
 
 body.is-lightbox-open,
-body.is-history-open {
+body.is-history-open,
+body.is-intro-active {
   overflow: hidden;
 }
 
@@ -171,8 +173,6 @@ img {
   position: fixed;
   inset: 0;
   z-index: 20;
-  display: grid;
-  place-items: center;
   background: #ffffff;
   transition: opacity 900ms ease, visibility 900ms ease;
 }
@@ -183,14 +183,22 @@ img {
   pointer-events: none;
 }
 
+.intro-shell {
+  width: min(100%, 1560px);
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 0.95rem clamp(0.75rem, 2vw, 1.5rem) 2.5rem;
+  display: grid;
+  place-items: center;
+}
+
 .intro-copy {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  display: grid;
+  justify-items: center;
   text-align: center;
   padding: 2rem;
-  width: fit-content;
-  max-width: min(100%, 52rem);
+  width: max-content;
+  max-width: calc(100vw - 4rem);
   margin: 0 auto;
 }
 
@@ -203,8 +211,8 @@ img {
   text-transform: uppercase;
   text-align: center;
   text-shadow: 0.014em 0 currentColor, -0.014em 0 currentColor;
-  width: 100%;
-  margin: 0 auto;
+  width: auto;
+  margin: 0;
 }
 
 .intro-subtitle {
@@ -216,7 +224,8 @@ img {
   color: rgba(0, 0, 0, 0.72);
   letter-spacing: 0.08em;
   text-align: center;
-  width: 100%;
+  width: auto;
+  white-space: nowrap;
 }
 
 .intro-lead {
@@ -228,7 +237,7 @@ img {
   color: rgba(0, 0, 0, 0.72);
   letter-spacing: 0.08em;
   text-align: center;
-  width: 100%;
+  width: auto;
 }
 
 .history-overlay {
@@ -469,6 +478,14 @@ img {
 
   .history-overlay {
     padding: 1.25rem;
+  }
+
+  .intro-copy {
+    max-width: calc(100vw - 2rem);
+  }
+
+  .intro-subtitle {
+    white-space: normal;
   }
 
   .history-panel {
