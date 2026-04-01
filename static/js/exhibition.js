@@ -1,6 +1,7 @@
 const stream = document.getElementById("photoStream");
 const emptyState = document.getElementById("emptyState");
 const introOverlay = document.getElementById("introOverlay");
+const siteTopbar = document.getElementById("siteTopbar");
 const lightbox = document.getElementById("lightbox");
 const lightboxContent = document.getElementById("lightboxContent");
 const lightboxImage = document.getElementById("lightboxImage");
@@ -102,8 +103,16 @@ function updateAudioToggle() {
   }
 
   const isPlaying = !backgroundAudio.paused && !backgroundAudio.ended;
-  audioToggle.textContent = isPlaying ? "BGM ON" : "BGM OFF";
+  audioToggle.textContent = isPlaying ? "\uC74C\uC545 ON" : "\uC74C\uC545 OFF";
   audioToggle.setAttribute("aria-pressed", String(isPlaying));
+}
+
+function syncTopbarState() {
+  if (!siteTopbar) {
+    return;
+  }
+
+  siteTopbar.classList.toggle("is-compact", window.scrollY > 48);
 }
 
 function bindAudioUnlock() {
@@ -449,11 +458,13 @@ document.addEventListener("keydown", (event) => {
     closeHistoryOverlay();
   }
 });
+window.addEventListener("scroll", syncTopbarState, { passive: true });
 audioToggle?.addEventListener("click", toggleBackgroundAudio);
 backgroundAudio?.addEventListener("play", updateAudioToggle);
 backgroundAudio?.addEventListener("pause", updateAudioToggle);
 backgroundAudio?.addEventListener("ended", playNextTrack);
 
 fadeIntro();
+syncTopbarState();
 startBackgroundAudio();
 loadPhotos();
