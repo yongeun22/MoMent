@@ -286,6 +286,15 @@ img {
   text-align: center;
 }
 
+.history-heading {
+  margin: 0 0 0.35rem;
+  font-family: var(--title-font);
+  font-size: clamp(1.08rem, 2.15vw, 1.34rem);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  line-height: 1.55;
+}
+
 .history-line {
   margin: 0;
   font-family: var(--title-font);
