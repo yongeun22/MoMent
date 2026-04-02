@@ -9,22 +9,23 @@ function json(body, status = 200) {
 }
 
 async function ensureSchema(db) {
-  await db.exec(`
-    CREATE TABLE IF NOT EXISTS site_stats (
-      key TEXT PRIMARY KEY,
-      value INTEGER NOT NULL DEFAULT 0,
-      updated_at TEXT NOT NULL
-    );
-  `);
+  await db
+    .prepare(`
+      CREATE TABLE IF NOT EXISTS site_stats (
+        id INTEGER PRIMARY KEY CHECK (id = 1),
+        count INTEGER NOT NULL DEFAULT 0,
+        updated_at TEXT NOT NULL
+      )
+    `)
+    .run();
 }
 
 async function readCount(db) {
   const result = await db
-    .prepare("SELECT value FROM site_stats WHERE key = ?")
-    .bind("visit_count")
+    .prepare("SELECT count FROM site_stats WHERE id = 1")
     .first();
 
-  return Number(result?.value || 0);
+  return Number(result?.count || 0);
 }
 
 function getDatabase(env) {
@@ -32,34 +33,54 @@ function getDatabase(env) {
 }
 
 export async function onRequestGet(context) {
-  const db = getDatabase(context.env);
-  if (!db) {
-    return json({ error: "Missing D1 binding: VISITS_DB" }, 503);
-  }
+  try {
+    const db = getDatabase(context.env);
+    if (!db) {
+      return json({ error: "Missing D1 binding: VISITS_DB" }, 503);
+    }
 
-  await ensureSchema(db);
-  return json({ count: await readCount(db) });
+    await ensureSchema(db);
+    return json({ count: await readCount(db) });
+  } catch (error) {
+    return json(
+      {
+        error: "Failed to read visit counter",
+        detail: error instanceof Error ? error.message : String(error),
+      },
+      500,
+    );
+  }
 }
 
 export async function onRequestPost(context) {
-  const db = getDatabase(context.env);
-  if (!db) {
-    return json({ error: "Missing D1 binding: VISITS_DB" }, 503);
+  try {
+    const db = getDatabase(context.env);
+    if (!db) {
+      return json({ error: "Missing D1 binding: VISITS_DB" }, 503);
+    }
+
+    await ensureSchema(db);
+    const now = new Date().toISOString();
+
+    await db
+      .prepare(`
+        INSERT INTO site_stats (id, count, updated_at)
+        VALUES (1, 1, ?)
+        ON CONFLICT(id) DO UPDATE SET
+          count = count + 1,
+          updated_at = excluded.updated_at
+      `)
+      .bind(now)
+      .run();
+
+    return json({ count: await readCount(db) });
+  } catch (error) {
+    return json(
+      {
+        error: "Failed to update visit counter",
+        detail: error instanceof Error ? error.message : String(error),
+      },
+      500,
+    );
   }
-
-  await ensureSchema(db);
-  const now = new Date().toISOString();
-
-  await db
-    .prepare(`
-      INSERT INTO site_stats (key, value, updated_at)
-      VALUES (?, 1, ?)
-      ON CONFLICT(key) DO UPDATE SET
-        value = value + 1,
-        updated_at = excluded.updated_at
-    `)
-    .bind("visit_count", now)
-    .run();
-
-  return json({ count: await readCount(db) });
 }
