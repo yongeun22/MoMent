@@ -149,7 +149,6 @@ img {
   font-size: clamp(1.48rem, 2.6vw, 2.18rem);
   font-weight: 900;
   letter-spacing: 0.12em;
-  text-transform: uppercase;
   color: #000000;
   padding: 0;
   border: 0;
@@ -225,7 +224,6 @@ img {
   font-weight: 900;
   line-height: 1;
   letter-spacing: 0.1em;
-  text-transform: uppercase;
   text-align: center;
   text-shadow: 0.014em 0 currentColor, -0.014em 0 currentColor;
   width: auto;
