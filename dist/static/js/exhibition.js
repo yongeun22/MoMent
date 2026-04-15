@@ -5,7 +5,9 @@ const introCopy = document.getElementById("introCopy");
 const siteTopbar = document.getElementById("siteTopbar");
 const lightbox = document.getElementById("lightbox");
 const lightboxContent = document.getElementById("lightboxContent");
+const lightboxImageShell = document.getElementById("lightboxImageShell");
 const lightboxImage = document.getElementById("lightboxImage");
+const lightboxImageBuffer = document.getElementById("lightboxImageBuffer");
 const lightboxMeta = document.getElementById("lightboxMeta");
 const historyTrigger = document.getElementById("historyTrigger");
 const historyOverlay = document.getElementById("historyOverlay");
@@ -28,6 +30,14 @@ let lightboxGhost = null;
 let lightboxGhostAnimation = null;
 let openLightboxPhotoId = null;
 let highResSwapToken = 0;
+
+function resetLightboxBuffer() {
+  if (!lightboxImageBuffer) {
+    return;
+  }
+  lightboxImageBuffer.classList.remove("is-visible");
+  lightboxImageBuffer.removeAttribute("src");
+}
 function pickIntroAnchor(options) {
   return options[Math.floor(Math.random() * options.length)];
 }
@@ -411,7 +421,7 @@ function createGhostImage(sourceImage, rect, radius, shadow) {
   return ghost;
 }
 
-function animateGhostBetween(ghost, fromRect, toRect, fromRadius, toRadius, fromShadow, toShadow, duration = 360) {
+function animateGhostBetween(ghost, fromRect, toRect, duration = 240) {
   const translateX = toRect.left - fromRect.left;
   const translateY = toRect.top - fromRect.top;
   const scaleX = fromRect.width ? toRect.width / fromRect.width : 1;
@@ -421,18 +431,14 @@ function animateGhostBetween(ghost, fromRect, toRect, fromRadius, toRadius, from
     [
       {
         transform: "translate(0px, 0px) scale(1, 1)",
-        borderRadius: fromRadius,
-        boxShadow: fromShadow,
       },
       {
         transform: `translate(${translateX}px, ${translateY}px) scale(${scaleX}, ${scaleY})`,
-        borderRadius: toRadius,
-        boxShadow: toShadow,
       },
     ],
     {
       duration,
-      easing: "cubic-bezier(0.2, 0.8, 0.2, 1)",
+      easing: "cubic-bezier(0.22, 0.8, 0.22, 1)",
       fill: "forwards",
     },
   );
@@ -485,8 +491,12 @@ async function openLightbox(photoId, triggerElement) {
   const sourceRadius = sourceImage ? window.getComputedStyle(sourceImage).borderTopLeftRadius : "0px";
   const sourceShadow = sourceImage ? window.getComputedStyle(sourceImage).boxShadow : "0 18px 42px rgba(0, 0, 0, 0.1)";
 
+  resetLightboxBuffer();
   lightboxImage.src = photo.imageUrl;
   lightboxImage.alt = `${photo.location}, ${photo.date}`;
+  if (lightboxImageBuffer) {
+    lightboxImageBuffer.alt = `${photo.location}, ${photo.date}`;
+  }
   lightboxMeta.innerHTML = renderLightboxMeta(photo);
   lightbox.hidden = false;
   document.body.classList.add("is-lightbox-open");
@@ -505,7 +515,7 @@ async function openLightbox(photoId, triggerElement) {
     return;
   }
 
-  const targetRect = lightboxImage.getBoundingClientRect();
+  const targetRect = lightboxImageShell.getBoundingClientRect();
   if (
     !sourceRect ||
     sourceRect.width <= 0 ||
@@ -524,11 +534,7 @@ async function openLightbox(photoId, triggerElement) {
     lightboxGhost,
     sourceRect,
     targetRect,
-    sourceRadius,
-    "0px",
-    sourceShadow,
-    "0 32px 64px rgba(0, 0, 0, 0.12)",
-    320,
+    230,
   );
 
   try {
@@ -544,10 +550,25 @@ async function openLightbox(photoId, triggerElement) {
     const highResImage = new Image();
     highResImage.decoding = "async";
     highResImage.src = photo.lightboxUrl;
-    highResImage.onload = () => {
-      if (!lightbox.hidden && openLightboxPhotoId === String(photo.id) && currentSwapToken === highResSwapToken) {
-        lightboxImage.src = photo.lightboxUrl;
+    highResImage.onload = async () => {
+      try {
+        await highResImage.decode();
+      } catch (error) {
+        // Continue with loaded pixels if decode is unsupported or interrupted.
       }
+
+      if (
+        lightbox.hidden ||
+        openLightboxPhotoId !== String(photo.id) ||
+        currentSwapToken !== highResSwapToken ||
+        !lightboxImageBuffer
+      ) {
+        return;
+      }
+
+      lightboxImageBuffer.src = photo.lightboxUrl;
+      await nextAnimationFrame();
+      lightboxImageBuffer.classList.add("is-visible");
     };
   }
 }
@@ -565,7 +586,7 @@ function closeLightbox() {
     ? stream.querySelector(`.photo-item[data-photo-id="${openLightboxPhotoId}"] .photo-image`)
     : null;
   const sourceRect = sourceImage?.getBoundingClientRect();
-  const targetRect = lightboxImage.getBoundingClientRect();
+  const targetRect = lightboxImageShell.getBoundingClientRect();
 
   if (
     sourceImage &&
@@ -575,23 +596,24 @@ function closeLightbox() {
     targetRect.width > 0 &&
     targetRect.height > 0
   ) {
-    const sourceRadius = window.getComputedStyle(sourceImage).borderTopLeftRadius;
-    const sourceShadow = window.getComputedStyle(sourceImage).boxShadow;
-    const targetShadow = window.getComputedStyle(lightboxImage).boxShadow;
+    const visibleLightboxImage =
+      lightboxImageBuffer &&
+      lightboxImageBuffer.classList.contains("is-visible") &&
+      lightboxImageBuffer.getAttribute("src")
+        ? lightboxImageBuffer
+        : lightboxImage;
+    const targetRadius = window.getComputedStyle(lightboxImageShell).borderTopLeftRadius;
+    const targetShadow = window.getComputedStyle(lightboxImageShell).boxShadow;
 
     lightbox.classList.add("is-closing");
-    lightboxGhost = createGhostImage(lightboxImage, targetRect, "0px", targetShadow);
+    lightboxGhost = createGhostImage(visibleLightboxImage, targetRect, targetRadius, targetShadow);
     document.body.append(lightboxGhost);
 
     lightboxGhostAnimation = animateGhostBetween(
       lightboxGhost,
       targetRect,
       sourceRect,
-      "0px",
-      sourceRadius,
-      targetShadow,
-      sourceShadow,
-      280,
+      190,
     );
 
     lightboxGhostAnimation.finished
@@ -609,6 +631,7 @@ function closeLightbox() {
     cleanupLightboxGhost();
     lightbox.classList.remove("is-closing");
     lightbox.hidden = true;
+    resetLightboxBuffer();
     lightboxImage.removeAttribute("src");
     lightboxMeta.innerHTML = "";
     openLightboxPhotoId = null;

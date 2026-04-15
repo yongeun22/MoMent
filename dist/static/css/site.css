@@ -5,6 +5,7 @@
   --muted: rgba(0, 0, 0, 0.62);
   --line: rgba(0, 0, 0, 0.12);
   --shadow: 0 24px 48px rgba(0, 0, 0, 0.08);
+  --frame-radius: 1.35rem;
   --title-font: "Aptos Display", "Aptos", "Helvetica Neue", "Segoe UI", "Noto Sans KR", sans-serif;
   --meta-font: "Aptos", "Helvetica Neue", "Segoe UI", "Noto Sans KR", sans-serif;
 }
@@ -343,7 +344,7 @@ img {
   height: auto;
   max-width: 100%;
   max-height: none;
-  border-radius: 1.35rem;
+  border-radius: var(--frame-radius);
   box-shadow: 0 16px 34px rgba(0, 0, 0, 0.06);
   transform: translateZ(0);
 }
@@ -415,6 +416,7 @@ img {
   background: rgba(255, 255, 255, 0.96);
   opacity: 0;
   transition: opacity 320ms ease;
+  will-change: opacity;
 }
 
 .lightbox.is-visible {
@@ -429,33 +431,52 @@ img {
   gap: 1rem;
   justify-items: stretch;
   opacity: 0;
-  transform: translateY(0.45rem);
-  transition: opacity 220ms ease, transform 220ms ease;
+  transition: opacity 180ms ease;
+  will-change: opacity;
+}
+
+.lightbox-image-shell {
+  display: grid;
+  justify-self: start;
+  width: fit-content;
+  max-width: 100%;
+  border-radius: var(--frame-radius);
+  overflow: hidden;
+  box-shadow: 0 24px 44px rgba(0, 0, 0, 0.09);
+  transform: translateZ(0);
 }
 
 .lightbox.is-visible .lightbox-content {
   opacity: 1;
-  transform: translateY(0);
 }
 
 .lightbox.is-opening .lightbox-content {
   opacity: 0;
-  transform: translateY(0.45rem);
 }
 
 .lightbox.is-closing .lightbox-content {
   opacity: 0;
-  transform: translateY(0.2rem);
 }
 
 .lightbox-image {
   display: block;
-  justify-self: start;
+  grid-area: 1 / 1;
   width: auto;
   max-width: 100%;
   max-height: calc(100vh - 11rem);
-  box-shadow: 0 24px 44px rgba(0, 0, 0, 0.09);
-  transform: translateZ(0);
+  border-radius: 0;
+  box-shadow: none;
+  transform: none;
+}
+
+.lightbox-image-buffer {
+  opacity: 0;
+  transition: opacity 120ms linear;
+  pointer-events: none;
+}
+
+.lightbox-image-buffer.is-visible {
+  opacity: 1;
 }
 
 .lightbox-ghost {
@@ -467,6 +488,8 @@ img {
   user-select: none;
   transform-origin: top left;
   will-change: transform;
+  contain: layout paint style;
+  backface-visibility: hidden;
 }
 
 .lightbox-meta {
@@ -506,6 +529,10 @@ img {
 }
 
 @media (max-width: 720px) {
+  :root {
+    --frame-radius: 1rem;
+  }
+
   .site-shell {
     padding-top: 0.8rem;
   }
@@ -568,10 +595,6 @@ img {
     column-gap: 0.75rem;
   }
 
-  .photo-image {
-    border-radius: 1rem;
-  }
-
   .photo-item {
     width: 100%;
     margin-bottom: 0.75rem;
@@ -596,6 +619,10 @@ img {
     max-width: 92vw;
     max-height: calc(100vh - 2rem);
     gap: 0.8rem;
+  }
+
+  .lightbox-image-shell {
+    max-width: 92vw;
   }
 
   .lightbox-image {
