@@ -27,6 +27,7 @@ let audioPlaylist = [];
 let lightboxGhost = null;
 let lightboxGhostAnimation = null;
 let openLightboxPhotoId = null;
+let highResSwapToken = 0;
 function pickIntroAnchor(options) {
   return options[Math.floor(Math.random() * options.length)];
 }
@@ -219,6 +220,20 @@ function bindAudioUnlock() {
   document.addEventListener("keydown", unlockAudio);
 }
 
+function runNonCriticalTasks() {
+  const execute = () => {
+    incrementVisitCounter();
+    startBackgroundAudio();
+  };
+
+  if ("requestIdleCallback" in window) {
+    window.requestIdleCallback(execute, { timeout: 1500 });
+    return;
+  }
+
+  window.setTimeout(execute, 320);
+}
+
 async function startBackgroundAudio() {
   if (!backgroundAudio) {
     return;
@@ -300,15 +315,20 @@ function shufflePhotos(source) {
   return items;
 }
 
-function renderPhoto(photo) {
+function renderPhoto(photo, index) {
+  const isPriorityImage = index < 4;
   return `
     <figure class="photo-item" data-photo-id="${photo.id}">
       <button class="photo-frame" type="button" aria-expanded="false" data-photo-id="${photo.id}">
         <img
           class="photo-image"
           src="${photo.imageUrl}"
+          ${photo.lightboxUrl ? `data-lightbox-src="${photo.lightboxUrl}"` : ""}
           alt="${escapeHtml(photo.location)}, ${escapeHtml(photo.date)}"
-          loading="lazy"
+          loading="${isPriorityImage ? "eager" : "lazy"}"
+          fetchpriority="${isPriorityImage ? "high" : "low"}"
+          decoding="async"
+          draggable="false"
         >
       </button>
       <figcaption class="photo-meta">
@@ -457,6 +477,8 @@ async function openLightbox(photoId, triggerElement) {
   window.clearTimeout(lightboxCloseTimeoutId);
   cleanupLightboxGhost();
   openLightboxPhotoId = String(photoId);
+  highResSwapToken += 1;
+  const currentSwapToken = highResSwapToken;
 
   const sourceImage = triggerElement?.querySelector(".photo-image") || triggerElement?.querySelector("img");
   const sourceRect = sourceImage?.getBoundingClientRect();
@@ -517,6 +539,17 @@ async function openLightbox(photoId, triggerElement) {
     cleanupLightboxGhost();
     lightbox.classList.remove("is-opening");
   }
+
+  if (photo.lightboxUrl && photo.lightboxUrl !== photo.imageUrl) {
+    const highResImage = new Image();
+    highResImage.decoding = "async";
+    highResImage.src = photo.lightboxUrl;
+    highResImage.onload = () => {
+      if (!lightbox.hidden && openLightboxPhotoId === String(photo.id) && currentSwapToken === highResSwapToken) {
+        lightboxImage.src = photo.lightboxUrl;
+      }
+    };
+  }
 }
 
 function closeLightbox() {
@@ -571,6 +604,7 @@ function closeLightbox() {
 
   lightbox.classList.remove("is-visible");
   document.body.classList.remove("is-lightbox-open");
+  highResSwapToken += 1;
   lightboxCloseTimeoutId = window.setTimeout(() => {
     cleanupLightboxGhost();
     lightbox.classList.remove("is-closing");
@@ -670,7 +704,7 @@ async function loadPhotos() {
 
       photos = shufflePhotos(payload.photos);
       emptyState.hidden = true;
-      stream.innerHTML = photos.map(renderPhoto).join("");
+      stream.innerHTML = photos.map((photo, index) => renderPhoto(photo, index)).join("");
       bindInteractions();
       return;
     } catch (error) {
@@ -729,6 +763,5 @@ positionIntroCopy();
 document.fonts?.ready.then(positionIntroCopy).catch(() => {});
 fadeIntro();
 syncTopbarState();
-incrementVisitCounter();
-startBackgroundAudio();
 loadPhotos();
+runNonCriticalTasks();

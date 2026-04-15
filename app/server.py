@@ -16,6 +16,7 @@ from .auth import create_session_token, generate_salt, hash_password, verify_pas
 from .config import AppConfig
 from .database import Database
 from .http_utils import normalize_photo_fields, normalized_upload_extension, parse_multipart_form, read_json, safe_relative_path
+from .image_variants import ensure_display_variant, display_variant_path
 from .public_site import build_public_payload, serialize_public_photo
 
 
@@ -85,7 +86,7 @@ def build_handler(config: AppConfig, database: Database, secret_key: bytes):
                 return
 
             if path == "/api/photos":
-                self._send_json(build_public_payload(database))
+                self._send_json(build_public_payload(database, config.uploads_dir))
                 return
 
             if path == "/api/visits":
@@ -93,7 +94,7 @@ def build_handler(config: AppConfig, database: Database, secret_key: bytes):
                 return
 
             if path == "/data/photos.json":
-                self._send_json(build_public_payload(database))
+                self._send_json(build_public_payload(database, config.uploads_dir))
                 return
 
             if path == "/api/admin/session":
@@ -112,7 +113,7 @@ def build_handler(config: AppConfig, database: Database, secret_key: bytes):
                 if not admin:
                     return
 
-                photos = [serialize_public_photo(photo) for photo in database.list_photos()]
+                photos = [serialize_public_photo(photo, config.uploads_dir) for photo in database.list_photos()]
                 self._send_json({"photos": photos, "username": admin["username"]})
                 return
 
@@ -368,9 +369,12 @@ def build_handler(config: AppConfig, database: Database, secret_key: bytes):
                 upload_path = config.uploads_dir / stored_filename
                 if upload_path.exists():
                     upload_path.unlink()
+                variant_path = display_variant_path(config.uploads_dir, stored_filename)
+                if variant_path.exists():
+                    variant_path.unlink()
                 raise
 
-            self._send_json({"photo": serialize_public_photo(photo)}, status=HTTPStatus.CREATED)
+            self._send_json({"photo": serialize_public_photo(photo, config.uploads_dir)}, status=HTTPStatus.CREATED)
 
         def _handle_photo_update(self, raw_photo_id: str) -> None:
             try:
@@ -428,14 +432,20 @@ def build_handler(config: AppConfig, database: Database, secret_key: bytes):
                     upload_path = config.uploads_dir / stored_filename
                     if upload_path.exists():
                         upload_path.unlink()
+                    variant_path = display_variant_path(config.uploads_dir, stored_filename)
+                    if variant_path.exists():
+                        variant_path.unlink()
                 raise
 
             if stored_filename and old_filename:
                 old_path = config.uploads_dir / old_filename
                 if old_path.exists():
                     old_path.unlink()
+                old_variant_path = display_variant_path(config.uploads_dir, old_filename)
+                if old_variant_path.exists():
+                    old_variant_path.unlink()
 
-            self._send_json({"photo": serialize_public_photo(photo)})
+            self._send_json({"photo": serialize_public_photo(photo, config.uploads_dir)})
 
         def _handle_photo_delete(self, raw_photo_id: str) -> None:
             try:
@@ -452,6 +462,9 @@ def build_handler(config: AppConfig, database: Database, secret_key: bytes):
             image_path = config.uploads_dir / photo["filename"]
             if image_path.exists():
                 image_path.unlink()
+            variant_path = display_variant_path(config.uploads_dir, photo["filename"])
+            if variant_path.exists():
+                variant_path.unlink()
 
             self._send_json({"deleted": True})
 
@@ -460,6 +473,7 @@ def build_handler(config: AppConfig, database: Database, secret_key: bytes):
             stored_filename = f"{uuid.uuid4().hex}{extension}"
             upload_path = config.uploads_dir / stored_filename
             upload_path.write_bytes(image_file["content"])
+            ensure_display_variant(config.uploads_dir, stored_filename)
             return stored_filename
 
         def _current_admin(self) -> dict | None:
@@ -589,6 +603,8 @@ def run_server(config: AppConfig) -> None:
     database = Database(config.db_path)
     database.initialize()
     bootstrap_admin(config, database)
+    for photo in database.list_photos():
+        ensure_display_variant(config.uploads_dir, photo["filename"])
     secret_key = config.secret_key_path.read_bytes()
     handler = build_handler(config, database, secret_key)
 

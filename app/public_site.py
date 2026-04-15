@@ -5,12 +5,18 @@ import json
 import shutil
 
 from .database import Database
+from .image_variants import display_variant_relative_path, ensure_display_variants
 
 
-def serialize_public_photo(photo: dict) -> dict:
+def serialize_public_photo(photo: dict, uploads_dir: Path) -> dict:
+    display_relative = display_variant_relative_path(photo["filename"])
+    display_path = uploads_dir / display_relative
+    image_url = f"/uploads/{display_relative}" if display_path.exists() else f"/uploads/{photo['filename']}"
+
     return {
         "id": photo["id"],
-        "imageUrl": f"/uploads/{photo['filename']}",
+        "imageUrl": image_url,
+        "lightboxUrl": f"/uploads/{photo['filename']}",
         "originalName": photo["original_name"],
         "date": photo["date_text"],
         "location": photo["location"],
@@ -20,8 +26,10 @@ def serialize_public_photo(photo: dict) -> dict:
     }
 
 
-def build_public_payload(database: Database) -> dict:
-    photos = [serialize_public_photo(photo) for photo in database.list_photos()]
+def build_public_payload(database: Database, uploads_dir: Path) -> dict:
+    photos_data = database.list_photos()
+    ensure_display_variants(uploads_dir, [photo["filename"] for photo in photos_data])
+    photos = [serialize_public_photo(photo, uploads_dir) for photo in photos_data]
     return {"photos": photos}
 
 
@@ -52,13 +60,18 @@ def export_static_site(*, root_dir: Path, static_dir: Path, uploads_dir: Path, d
             if og_file.is_file():
                 shutil.copy2(og_file, output_dir / "static" / "og" / og_file.name)
 
-    for item in uploads_dir.iterdir():
-        if item.name == ".gitkeep":
-            continue
-        if item.is_file():
-            shutil.copy2(item, output_dir / "uploads" / item.name)
+    photos_data = database.list_photos()
+    ensure_display_variants(uploads_dir, [photo["filename"] for photo in photos_data])
 
-    payload = build_public_payload(database)
+    for item in uploads_dir.rglob("*"):
+        if item.name == ".gitkeep" or not item.is_file():
+            continue
+        relative_path = item.relative_to(uploads_dir)
+        destination = output_dir / "uploads" / relative_path
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(item, destination)
+
+    payload = build_public_payload(database, uploads_dir)
     (output_dir / "data" / "photos.json").write_text(
         json.dumps(payload, ensure_ascii=False, indent=2),
         encoding="utf-8",

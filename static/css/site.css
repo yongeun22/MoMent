@@ -72,16 +72,15 @@ img {
   padding: 1rem 1.2rem 0.9rem;
   border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 1.35rem;
-  background: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 20px 44px rgba(0, 0, 0, 0.08);
-  backdrop-filter: blur(16px);
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.05);
   transition: padding 260ms ease, box-shadow 260ms ease, border-color 260ms ease;
 }
 
 .site-topbar.is-compact .site-nav-card {
   padding-top: 0.82rem;
   padding-bottom: 0.8rem;
-  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.04);
 }
 
 .history-trigger,
@@ -315,12 +314,13 @@ img {
   width: 100%;
   margin: 0 auto 1rem;
   break-inside: avoid;
-  transition: opacity 280ms ease, filter 280ms ease, transform 280ms ease;
+  content-visibility: auto;
+  contain-intrinsic-size: 420px;
+  transition: opacity 220ms ease, transform 220ms ease;
 }
 
 .exhibition-stream.is-hovering .photo-item:not(.is-active) {
-  opacity: 0.58;
-  filter: saturate(0.88);
+  opacity: 0.72;
 }
 
 .photo-item.is-active {
@@ -344,7 +344,8 @@ img {
   max-width: 100%;
   max-height: none;
   border-radius: 1.35rem;
-  box-shadow: var(--shadow);
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.06);
+  transform: translateZ(0);
 }
 
 .photo-meta {
@@ -453,7 +454,8 @@ img {
   width: auto;
   max-width: 100%;
   max-height: calc(100vh - 11rem);
-  box-shadow: 0 32px 64px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 24px 44px rgba(0, 0, 0, 0.09);
+  transform: translateZ(0);
 }
 
 .lightbox-ghost {
