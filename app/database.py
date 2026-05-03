@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS admins (
     username TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
     password_salt TEXT NOT NULL,
+    session_version INTEGER NOT NULL DEFAULT 1,
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
 );
@@ -59,6 +60,17 @@ class Database:
     def initialize(self) -> None:
         with self.connection() as connection:
             connection.executescript(SCHEMA)
+            self._ensure_admin_columns(connection)
+
+    def _ensure_admin_columns(self, connection: sqlite3.Connection) -> None:
+        columns = {
+            row["name"]
+            for row in connection.execute("PRAGMA table_info(admins)").fetchall()
+        }
+        if "session_version" not in columns:
+            connection.execute(
+                "ALTER TABLE admins ADD COLUMN session_version INTEGER NOT NULL DEFAULT 1"
+            )
 
     def has_admin(self) -> bool:
         with self.connection() as connection:
@@ -75,13 +87,17 @@ class Database:
     def create_or_replace_admin(self, username: str, password_hash: str, password_salt: str) -> None:
         timestamp = utc_now_iso()
         with self.connection() as connection:
+            existing = connection.execute(
+                "SELECT session_version FROM admins ORDER BY id ASC LIMIT 1"
+            ).fetchone()
+            next_session_version = int(existing["session_version"]) + 1 if existing else 1
             connection.execute("DELETE FROM admins")
             connection.execute(
                 """
-                INSERT INTO admins (id, username, password_hash, password_salt, created_at, updated_at)
-                VALUES (1, ?, ?, ?, ?, ?)
+                INSERT INTO admins (id, username, password_hash, password_salt, session_version, created_at, updated_at)
+                VALUES (1, ?, ?, ?, ?, ?, ?)
                 """,
-                (username, password_hash, password_salt, timestamp, timestamp),
+                (username, password_hash, password_salt, next_session_version, timestamp, timestamp),
             )
 
     def update_admin_password(self, username: str, password_hash: str, password_salt: str) -> sqlite3.Row | None:
@@ -92,10 +108,28 @@ class Database:
                 UPDATE admins
                 SET password_hash = ?,
                     password_salt = ?,
+                    session_version = session_version + 1,
                     updated_at = ?
                 WHERE username = ?
                 """,
                 (password_hash, password_salt, timestamp, username),
+            )
+            return connection.execute(
+                "SELECT * FROM admins WHERE username = ?",
+                (username,),
+            ).fetchone()
+
+    def rotate_admin_session_version(self, username: str) -> sqlite3.Row | None:
+        timestamp = utc_now_iso()
+        with self.connection() as connection:
+            connection.execute(
+                """
+                UPDATE admins
+                SET session_version = session_version + 1,
+                    updated_at = ?
+                WHERE username = ?
+                """,
+                (timestamp, username),
             )
             return connection.execute(
                 "SELECT * FROM admins WHERE username = ?",

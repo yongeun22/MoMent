@@ -26,6 +26,7 @@ class AppConfig:
     bootstrap_admin_username: str | None
     bootstrap_admin_password: str | None
     admin_path: str
+    public_url: str | None
 
 
 def _load_env_file(env_path: Path) -> None:
@@ -59,6 +60,13 @@ def _normalize_admin_path(raw_path: str) -> str:
     return cleaned
 
 
+def _normalize_public_url(raw_url: str | None) -> str | None:
+    cleaned = (raw_url or "").strip()
+    if not cleaned:
+        return None
+    return cleaned.rstrip("/")
+
+
 def load_config() -> AppConfig:
     _load_env_file(ENV_PATH)
 
@@ -87,4 +95,5 @@ def load_config() -> AppConfig:
         bootstrap_admin_username=os.getenv("MOMENT_ADMIN_USERNAME") or None,
         bootstrap_admin_password=os.getenv("MOMENT_ADMIN_PASSWORD") or None,
         admin_path=_normalize_admin_path(os.getenv("MOMENT_ADMIN_PATH", "/admin")),
+        public_url=_normalize_public_url(os.getenv("MOMENT_PUBLIC_URL")),
     )

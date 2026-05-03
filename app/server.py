@@ -15,6 +15,7 @@ import uuid
 from .auth import create_session_token, generate_salt, hash_password, verify_password, verify_session_token
 from .config import AppConfig
 from .database import Database
+from .html_templates import render_html_template
 from .http_utils import normalize_photo_fields, normalized_upload_extension, parse_multipart_form, read_json, safe_relative_path
 from .image_variants import ensure_display_variant, display_variant_path
 from .public_site import build_public_payload, serialize_public_photo
@@ -78,11 +79,11 @@ def build_handler(config: AppConfig, database: Database, secret_key: bytes):
             path = parsed.path
 
             if path == "/":
-                self._serve_file(config.static_dir / "index.html", cache_seconds=0)
+                self._serve_rendered_html(config.static_dir / "index.html")
                 return
 
             if path in {config.admin_path, f"{config.admin_path}/"}:
-                self._serve_file(config.static_dir / "admin" / "index.html", cache_seconds=0)
+                self._serve_rendered_html(config.static_dir / "admin" / "index.html")
                 return
 
             if path == "/api/photos":
@@ -122,7 +123,11 @@ def build_handler(config: AppConfig, database: Database, secret_key: bytes):
                 if not relative_path:
                     self._send_json({"error": "Not found."}, status=HTTPStatus.NOT_FOUND)
                     return
-                self._serve_file(config.static_dir / relative_path, cache_seconds=STATIC_CACHE_MAX_AGE)
+                self._serve_file(
+                    config.static_dir / relative_path,
+                    cache_seconds=STATIC_CACHE_MAX_AGE,
+                    allowed_root=config.static_dir,
+                )
                 return
 
             if path.startswith("/uploads/"):
@@ -130,7 +135,11 @@ def build_handler(config: AppConfig, database: Database, secret_key: bytes):
                 if not relative_path:
                     self._send_json({"error": "Not found."}, status=HTTPStatus.NOT_FOUND)
                     return
-                self._serve_file(config.uploads_dir / relative_path, cache_seconds=UPLOAD_CACHE_MAX_AGE)
+                self._serve_file(
+                    config.uploads_dir / relative_path,
+                    cache_seconds=UPLOAD_CACHE_MAX_AGE,
+                    allowed_root=config.uploads_dir,
+                )
                 return
 
             if path == "/favicon.ico":
@@ -284,7 +293,12 @@ def build_handler(config: AppConfig, database: Database, secret_key: bytes):
                 self._send_json({"error": "Incorrect username or password."}, status=HTTPStatus.UNAUTHORIZED)
                 return
 
-            token = create_session_token(username, secret_key, config.session_max_age)
+            token = create_session_token(
+                username,
+                int(admin["session_version"]),
+                secret_key,
+                config.session_max_age,
+            )
             cookie = (
                 f"{config.session_cookie_name}={token}; Path=/; HttpOnly; SameSite=Strict; Max-Age={config.session_max_age}"
             )
@@ -294,6 +308,11 @@ def build_handler(config: AppConfig, database: Database, secret_key: bytes):
             )
 
         def _handle_logout(self) -> None:
+            admin = self._require_admin()
+            if not admin:
+                return
+
+            database.rotate_admin_session_version(admin["username"])
             expired_cookie = f"{config.session_cookie_name}=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0"
             self._send_json({"authenticated": False}, headers={"Set-Cookie": expired_cookie})
 
@@ -324,8 +343,21 @@ def build_handler(config: AppConfig, database: Database, secret_key: bytes):
 
             salt = generate_salt()
             password_hash = hash_password(new_password, salt)
-            database.update_admin_password(admin["username"], password_hash, salt.hex())
-            self._send_json({"updated": True})
+            updated_admin = database.update_admin_password(admin["username"], password_hash, salt.hex())
+            if not updated_admin:
+                self._send_json({"error": "Admin account not found."}, status=HTTPStatus.NOT_FOUND)
+                return
+
+            token = create_session_token(
+                updated_admin["username"],
+                int(updated_admin["session_version"]),
+                secret_key,
+                config.session_max_age,
+            )
+            cookie = (
+                f"{config.session_cookie_name}={token}; Path=/; HttpOnly; SameSite=Strict; Max-Age={config.session_max_age}"
+            )
+            self._send_json({"updated": True}, headers={"Set-Cookie": cookie})
 
         def _handle_photo_create(self) -> None:
             body = self._read_body()
@@ -487,12 +519,20 @@ def build_handler(config: AppConfig, database: Database, secret_key: bytes):
             if not morsel:
                 return None
 
-            username = verify_session_token(morsel.value, secret_key)
-            if not username:
+            token_payload = verify_session_token(morsel.value, secret_key)
+            if not token_payload:
                 return None
+            username, session_version = token_payload
 
             admin = database.get_admin(username)
-            return dict(admin) if admin else None
+            if not admin:
+                return None
+
+            admin_dict = dict(admin)
+            if int(admin_dict["session_version"]) != session_version:
+                return None
+
+            return admin_dict
 
         def _require_admin(self) -> dict | None:
             admin = self._current_admin()
@@ -502,10 +542,10 @@ def build_handler(config: AppConfig, database: Database, secret_key: bytes):
             self._send_json({"error": "Authentication required."}, status=HTTPStatus.UNAUTHORIZED)
             return None
 
-        def _serve_file(self, file_path: Path, *, cache_seconds: int) -> None:
+        def _serve_file(self, file_path: Path, *, cache_seconds: int, allowed_root: Path) -> None:
             resolved = file_path.resolve()
-            allowed_root = config.root_dir.resolve()
-            if allowed_root not in resolved.parents and resolved != allowed_root:
+            resolved_root = allowed_root.resolve()
+            if resolved_root not in resolved.parents and resolved != resolved_root:
                 self._send_json({"error": "Not found."}, status=HTTPStatus.NOT_FOUND)
                 return
 
@@ -545,6 +585,37 @@ def build_handler(config: AppConfig, database: Database, secret_key: bytes):
                         break
                     self.wfile.write(chunk)
                     remaining -= len(chunk)
+
+        def _serve_rendered_html(self, template_path: Path) -> None:
+            resolved = template_path.resolve()
+            resolved_root = config.static_dir.resolve()
+            if resolved_root not in resolved.parents and resolved != resolved_root:
+                self._send_json({"error": "Not found."}, status=HTTPStatus.NOT_FOUND)
+                return
+
+            if not resolved.exists() or not resolved.is_file():
+                self._send_json({"error": "Not found."}, status=HTTPStatus.NOT_FOUND)
+                return
+
+            body = render_html_template(
+                resolved,
+                config.static_dir,
+                public_url=config.public_url or self._request_origin(),
+            ).encode("utf-8")
+            self.send_response(HTTPStatus.OK)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Content-Length", str(len(body)))
+            self.send_header("Cache-Control", "no-store")
+            self.end_headers()
+            self.wfile.write(body)
+
+        def _request_origin(self) -> str | None:
+            host = self.headers.get("Host", "").strip()
+            if not host:
+                return None
+            forwarded_proto = self.headers.get("X-Forwarded-Proto", "").strip().lower()
+            scheme = forwarded_proto if forwarded_proto in {"http", "https"} else "http"
+            return f"{scheme}://{host}"
 
         def _resolve_byte_range(self, file_size: int) -> tuple[int | None, int | None]:
             range_header = self.headers.get("Range")
@@ -603,8 +674,6 @@ def run_server(config: AppConfig) -> None:
     database = Database(config.db_path)
     database.initialize()
     bootstrap_admin(config, database)
-    for photo in database.list_photos():
-        ensure_display_variant(config.uploads_dir, photo["filename"])
     secret_key = config.secret_key_path.read_bytes()
     handler = build_handler(config, database, secret_key)
 

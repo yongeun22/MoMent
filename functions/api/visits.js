@@ -36,19 +36,15 @@ export async function onRequestGet(context) {
   try {
     const db = getDatabase(context.env);
     if (!db) {
-      return json({ error: "Missing D1 binding: VISITS_DB" }, 503);
+      console.error("Missing D1 binding: VISITS_DB");
+      return json({ error: "\uBC29\uBB38\uC790 \uC218\uB97C \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4." }, 503);
     }
 
     await ensureSchema(db);
     return json({ count: await readCount(db) });
   } catch (error) {
-    return json(
-      {
-        error: "Failed to read visit counter",
-        detail: error instanceof Error ? error.message : String(error),
-      },
-      500,
-    );
+    console.error("Failed to read visit counter", error);
+    return json({ error: "\uBC29\uBB38\uC790 \uC218\uB97C \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4." }, 500);
   }
 }
 
@@ -56,7 +52,8 @@ export async function onRequestPost(context) {
   try {
     const db = getDatabase(context.env);
     if (!db) {
-      return json({ error: "Missing D1 binding: VISITS_DB" }, 503);
+      console.error("Missing D1 binding: VISITS_DB");
+      return json({ error: "\uBC29\uBB38\uC790 \uC218\uB97C \uC5C5\uB370\uC774\uD2B8\uD558\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4." }, 503);
     }
 
     await ensureSchema(db);
@@ -75,12 +72,7 @@ export async function onRequestPost(context) {
 
     return json({ count: await readCount(db) });
   } catch (error) {
-    return json(
-      {
-        error: "Failed to update visit counter",
-        detail: error instanceof Error ? error.message : String(error),
-      },
-      500,
-    );
+    console.error("Failed to update visit counter", error);
+    return json({ error: "\uBC29\uBB38\uC790 \uC218\uB97C \uC5C5\uB370\uC774\uD2B8\uD558\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4." }, 500);
   }
 }

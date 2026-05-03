@@ -191,7 +191,6 @@ async function incrementVisitCounter() {
     }
   }
 }
-
 function syncTopbarState() {
   if (!siteTopbar) {
     return;
@@ -458,7 +457,7 @@ function waitForImageReady(image) {
     const handleError = () => {
       image.removeEventListener("load", handleLoad);
       image.removeEventListener("error", handleError);
-      reject(new Error("이미지를 불러오지 못했습니다."));
+      reject(new Error("\uC774\uBBF8\uC9C0\uB97C \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4."));
     };
 
     image.addEventListener("load", handleLoad, { once: true });

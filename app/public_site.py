@@ -5,18 +5,30 @@ import json
 import shutil
 
 from .database import Database
-from .image_variants import display_variant_relative_path, ensure_display_variants
+from .html_templates import render_html_template
+from .image_variants import (
+    display_variant_relative_path,
+    ensure_display_variants,
+    ensure_lightbox_variants,
+    lightbox_variant_relative_path,
+)
 
 
-def serialize_public_photo(photo: dict, uploads_dir: Path) -> dict:
+def serialize_public_photo(photo: dict, uploads_dir: Path, *, prefer_lightbox_variant: bool = False) -> dict:
     display_relative = display_variant_relative_path(photo["filename"])
     display_path = uploads_dir / display_relative
     image_url = f"/uploads/{display_relative}" if display_path.exists() else f"/uploads/{photo['filename']}"
+    lightbox_relative = lightbox_variant_relative_path(photo["filename"])
+    lightbox_path = uploads_dir / lightbox_relative
+    if prefer_lightbox_variant and lightbox_path.exists():
+        lightbox_url = f"/uploads/{lightbox_relative}"
+    else:
+        lightbox_url = f"/uploads/{photo['filename']}"
 
     return {
         "id": photo["id"],
         "imageUrl": image_url,
-        "lightboxUrl": f"/uploads/{photo['filename']}",
+        "lightboxUrl": lightbox_url,
         "originalName": photo["original_name"],
         "date": photo["date_text"],
         "location": photo["location"],
@@ -26,14 +38,24 @@ def serialize_public_photo(photo: dict, uploads_dir: Path) -> dict:
     }
 
 
-def build_public_payload(database: Database, uploads_dir: Path) -> dict:
+def build_public_payload(database: Database, uploads_dir: Path, *, prefer_lightbox_variant: bool = False) -> dict:
     photos_data = database.list_photos()
-    ensure_display_variants(uploads_dir, [photo["filename"] for photo in photos_data])
-    photos = [serialize_public_photo(photo, uploads_dir) for photo in photos_data]
+    photos = [
+        serialize_public_photo(photo, uploads_dir, prefer_lightbox_variant=prefer_lightbox_variant)
+        for photo in photos_data
+    ]
     return {"photos": photos}
 
 
-def export_static_site(*, root_dir: Path, static_dir: Path, uploads_dir: Path, database: Database, output_dir: Path) -> None:
+def export_static_site(
+    *,
+    root_dir: Path,
+    static_dir: Path,
+    uploads_dir: Path,
+    database: Database,
+    output_dir: Path,
+    public_url: str | None = None,
+) -> None:
     if output_dir.exists():
         shutil.rmtree(output_dir)
 
@@ -44,7 +66,10 @@ def export_static_site(*, root_dir: Path, static_dir: Path, uploads_dir: Path, d
     (output_dir / "uploads").mkdir(parents=True, exist_ok=True)
     (output_dir / "data").mkdir(parents=True, exist_ok=True)
 
-    shutil.copy2(static_dir / "index.html", output_dir / "index.html")
+    (output_dir / "index.html").write_text(
+        render_html_template(static_dir / "index.html", static_dir, public_url=public_url),
+        encoding="utf-8",
+    )
     shutil.copy2(static_dir / "css" / "site.css", output_dir / "static" / "css" / "site.css")
     shutil.copy2(static_dir / "js" / "exhibition.js", output_dir / "static" / "js" / "exhibition.js")
 
@@ -61,17 +86,28 @@ def export_static_site(*, root_dir: Path, static_dir: Path, uploads_dir: Path, d
                 shutil.copy2(og_file, output_dir / "static" / "og" / og_file.name)
 
     photos_data = database.list_photos()
-    ensure_display_variants(uploads_dir, [photo["filename"] for photo in photos_data])
+    filenames = [photo["filename"] for photo in photos_data]
+    ensure_display_variants(uploads_dir, filenames)
+    ensure_lightbox_variants(uploads_dir, filenames)
+    payload = build_public_payload(database, uploads_dir, prefer_lightbox_variant=True)
 
-    for item in uploads_dir.rglob("*"):
-        if item.name == ".gitkeep" or not item.is_file():
+    files_to_copy = {
+        relative_path
+        for photo in payload["photos"]
+        for relative_path in (
+            photo["imageUrl"].removeprefix("/uploads/"),
+            photo["lightboxUrl"].removeprefix("/uploads/"),
+        )
+    }
+
+    for relative_path in sorted(files_to_copy):
+        source = uploads_dir / relative_path
+        if not source.exists() or not source.is_file():
             continue
-        relative_path = item.relative_to(uploads_dir)
         destination = output_dir / "uploads" / relative_path
         destination.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(item, destination)
+        shutil.copy2(source, destination)
 
-    payload = build_public_payload(database, uploads_dir)
     (output_dir / "data" / "photos.json").write_text(
         json.dumps(payload, ensure_ascii=False, indent=2),
         encoding="utf-8",

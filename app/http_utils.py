@@ -3,6 +3,7 @@ from __future__ import annotations
 from email.parser import BytesParser
 from email.policy import default
 from pathlib import Path
+from pathlib import PurePosixPath, PureWindowsPath
 from urllib.parse import unquote
 import json
 
@@ -67,7 +68,7 @@ def normalize_photo_fields(fields: dict) -> dict:
     labels = {
         "date_text": "\uB0A0\uC9DC",
         "location": "\uC7A5\uC18C",
-        "photographer": "\uCD2C\uC601\uC790",
+        "photographer": "\uCD2C\uC601",
     }
 
     for key, value in normalized.items():
@@ -92,12 +93,23 @@ def normalized_upload_extension(filename: str, content_type: str) -> str:
 
 
 def safe_relative_path(raw_path: str) -> str | None:
-    relative_path = raw_path.lstrip("/")
+    decoded_path = unquote(raw_path).replace("\\", "/")
+    if decoded_path.startswith("//"):
+        return None
+
+    relative_path = decoded_path.lstrip("/")
     if not relative_path:
         return None
 
-    candidate = Path(unquote(relative_path))
-    if any(part in {"..", ""} for part in candidate.parts):
+    windows_candidate = PureWindowsPath(relative_path)
+    if windows_candidate.is_absolute() or windows_candidate.drive or windows_candidate.root:
         return None
 
-    return candidate.as_posix()
+    posix_candidate = PurePosixPath(relative_path)
+    if posix_candidate.is_absolute():
+        return None
+
+    if any(part in {"..", ".", ""} for part in posix_candidate.parts):
+        return None
+
+    return posix_candidate.as_posix()

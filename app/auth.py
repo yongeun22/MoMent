@@ -30,34 +30,39 @@ def verify_password(password: str, salt_hex: str, expected_hash: str) -> bool:
     return hmac.compare_digest(password_hash, expected_hash)
 
 
-def create_session_token(username: str, secret_key: bytes, max_age: int) -> str:
+def create_session_token(username: str, session_version: int, secret_key: bytes, max_age: int) -> str:
     expires_at = str(int(time.time()) + max_age)
-    payload = f"{username}|{expires_at}".encode("utf-8")
+    payload = f"{username}|{session_version}|{expires_at}".encode("utf-8")
     signature = hmac.new(secret_key, payload, hashlib.sha256).hexdigest().encode("utf-8")
     token_bytes = payload + b"|" + signature
     encoded = base64.urlsafe_b64encode(token_bytes).decode("ascii")
     return encoded.rstrip("=")
 
 
-def verify_session_token(token: str, secret_key: bytes) -> str | None:
+def verify_session_token(token: str, secret_key: bytes) -> tuple[str, int] | None:
     if not token:
         return None
 
     padding = "=" * (-len(token) % 4)
     try:
         raw_token = base64.urlsafe_b64decode(token + padding)
-        username, expires_at, signature = raw_token.decode("utf-8").rsplit("|", 2)
+        username, session_version, expires_at, signature = raw_token.decode("utf-8").rsplit("|", 3)
     except (ValueError, UnicodeDecodeError):
         return None
 
-    payload = f"{username}|{expires_at}".encode("utf-8")
+    payload = f"{username}|{session_version}|{expires_at}".encode("utf-8")
     expected_signature = hmac.new(secret_key, payload, hashlib.sha256).hexdigest()
 
     if not hmac.compare_digest(signature, expected_signature):
         return None
 
-    if int(expires_at) < int(time.time()):
+    try:
+        parsed_session_version = int(session_version)
+        parsed_expires_at = int(expires_at)
+    except ValueError:
         return None
 
-    return username
+    if parsed_expires_at < int(time.time()):
+        return None
 
+    return username, parsed_session_version

@@ -49,6 +49,7 @@ def export_static(output: str | None) -> int:
         uploads_dir=config.uploads_dir,
         database=database,
         output_dir=output_dir,
+        public_url=config.public_url,
     )
 
     photo_count = len(database.list_photos())
