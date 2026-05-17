@@ -34,28 +34,6 @@
       "updatedAt": "2026-04-01T17:34:53+00:00"
     },
     {
-      "id": 18,
-      "imageUrl": "/uploads/display/78af31d263ff44f6bb00214a15cfe5bd.webp",
-      "lightboxUrl": "/uploads/lightbox/78af31d263ff44f6bb00214a15cfe5bd.webp",
-      "originalName": "251108 양산통도사.jpg",
-      "date": "2025.11.08",
-      "location": "양산 통도사",
-      "photographer": "24 신용은",
-      "createdAt": "2026-04-01T13:05:57+00:00",
-      "updatedAt": "2026-04-01T17:34:55+00:00"
-    },
-    {
-      "id": 19,
-      "imageUrl": "/uploads/display/10f54c3fac304e29aac67b3c6b129e91.webp",
-      "lightboxUrl": "/uploads/lightbox/10f54c3fac304e29aac67b3c6b129e91.webp",
-      "originalName": "251108양산통도사1.jpg",
-      "date": "2025.11.08",
-      "location": "양산 통도사",
-      "photographer": "24 신용은",
-      "createdAt": "2026-04-01T13:06:24+00:00",
-      "updatedAt": "2026-04-01T17:34:56+00:00"
-    },
-    {
       "id": 20,
       "imageUrl": "/uploads/display/c310a19a2dcc4c368b37b2f7eb53fd05.webp",
       "lightboxUrl": "/uploads/lightbox/c310a19a2dcc4c368b37b2f7eb53fd05.webp",
@@ -98,17 +76,6 @@
       "photographer": "24 신용은",
       "createdAt": "2026-04-01T13:10:26+00:00",
       "updatedAt": "2026-04-01T17:35:02+00:00"
-    },
-    {
-      "id": 24,
-      "imageUrl": "/uploads/display/774b1db5a10446c5a047f58111b2617c.webp",
-      "lightboxUrl": "/uploads/lightbox/774b1db5a10446c5a047f58111b2617c.webp",
-      "originalName": "251108,didxd.jpg",
-      "date": "2025.11.08",
-      "location": "양산 통도사",
-      "photographer": "24 신용은",
-      "createdAt": "2026-04-01T13:10:45+00:00",
-      "updatedAt": "2026-04-01T17:35:03+00:00"
     },
     {
       "id": 25,
@@ -229,7 +196,7 @@
       "location": "양양 낙산사",
       "photographer": "24 신용은",
       "createdAt": "2026-04-01T18:04:42+00:00",
-      "updatedAt": "2026-04-01T18:04:42+00:00"
+      "updatedAt": "2026-05-17T16:36:02+00:00"
     }
   ]
 }
