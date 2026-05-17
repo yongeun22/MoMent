@@ -63,6 +63,7 @@ def export_static_site(
     (output_dir / "static" / "js").mkdir(parents=True, exist_ok=True)
     (output_dir / "static" / "audio").mkdir(parents=True, exist_ok=True)
     (output_dir / "static" / "og").mkdir(parents=True, exist_ok=True)
+    (output_dir / "static" / "qr").mkdir(parents=True, exist_ok=True)
     (output_dir / "uploads").mkdir(parents=True, exist_ok=True)
     (output_dir / "data").mkdir(parents=True, exist_ok=True)
 
@@ -84,6 +85,12 @@ def export_static_site(
         for og_file in og_dir.iterdir():
             if og_file.is_file():
                 shutil.copy2(og_file, output_dir / "static" / "og" / og_file.name)
+
+    qr_dir = static_dir / "qr"
+    if qr_dir.exists():
+        for qr_file in qr_dir.iterdir():
+            if qr_file.is_file():
+                shutil.copy2(qr_file, output_dir / "static" / "qr" / qr_file.name)
 
     photos_data = database.list_photos()
     filenames = [photo["filename"] for photo in photos_data]
@@ -126,6 +133,9 @@ def export_static_site(
                 "  Cache-Control: public, max-age=31536000, immutable",
                 "",
                 "/static/og/*",
+                "  Cache-Control: public, max-age=31536000, immutable",
+                "",
+                "/static/qr/*",
                 "  Cache-Control: public, max-age=31536000, immutable",
                 "",
                 "/uploads/*",
