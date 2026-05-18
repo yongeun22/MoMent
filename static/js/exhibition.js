@@ -12,6 +12,9 @@ const lightboxMeta = document.getElementById("lightboxMeta");
 const historyTrigger = document.getElementById("historyTrigger");
 const historyOverlay = document.getElementById("historyOverlay");
 const historyPanel = document.getElementById("historyPanel");
+const contactTrigger = document.getElementById("contactTrigger");
+const contactOverlay = document.getElementById("contactOverlay");
+const contactPanel = document.getElementById("contactPanel");
 const backgroundAudio = document.getElementById("backgroundAudio");
 const audioToggle = document.getElementById("audioToggle");
 const visitCounter = document.getElementById("visitCounter");
@@ -20,6 +23,7 @@ const hoverQuery = window.matchMedia("(hover: hover) and (pointer: fine)");
 let activePhotoId = null;
 let introTimeoutId = null;
 let historyCloseTimeoutId = null;
+let contactCloseTimeoutId = null;
 let lightboxCloseTimeoutId = null;
 let photos = [];
 let audioUnlockBound = false;
@@ -637,32 +641,68 @@ function closeLightbox() {
   }, 320);
 }
 
-function openHistoryOverlay() {
-  if (!historyOverlay || !historyTrigger) {
+function openInfoOverlay(overlay, trigger, bodyClass, closeTimeoutId) {
+  if (!overlay || !trigger) {
     return;
   }
 
-  window.clearTimeout(historyCloseTimeoutId);
-  historyOverlay.hidden = false;
-  document.body.classList.add("is-history-open");
-  historyTrigger.setAttribute("aria-expanded", "true");
+  window.clearTimeout(closeTimeoutId);
+  overlay.hidden = false;
+  document.body.classList.add(bodyClass);
+  trigger.setAttribute("aria-expanded", "true");
   window.requestAnimationFrame(() => {
-    historyOverlay.classList.add("is-visible");
+    overlay.classList.add("is-visible");
   });
 }
 
-function closeHistoryOverlay() {
-  if (!historyOverlay || historyOverlay.hidden || !historyTrigger) {
+function closeInfoOverlay(overlay, trigger, bodyClass, closeTimeoutId, setCloseTimeoutId) {
+  if (!overlay || overlay.hidden || !trigger) {
     return;
   }
 
-  historyOverlay.classList.remove("is-visible");
-  document.body.classList.remove("is-history-open");
-  historyTrigger.setAttribute("aria-expanded", "false");
-  window.clearTimeout(historyCloseTimeoutId);
-  historyCloseTimeoutId = window.setTimeout(() => {
-    historyOverlay.hidden = true;
-  }, 320);
+  overlay.classList.remove("is-visible");
+  document.body.classList.remove(bodyClass);
+  trigger.setAttribute("aria-expanded", "false");
+  window.clearTimeout(closeTimeoutId);
+  setCloseTimeoutId(
+    window.setTimeout(() => {
+      overlay.hidden = true;
+    }, 320),
+  );
+}
+
+function openHistoryOverlay() {
+  closeContactOverlay();
+  openInfoOverlay(historyOverlay, historyTrigger, "is-history-open", historyCloseTimeoutId);
+}
+
+function closeHistoryOverlay() {
+  closeInfoOverlay(
+    historyOverlay,
+    historyTrigger,
+    "is-history-open",
+    historyCloseTimeoutId,
+    (timeoutId) => {
+      historyCloseTimeoutId = timeoutId;
+    },
+  );
+}
+
+function openContactOverlay() {
+  closeHistoryOverlay();
+  openInfoOverlay(contactOverlay, contactTrigger, "is-contact-open", contactCloseTimeoutId);
+}
+
+function closeContactOverlay() {
+  closeInfoOverlay(
+    contactOverlay,
+    contactTrigger,
+    "is-contact-open",
+    contactCloseTimeoutId,
+    (timeoutId) => {
+      contactCloseTimeoutId = timeoutId;
+    },
+  );
 }
 
 function bindInteractions() {
@@ -760,18 +800,39 @@ historyTrigger?.addEventListener("click", () => {
 
   closeHistoryOverlay();
 });
+contactTrigger?.addEventListener("click", () => {
+  if (!contactOverlay) {
+    return;
+  }
+
+  if (contactOverlay.hidden) {
+    openContactOverlay();
+    return;
+  }
+
+  closeContactOverlay();
+});
 historyOverlay?.addEventListener("click", (event) => {
-  if (!event.target.closest(".history-panel")) {
+  if (!event.target.closest(".info-panel")) {
     closeHistoryOverlay();
   }
 });
 historyPanel?.addEventListener("click", (event) => {
   event.stopPropagation();
 });
+contactOverlay?.addEventListener("click", (event) => {
+  if (!event.target.closest(".info-panel")) {
+    closeContactOverlay();
+  }
+});
+contactPanel?.addEventListener("click", (event) => {
+  event.stopPropagation();
+});
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") {
     closeLightbox();
     closeHistoryOverlay();
+    closeContactOverlay();
   }
 });
 window.addEventListener("scroll", syncTopbarState, { passive: true });

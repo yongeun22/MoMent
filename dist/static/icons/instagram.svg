@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">Instagram</title>
+  <desc id="desc">Instagram outline logo on a transparent background</desc>
+  <defs>
+    <linearGradient id="instagram-gradient" x1="38" y1="222" x2="218" y2="36" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ff9f1c"/>
+      <stop offset="0.38" stop-color="#ff5a3d"/>
+      <stop offset="0.68" stop-color="#d62976"/>
+      <stop offset="1" stop-color="#8a3ab9"/>
+    </linearGradient>
+  </defs>
+  <rect
+    x="34"
+    y="34"
+    width="188"
+    height="188"
+    rx="54"
+    fill="none"
+    stroke="url(#instagram-gradient)"
+    stroke-width="20"
+  />
+  <circle
+    cx="128"
+    cy="128"
+    r="42"
+    fill="none"
+    stroke="url(#instagram-gradient)"
+    stroke-width="20"
+  />
+  <circle cx="178" cy="78" r="15" fill="#c02da8"/>
+</svg>
