@@ -181,17 +181,17 @@ async function incrementVisitCounter() {
     if (!response.ok || typeof payload.count !== "number") {
       throw new Error("counter-unavailable");
     }
-    visitCounter.textContent = `방문자 ${payload.count}`;
-    visitCounter.title = "전체 방문 횟수";
+    visitCounter.textContent = `\uBC29\uBB38\uC790 ${payload.count}`;
+    visitCounter.title = "\uC804\uCCB4 \uBC29\uBB38 \uD69F\uC218";
     return;
   } catch (error) {
     try {
       const localCount = Number.parseInt(window.localStorage.getItem("moment-local-visit-count") || "0", 10) + 1;
       window.localStorage.setItem("moment-local-visit-count", String(localCount));
-      visitCounter.textContent = `방문자 ${localCount}`;
-      visitCounter.title = "현재 브라우저 기준 방문 횟수";
+      visitCounter.textContent = `\uBC29\uBB38\uC790 ${localCount}`;
+      visitCounter.title = "\uD604\uC7AC \uBE0C\uB77C\uC6B0\uC800 \uAE30\uC900 \uBC29\uBB38 \uD69F\uC218";
     } catch (storageError) {
-      visitCounter.textContent = "방문자 -";
+      visitCounter.textContent = "\uBC29\uBB38\uC790 -";
     }
   }
 }

@@ -11,6 +11,7 @@ const statusToast = document.getElementById("statusToast");
 
 const MAX_IMAGE_DIMENSION = 2400;
 const OPTIMIZE_THRESHOLD_BYTES = 4 * 1024 * 1024;
+const PUBLISH_REMINDER = "\uACF5\uAC1C \uC0AC\uC774\uD2B8 \uBC18\uC601\uC740 export-static \uD6C4 \uD478\uC2DC\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.";
 
 let currentPhotos = [];
 
@@ -31,6 +32,10 @@ function showToast(message, isError = false) {
   showToast.timeoutId = window.setTimeout(() => {
     statusToast.hidden = true;
   }, 3200);
+}
+
+function showSavedToast(message) {
+  showToast(`${message} ${PUBLISH_REMINDER}`);
 }
 
 async function requestJson(url, options = {}) {
@@ -220,7 +225,7 @@ function bindPhotoEditorEvents() {
           method: "POST",
           body: formData,
         });
-        showToast(
+        showSavedToast(
           optimized
             ? "\uC774\uBBF8\uC9C0\uB97C \uCD5C\uC801\uD654\uD574 \uC800\uC7A5\uD588\uC2B5\uB2C8\uB2E4."
             : "\uC0AC\uC9C4 \uC815\uBCF4\uB97C \uC218\uC815\uD588\uC2B5\uB2C8\uB2E4.",
@@ -243,7 +248,7 @@ function bindPhotoEditorEvents() {
         await requestJson(`/api/admin/photos/${button.dataset.deleteId}`, {
           method: "DELETE",
         });
-        showToast("\uC0AC\uC9C4\uC744 \uC0AD\uC81C\uD588\uC2B5\uB2C8\uB2E4.");
+        showSavedToast("\uC0AC\uC9C4\uC744 \uC0AD\uC81C\uD588\uC2B5\uB2C8\uB2E4.");
         await loadAdminPhotos();
       } catch (error) {
         showToast(error.message, true);
@@ -303,7 +308,7 @@ async function handleUpload(event) {
       body: formData,
     });
     uploadForm.reset();
-    showToast(
+    showSavedToast(
       optimized
         ? "\uC774\uBBF8\uC9C0\uB97C \uCD5C\uC801\uD654\uD574 \uCD9C\uD488\uD588\uC2B5\uB2C8\uB2E4."
         : "\uC0AC\uC9C4\uC744 \uCD9C\uD488\uD588\uC2B5\uB2C8\uB2E4.",

@@ -43,14 +43,18 @@ def export_static(output: str | None) -> int:
     if not output_dir.is_absolute():
         output_dir = config.root_dir / output_dir
 
-    export_static_site(
-        root_dir=config.root_dir,
-        static_dir=config.static_dir,
-        uploads_dir=config.uploads_dir,
-        database=database,
-        output_dir=output_dir,
-        public_url=config.public_url,
-    )
+    try:
+        export_static_site(
+            root_dir=config.root_dir,
+            static_dir=config.static_dir,
+            uploads_dir=config.uploads_dir,
+            database=database,
+            output_dir=output_dir,
+            public_url=config.public_url,
+        )
+    except ValueError as exc:
+        print(f"Export failed: {exc}")
+        return 1
 
     photo_count = len(database.list_photos())
     print(f"Static site exported to '{output_dir}'.")

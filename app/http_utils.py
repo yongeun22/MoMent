@@ -2,19 +2,9 @@ from __future__ import annotations
 
 from email.parser import BytesParser
 from email.policy import default
-from pathlib import Path
 from pathlib import PurePosixPath, PureWindowsPath
 from urllib.parse import unquote
 import json
-
-
-ALLOWED_IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".gif"}
-CONTENT_TYPE_EXTENSION_MAP = {
-    "image/jpeg": ".jpg",
-    "image/png": ".png",
-    "image/webp": ".webp",
-    "image/gif": ".gif",
-}
 
 
 def read_json(body: bytes) -> dict:
@@ -78,18 +68,6 @@ def normalize_photo_fields(fields: dict) -> dict:
             raise ValueError(f"{labels[key]}\uB294 200\uC790 \uC774\uD558\uB85C \uC785\uB825\uD574 \uC8FC\uC138\uC694.")
 
     return normalized
-
-
-def normalized_upload_extension(filename: str, content_type: str) -> str:
-    extension = Path(filename).suffix.lower()
-    if extension in ALLOWED_IMAGE_EXTENSIONS:
-        return extension
-
-    mapped_extension = CONTENT_TYPE_EXTENSION_MAP.get(content_type)
-    if mapped_extension:
-        return mapped_extension
-
-    raise ValueError("Only JPG, PNG, WEBP, and GIF images are supported.")
 
 
 def safe_relative_path(raw_path: str) -> str | None:

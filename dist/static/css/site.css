@@ -320,10 +320,11 @@ img {
 .contact-link {
   display: inline-grid;
   place-items: center;
-  width: clamp(4.6rem, 10vw, 6.4rem);
-  aspect-ratio: 1;
+  gap: 0.7rem;
   margin: 0 auto;
   border-radius: 1.45rem;
+  color: var(--text);
+  text-decoration: none;
   transition: opacity 180ms ease, transform 180ms ease;
 }
 
@@ -340,9 +341,16 @@ img {
 
 .contact-icon {
   display: block;
-  width: 100%;
+  width: clamp(4.6rem, 10vw, 6.4rem);
   height: auto;
   filter: drop-shadow(0 18px 28px rgba(0, 0, 0, 0.34));
+}
+
+.contact-handle {
+  font-family: var(--title-font);
+  font-size: clamp(0.86rem, 1.6vw, 1.04rem);
+  font-weight: 700;
+  letter-spacing: 0.08em;
 }
 
 .exhibition-stream {

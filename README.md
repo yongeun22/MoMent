@@ -7,8 +7,13 @@ Quiet online photography exhibition space for the archaeology and art history de
 - Python 3.13
 - SQLite for metadata and admin credentials
 - Plain HTML, CSS, and JavaScript for a lightweight public exhibition and admin interface
+- Pillow for image validation and display/lightbox image variants
 
-No third-party packages are required.
+Install Python dependencies before running the app:
+
+```powershell
+py -m pip install -r requirements.txt
+```
 
 ## Project structure
 
@@ -18,6 +23,7 @@ No third-party packages are required.
 - `app/database.py`: SQLite schema and data access
 - `app/auth.py`: password hashing and signed admin session cookies
 - `app/http_utils.py`: multipart parsing and upload validation helpers
+- `app/image_validation.py`: server-side image file validation
 - `app/public_site.py`: public photo serialization and static export helpers
 - `app/server.py`: HTTP routes for the public site, admin auth, and photo CRUD
 - `static/index.html`: public exhibition page
@@ -45,6 +51,12 @@ No third-party packages are required.
 
 4. Open the private admin path configured in `.env` to log in and manage photographs.
 
+5. After adding, editing, or deleting photographs locally, export again before pushing:
+
+   ```powershell
+   py manage.py export-static
+   ```
+
 ## Static export
 
 Use this when you want to publish the exhibition on Cloudflare Pages or any other static host:
@@ -62,6 +74,7 @@ This creates a `dist/` folder containing:
 - `uploads/` copied exhibition images
 - `data/photos.json` exported metadata
 - `_headers` cache rules for static hosting
+- `.moment-static-export` marker used to prevent accidental deletion of unrelated folders
 
 The admin page is not exported. Admin editing remains local in the Python app.
 

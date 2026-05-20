@@ -16,8 +16,9 @@ from .auth import create_session_token, generate_salt, hash_password, verify_pas
 from .config import AppConfig
 from .database import Database
 from .html_templates import render_html_template
-from .http_utils import normalize_photo_fields, normalized_upload_extension, parse_multipart_form, read_json, safe_relative_path
-from .image_variants import ensure_display_variant, display_variant_path
+from .http_utils import normalize_photo_fields, parse_multipart_form, read_json, safe_relative_path
+from .image_validation import detect_image_extension
+from .image_variants import ensure_display_variant, display_variant_path, lightbox_variant_path
 from .public_site import build_public_payload, serialize_public_photo
 
 
@@ -401,9 +402,7 @@ def build_handler(config: AppConfig, database: Database, secret_key: bytes):
                 upload_path = config.uploads_dir / stored_filename
                 if upload_path.exists():
                     upload_path.unlink()
-                variant_path = display_variant_path(config.uploads_dir, stored_filename)
-                if variant_path.exists():
-                    variant_path.unlink()
+                self._delete_upload_variants(stored_filename)
                 raise
 
             self._send_json({"photo": serialize_public_photo(photo, config.uploads_dir)}, status=HTTPStatus.CREATED)
@@ -464,18 +463,14 @@ def build_handler(config: AppConfig, database: Database, secret_key: bytes):
                     upload_path = config.uploads_dir / stored_filename
                     if upload_path.exists():
                         upload_path.unlink()
-                    variant_path = display_variant_path(config.uploads_dir, stored_filename)
-                    if variant_path.exists():
-                        variant_path.unlink()
+                    self._delete_upload_variants(stored_filename)
                 raise
 
             if stored_filename and old_filename:
                 old_path = config.uploads_dir / old_filename
                 if old_path.exists():
                     old_path.unlink()
-                old_variant_path = display_variant_path(config.uploads_dir, old_filename)
-                if old_variant_path.exists():
-                    old_variant_path.unlink()
+                self._delete_upload_variants(old_filename)
 
             self._send_json({"photo": serialize_public_photo(photo, config.uploads_dir)})
 
@@ -494,19 +489,25 @@ def build_handler(config: AppConfig, database: Database, secret_key: bytes):
             image_path = config.uploads_dir / photo["filename"]
             if image_path.exists():
                 image_path.unlink()
-            variant_path = display_variant_path(config.uploads_dir, photo["filename"])
-            if variant_path.exists():
-                variant_path.unlink()
+            self._delete_upload_variants(photo["filename"])
 
             self._send_json({"deleted": True})
 
         def _save_upload(self, image_file: dict) -> str:
-            extension = normalized_upload_extension(image_file["filename"], image_file["content_type"])
+            extension = detect_image_extension(image_file["content"])
             stored_filename = f"{uuid.uuid4().hex}{extension}"
             upload_path = config.uploads_dir / stored_filename
             upload_path.write_bytes(image_file["content"])
             ensure_display_variant(config.uploads_dir, stored_filename)
             return stored_filename
+
+        def _delete_upload_variants(self, filename: str) -> None:
+            for variant_path in (
+                display_variant_path(config.uploads_dir, filename),
+                lightbox_variant_path(config.uploads_dir, filename),
+            ):
+                if variant_path.exists():
+                    variant_path.unlink()
 
         def _current_admin(self) -> dict | None:
             cookie_header = self.headers.get("Cookie")

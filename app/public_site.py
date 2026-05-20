@@ -14,6 +14,30 @@ from .image_variants import (
 )
 
 
+EXPORT_MARKER = ".moment-static-export"
+PROTECTED_OUTPUT_NAMES = {"app", "data", "static", "uploads", ".git"}
+
+
+def _validate_output_dir(root_dir: Path, output_dir: Path) -> None:
+    resolved_root = root_dir.resolve()
+    resolved_output = output_dir.resolve()
+
+    if resolved_output == resolved_root or resolved_root not in resolved_output.parents:
+        raise ValueError("Static export output must be a subfolder inside the project directory.")
+
+    if resolved_output.name in PROTECTED_OUTPUT_NAMES:
+        raise ValueError(f"Refusing to export into protected project folder: {resolved_output.name}")
+
+    if resolved_output.exists() and not resolved_output.is_dir():
+        raise ValueError("Static export output path exists and is not a folder.")
+
+    marker_path = resolved_output / EXPORT_MARKER
+    if resolved_output.exists() and resolved_output.name != "dist" and not marker_path.exists():
+        raise ValueError(
+            "Refusing to delete an existing folder that was not created by MoMent static export."
+        )
+
+
 def serialize_public_photo(photo: dict, uploads_dir: Path, *, prefer_lightbox_variant: bool = False) -> dict:
     display_relative = display_variant_relative_path(photo["filename"])
     display_path = uploads_dir / display_relative
@@ -56,6 +80,8 @@ def export_static_site(
     output_dir: Path,
     public_url: str | None = None,
 ) -> None:
+    _validate_output_dir(root_dir, output_dir)
+
     if output_dir.exists():
         shutil.rmtree(output_dir)
 
@@ -160,3 +186,4 @@ def export_static_site(
     )
 
     (output_dir / ".nojekyll").write_text("", encoding="utf-8")
+    (output_dir / EXPORT_MARKER).write_text("", encoding="utf-8")
