@@ -24,6 +24,7 @@ py -m pip install -r requirements.txt
 - `app/auth.py`: password hashing and signed admin session cookies
 - `app/http_utils.py`: multipart parsing and upload validation helpers
 - `app/image_validation.py`: server-side image file validation
+- `app/guestbook.py`: public trace guestbook validation
 - `app/public_site.py`: public photo serialization and static export helpers
 - `app/server.py`: HTTP routes for the public site, admin auth, and photo CRUD
 - `static/index.html`: public exhibition page
@@ -77,6 +78,7 @@ This creates a `dist/` folder containing:
 - `.moment-static-export` marker used to prevent accidental deletion of unrelated folders
 
 The admin page is not exported. Admin editing remains local in the Python app.
+The public trace guestbook uses `/api/traces`; on Cloudflare Pages it requires the D1 binding named `VISITS_DB`.
 
 ## Cloudflare Pages workflow
 

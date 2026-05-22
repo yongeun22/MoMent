@@ -30,10 +30,11 @@ CREATE TABLE IF NOT EXISTS photos (
     updated_at TEXT NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS site_stats (
-    key TEXT PRIMARY KEY,
-    value INTEGER NOT NULL DEFAULT 0,
-    updated_at TEXT NOT NULL
+CREATE TABLE IF NOT EXISTS guestbook_entries (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    affiliation TEXT NOT NULL,
+    name TEXT NOT NULL,
+    created_at TEXT NOT NULL
 );
 """
 
@@ -248,29 +249,43 @@ class Database:
             connection.execute("DELETE FROM photos WHERE id = ?", (photo_id,))
         return current
 
-    def get_visit_count(self) -> int:
+    def list_guestbook_entries(self, *, limit: int = 80) -> list[dict]:
+        safe_limit = max(1, min(int(limit), 100))
+        with self.connection() as connection:
+            rows = connection.execute(
+                """
+                SELECT id, affiliation, name, created_at
+                FROM guestbook_entries
+                ORDER BY id DESC
+                LIMIT ?
+                """,
+                (safe_limit,),
+            ).fetchall()
+        return [dict(row) for row in rows]
+
+    def get_guestbook_count(self) -> int:
         with self.connection() as connection:
             row = connection.execute(
-                "SELECT value FROM site_stats WHERE key = ?",
-                ("visit_count",),
+                "SELECT COUNT(*) AS total FROM guestbook_entries",
             ).fetchone()
-        return int(row["value"]) if row else 0
+        return int(row["total"]) if row else 0
 
-    def increment_visit_count(self) -> int:
+    def create_guestbook_entry(self, *, affiliation: str, name: str) -> dict:
         timestamp = utc_now_iso()
         with self.connection() as connection:
-            connection.execute(
+            cursor = connection.execute(
                 """
-                INSERT INTO site_stats (key, value, updated_at)
-                VALUES (?, 1, ?)
-                ON CONFLICT(key) DO UPDATE SET
-                    value = value + 1,
-                    updated_at = excluded.updated_at
+                INSERT INTO guestbook_entries (affiliation, name, created_at)
+                VALUES (?, ?, ?)
                 """,
-                ("visit_count", timestamp),
+                (affiliation, name, timestamp),
             )
             row = connection.execute(
-                "SELECT value FROM site_stats WHERE key = ?",
-                ("visit_count",),
+                """
+                SELECT id, affiliation, name, created_at
+                FROM guestbook_entries
+                WHERE id = ?
+                """,
+                (cursor.lastrowid,),
             ).fetchone()
-        return int(row["value"]) if row else 0
+        return dict(row)

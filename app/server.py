@@ -15,6 +15,7 @@ import uuid
 from .auth import create_session_token, generate_salt, hash_password, verify_password, verify_session_token
 from .config import AppConfig
 from .database import Database
+from .guestbook import normalize_guestbook_fields
 from .html_templates import render_html_template
 from .http_utils import normalize_photo_fields, parse_multipart_form, read_json, safe_relative_path
 from .image_validation import detect_image_extension
@@ -91,8 +92,8 @@ def build_handler(config: AppConfig, database: Database, secret_key: bytes):
                 self._send_json(build_public_payload(database, config.uploads_dir))
                 return
 
-            if path == "/api/visits":
-                self._send_json({"count": database.get_visit_count()})
+            if path == "/api/traces":
+                self._send_json(self._guestbook_payload())
                 return
 
             if path == "/data/photos.json":
@@ -159,8 +160,8 @@ def build_handler(config: AppConfig, database: Database, secret_key: bytes):
                 self._handle_login()
                 return
 
-            if path == "/api/visits":
-                self._send_json({"count": database.increment_visit_count()})
+            if path == "/api/traces":
+                self._handle_guestbook_create()
                 return
 
             if path == "/api/admin/logout":
@@ -492,6 +493,40 @@ def build_handler(config: AppConfig, database: Database, secret_key: bytes):
             self._delete_upload_variants(photo["filename"])
 
             self._send_json({"deleted": True})
+
+        def _guestbook_payload(self) -> dict:
+            return {
+                "count": database.get_guestbook_count(),
+                "entries": database.list_guestbook_entries(),
+            }
+
+        def _handle_guestbook_create(self) -> None:
+            body = self._read_body(max_bytes=20_000)
+            if body is None:
+                return
+
+            try:
+                payload = read_json(body)
+                normalized = normalize_guestbook_fields(payload)
+            except json.JSONDecodeError:
+                self._send_json({"error": "Invalid JSON payload."}, status=HTTPStatus.BAD_REQUEST)
+                return
+            except ValueError as exc:
+                self._send_json({"error": str(exc)}, status=HTTPStatus.BAD_REQUEST)
+                return
+
+            entry = database.create_guestbook_entry(
+                affiliation=normalized["affiliation"],
+                name=normalized["name"],
+            )
+            self._send_json(
+                {
+                    "entry": entry,
+                    "count": database.get_guestbook_count(),
+                    "entries": database.list_guestbook_entries(),
+                },
+                status=HTTPStatus.CREATED,
+            )
 
         def _save_upload(self, image_file: dict) -> str:
             extension = detect_image_extension(image_file["content"])

@@ -15,17 +15,25 @@ const historyPanel = document.getElementById("historyPanel");
 const contactTrigger = document.getElementById("contactTrigger");
 const contactOverlay = document.getElementById("contactOverlay");
 const contactPanel = document.getElementById("contactPanel");
+const traceTrigger = document.getElementById("traceTrigger");
+const traceOverlay = document.getElementById("traceOverlay");
+const tracePanel = document.getElementById("tracePanel");
+const traceForm = document.getElementById("traceForm");
+const traceCountText = document.getElementById("traceCountText");
+const traceList = document.getElementById("traceList");
+const traceStatus = document.getElementById("traceStatus");
 const backgroundAudio = document.getElementById("backgroundAudio");
 const audioToggle = document.getElementById("audioToggle");
-const visitCounter = document.getElementById("visitCounter");
 const hoverQuery = window.matchMedia("(hover: hover) and (pointer: fine)");
 
 let activePhotoId = null;
 let introTimeoutId = null;
 let historyCloseTimeoutId = null;
 let contactCloseTimeoutId = null;
+let traceCloseTimeoutId = null;
 let lightboxCloseTimeoutId = null;
 let photos = [];
+let tracesLoaded = false;
 let audioUnlockBound = false;
 let audioShouldPlay = true;
 let audioTrackIndex = 0;
@@ -167,34 +175,6 @@ function updateAudioToggle() {
   audioToggle.setAttribute("aria-pressed", String(isPlaying));
 }
 
-async function incrementVisitCounter() {
-  if (!visitCounter) {
-    return;
-  }
-
-  try {
-    const response = await fetch("/api/visits", {
-      method: "POST",
-      headers: { Accept: "application/json" },
-    });
-    const payload = await response.json().catch(() => ({}));
-    if (!response.ok || typeof payload.count !== "number") {
-      throw new Error("counter-unavailable");
-    }
-    visitCounter.textContent = `\uBC29\uBB38\uC790 ${payload.count}`;
-    visitCounter.title = "\uC804\uCCB4 \uBC29\uBB38 \uD69F\uC218";
-    return;
-  } catch (error) {
-    try {
-      const localCount = Number.parseInt(window.localStorage.getItem("moment-local-visit-count") || "0", 10) + 1;
-      window.localStorage.setItem("moment-local-visit-count", String(localCount));
-      visitCounter.textContent = `\uBC29\uBB38\uC790 ${localCount}`;
-      visitCounter.title = "\uD604\uC7AC \uBE0C\uB77C\uC6B0\uC800 \uAE30\uC900 \uBC29\uBB38 \uD69F\uC218";
-    } catch (storageError) {
-      visitCounter.textContent = "\uBC29\uBB38\uC790 -";
-    }
-  }
-}
 function syncTopbarState() {
   if (!siteTopbar) {
     return;
@@ -235,7 +215,6 @@ function bindAudioUnlock() {
 
 function runNonCriticalTasks() {
   const execute = () => {
-    incrementVisitCounter();
     startBackgroundAudio();
   };
 
@@ -252,7 +231,7 @@ async function startBackgroundAudio() {
     return;
   }
 
-  backgroundAudio.volume = 0.1;
+  backgroundAudio.volume = 0.15;
   ensureAudioSource();
 
   try {
@@ -673,6 +652,7 @@ function closeInfoOverlay(overlay, trigger, bodyClass, closeTimeoutId, setCloseT
 
 function openHistoryOverlay() {
   closeContactOverlay();
+  closeTraceOverlay();
   openInfoOverlay(historyOverlay, historyTrigger, "is-history-open", historyCloseTimeoutId);
 }
 
@@ -690,6 +670,7 @@ function closeHistoryOverlay() {
 
 function openContactOverlay() {
   closeHistoryOverlay();
+  closeTraceOverlay();
   openInfoOverlay(contactOverlay, contactTrigger, "is-contact-open", contactCloseTimeoutId);
 }
 
@@ -701,6 +682,136 @@ function closeContactOverlay() {
     contactCloseTimeoutId,
     (timeoutId) => {
       contactCloseTimeoutId = timeoutId;
+    },
+  );
+}
+
+function setTraceStatus(message, isError = false) {
+  if (!traceStatus) {
+    return;
+  }
+
+  traceStatus.textContent = message;
+  traceStatus.classList.toggle("is-error", isError);
+}
+
+function renderTraceCount(count) {
+  if (!traceCountText) {
+    return;
+  }
+
+  const safeCount = Number.isFinite(count) ? count : 0;
+  traceCountText.textContent = `\uC9C0\uAE08\uAE4C\uC9C0 ${safeCount}\uAC1C\uC758 \uD754\uC801\uC774 \uB0A8\uC558\uC2B5\uB2C8\uB2E4`;
+}
+
+function renderTraceList(entries) {
+  if (!traceList) {
+    return;
+  }
+
+  if (!entries.length) {
+    traceList.innerHTML = `<p class="trace-empty">\uC544\uC9C1 \uB0A8\uACA8\uC9C4 \uD754\uC801\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.</p>`;
+    return;
+  }
+
+  traceList.innerHTML = entries
+    .map((entry) => `
+      <p class="trace-entry">
+        <span>${escapeHtml(entry.affiliation)}</span>
+        <span class="trace-entry-separator">/</span>
+        <span class="trace-entry-name">${escapeHtml(entry.name)}</span>
+      </p>
+    `)
+    .join("");
+}
+
+async function loadTraces({ force = false } = {}) {
+  if (!traceList || (!force && tracesLoaded)) {
+    return;
+  }
+
+  setTraceStatus("\uD754\uC801\uC744 \uBD88\uB7EC\uC624\uB294 \uC911\uC785\uB2C8\uB2E4.");
+
+  try {
+    const response = await fetch("/api/traces", {
+      headers: { Accept: "application/json" },
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok || !Array.isArray(payload.entries)) {
+      throw new Error(payload.error || "\uD754\uC801\uC744 \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.");
+    }
+
+    renderTraceCount(Number(payload.count || 0));
+    renderTraceList(payload.entries);
+    tracesLoaded = true;
+    setTraceStatus("");
+  } catch (error) {
+    setTraceStatus(error.message || "\uD754\uC801\uC744 \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.", true);
+  }
+}
+
+async function submitTrace(event) {
+  event.preventDefault();
+  if (!traceForm) {
+    return;
+  }
+
+  const submitButton = traceForm.querySelector(".trace-submit");
+  const formData = new FormData(traceForm);
+  const payload = {
+    affiliation: String(formData.get("affiliation") || "").trim(),
+    name: String(formData.get("name") || "").trim(),
+  };
+
+  if (!payload.affiliation || !payload.name) {
+    setTraceStatus("\uD559\uAD50/\uD559\uACFC\uBA85\uACFC \uC774\uB984\uC744 \uBAA8\uB450 \uC785\uB825\uD574 \uC8FC\uC138\uC694.", true);
+    return;
+  }
+
+  submitButton?.setAttribute("disabled", "disabled");
+  setTraceStatus("\uD754\uC801\uC744 \uB0A8\uAE30\uB294 \uC911\uC785\uB2C8\uB2E4.");
+
+  try {
+    const response = await fetch("/api/traces", {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || !Array.isArray(result.entries)) {
+      throw new Error(result.error || "\uD754\uC801\uC744 \uB0A8\uAE30\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.");
+    }
+
+    traceForm.reset();
+    renderTraceCount(Number(result.count || 0));
+    renderTraceList(result.entries);
+    tracesLoaded = true;
+    setTraceStatus("\uD754\uC801\uC774 \uB0A8\uACA8\uC84C\uC2B5\uB2C8\uB2E4.");
+  } catch (error) {
+    setTraceStatus(error.message || "\uD754\uC801\uC744 \uB0A8\uAE30\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.", true);
+  } finally {
+    submitButton?.removeAttribute("disabled");
+  }
+}
+
+function openTraceOverlay() {
+  closeHistoryOverlay();
+  closeContactOverlay();
+  openInfoOverlay(traceOverlay, traceTrigger, "is-trace-open", traceCloseTimeoutId);
+  loadTraces();
+}
+
+function closeTraceOverlay() {
+  closeInfoOverlay(
+    traceOverlay,
+    traceTrigger,
+    "is-trace-open",
+    traceCloseTimeoutId,
+    (timeoutId) => {
+      traceCloseTimeoutId = timeoutId;
     },
   );
 }
@@ -812,6 +923,18 @@ contactTrigger?.addEventListener("click", () => {
 
   closeContactOverlay();
 });
+traceTrigger?.addEventListener("click", () => {
+  if (!traceOverlay) {
+    return;
+  }
+
+  if (traceOverlay.hidden) {
+    openTraceOverlay();
+    return;
+  }
+
+  closeTraceOverlay();
+});
 historyOverlay?.addEventListener("click", (event) => {
   if (!event.target.closest(".info-panel")) {
     closeHistoryOverlay();
@@ -828,11 +951,21 @@ contactOverlay?.addEventListener("click", (event) => {
 contactPanel?.addEventListener("click", (event) => {
   event.stopPropagation();
 });
+traceOverlay?.addEventListener("click", (event) => {
+  if (!event.target.closest(".info-panel")) {
+    closeTraceOverlay();
+  }
+});
+tracePanel?.addEventListener("click", (event) => {
+  event.stopPropagation();
+});
+traceForm?.addEventListener("submit", submitTrace);
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") {
     closeLightbox();
     closeHistoryOverlay();
     closeContactOverlay();
+    closeTraceOverlay();
   }
 });
 window.addEventListener("scroll", syncTopbarState, { passive: true });

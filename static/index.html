@@ -74,6 +74,50 @@
     </div>
   </div>
 
+  <div class="trace-overlay info-overlay" id="traceOverlay" hidden>
+    <div
+      class="trace-panel info-panel"
+      id="tracePanel"
+      role="dialog"
+      aria-modal="true"
+      aria-label="흔적"
+    >
+      <div class="trace-lines info-lines">
+        <p class="trace-title" id="traceCountText">지금까지 -개의 흔적이 남았습니다</p>
+        <p class="trace-note">학교/학과명과 이름은 전시 방명록에 공개됩니다.</p>
+        <form class="trace-form" id="traceForm">
+          <label class="trace-field">
+            <span>학교/학과명</span>
+            <input
+              class="trace-input"
+              type="text"
+              name="affiliation"
+              maxlength="80"
+              autocomplete="organization"
+              placeholder="동국대학교 고고미술사학과"
+              required
+            >
+          </label>
+          <label class="trace-field">
+            <span>이름</span>
+            <input
+              class="trace-input"
+              type="text"
+              name="name"
+              maxlength="40"
+              autocomplete="name"
+              placeholder="신용은"
+              required
+            >
+          </label>
+          <button class="trace-submit" type="submit">남기기</button>
+          <p class="trace-status" id="traceStatus" role="status" aria-live="polite"></p>
+        </form>
+        <div class="trace-list" id="traceList" aria-live="polite"></div>
+      </div>
+    </div>
+  </div>
+
   <main class="site-shell">
     <h1 class="sr-only">MoMent Online Exhibition</h1>
 
@@ -100,6 +144,16 @@
           >
             &#xBB38;&#xC758;
           </button>
+          <button
+            class="trace-trigger"
+            id="traceTrigger"
+            type="button"
+            aria-haspopup="dialog"
+            aria-controls="traceOverlay"
+            aria-expanded="false"
+          >
+            흔적
+          </button>
         </div>
 
         <div class="site-brand">
@@ -108,7 +162,6 @@
         </div>
 
         <div class="site-actions">
-          <div class="visit-counter" id="visitCounter" aria-live="polite">&#xBC29;&#xBB38;&#xC790; -</div>
           <button class="audio-toggle" id="audioToggle" type="button" aria-pressed="false">
             &#xC74C;&#xC545; OFF
           </button>
