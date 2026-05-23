@@ -789,7 +789,7 @@ async function submitTrace(event) {
     renderTraceCount(Number(result.count || 0));
     renderTraceList(result.entries);
     tracesLoaded = true;
-    setTraceStatus("\uD754\uC801\uC774 \uB0A8\uACA8\uC84C\uC2B5\uB2C8\uB2E4.");
+    setTraceStatus("");
   } catch (error) {
     setTraceStatus(error.message || "\uD754\uC801\uC744 \uB0A8\uAE30\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.", true);
   } finally {

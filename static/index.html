@@ -84,7 +84,7 @@
     >
       <div class="trace-lines info-lines">
         <p class="trace-title" id="traceCountText">지금까지 -개의 흔적이 남았습니다</p>
-        <p class="trace-note">학교/학과명과 이름은 전시 방명록에 공개됩니다.</p>
+        <p class="trace-note">한 번 남긴 흔적은 지울 수 없으니 신중하게 적어주세요.</p>
         <form class="trace-form" id="traceForm">
           <label class="trace-field">
             <span>학교/학과명</span>
@@ -94,7 +94,6 @@
               name="affiliation"
               maxlength="80"
               autocomplete="organization"
-              placeholder="동국대학교 고고미술사학과"
               required
             >
           </label>
@@ -106,7 +105,6 @@
               name="name"
               maxlength="40"
               autocomplete="name"
-              placeholder="신용은"
               required
             >
           </label>
@@ -144,6 +142,14 @@
           >
             &#xBB38;&#xC758;
           </button>
+        </div>
+
+        <div class="site-brand">
+          <a class="exhibition-logo" href="/">MoMent</a>
+          <p class="site-credit" aria-hidden="true">&#xC2E0;&#xC6A9;&#xC740; &#xC81C;&#xC791;</p>
+        </div>
+
+        <div class="site-actions">
           <button
             class="trace-trigger"
             id="traceTrigger"
@@ -154,14 +160,6 @@
           >
             흔적
           </button>
-        </div>
-
-        <div class="site-brand">
-          <a class="exhibition-logo" href="/">MoMent</a>
-          <p class="site-credit" aria-hidden="true">&#xC2E0;&#xC6A9;&#xC740; &#xC81C;&#xC791;</p>
-        </div>
-
-        <div class="site-actions">
           <button class="audio-toggle" id="audioToggle" type="button" aria-pressed="false">
             &#xC74C;&#xC545; OFF
           </button>
