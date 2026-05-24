@@ -525,10 +525,7 @@ img {
 }
 
 .trace-entry {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 0.45rem;
+  display: block;
 }
 
 .trace-entry-copy {
@@ -544,72 +541,6 @@ img {
 .trace-entry-separator {
   color: rgba(255, 255, 255, 0.36);
   padding: 0 0.36rem;
-}
-
-.trace-delete {
-  width: 1.4rem;
-  height: 1.4rem;
-  padding: 0;
-  border: 0;
-  border-radius: 999px;
-  background: transparent;
-  color: rgba(255, 255, 255, 0.42);
-  font: inherit;
-  font-size: 0.82rem;
-  line-height: 1;
-  cursor: pointer;
-  transition: color 160ms ease, background 160ms ease;
-}
-
-.trace-delete:hover,
-.trace-delete:focus-visible {
-  background: rgba(255, 255, 255, 0.08);
-  color: #ffffff;
-  outline: 1px solid rgba(255, 255, 255, 0.58);
-  outline-offset: 0.16rem;
-}
-
-.trace-delete-form {
-  grid-column: 1 / -1;
-  display: inline-grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  justify-self: end;
-  align-items: center;
-  gap: 0.28rem;
-  margin-top: 0.25rem;
-  width: min(100%, 260px);
-}
-
-.trace-delete-input {
-  width: 100%;
-  padding: 0.32rem 0.42rem;
-  border: 0;
-  border-radius: 0.2rem;
-  background: #ffffff;
-  color: #000000;
-  font-size: 0.82rem;
-  outline: none;
-}
-
-.trace-delete-submit {
-  width: 1.35rem;
-  height: 1.35rem;
-  padding: 0;
-  border: 0;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.86);
-  color: #000000;
-  font: inherit;
-  font-size: 1rem;
-  line-height: 1;
-  cursor: pointer;
-}
-
-.trace-delete-submit:hover,
-.trace-delete-submit:focus-visible {
-  background: #ffffff;
-  outline: 1px solid rgba(255, 255, 255, 0.72);
-  outline-offset: 0.12rem;
 }
 
 .exhibition-stream {

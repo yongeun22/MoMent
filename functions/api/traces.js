@@ -1,6 +1,8 @@
 const MAX_ENTRIES = 80;
 const MAX_AFFILIATION_LENGTH = 80;
 const MAX_NAME_LENGTH = 40;
+const FALLBACK_DELETE_PASSWORD_HASH =
+  "8a7177fcda2d2eefc04849818b92cdd4444b23cfa993f103c1a9577dcc9f7028";
 
 function json(body, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -65,6 +67,7 @@ function getDeletePasswordHash(env) {
   const candidates = [
     env?.TRACE_DELETE_PASSWORD_HASH,
     env?.MOMENT_TRACE_DELETE_PASSWORD_HASH,
+    FALLBACK_DELETE_PASSWORD_HASH,
   ];
   const configuredHash = candidates.find((value) => typeof value === "string" && value.trim().length > 0);
   return configuredHash ? configuredHash.trim().toLowerCase() : "";

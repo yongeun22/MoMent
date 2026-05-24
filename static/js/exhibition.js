@@ -34,8 +34,6 @@ let contactCloseTimeoutId = null;
 let traceCloseTimeoutId = null;
 let lightboxCloseTimeoutId = null;
 let photos = [];
-let traceEntries = [];
-let activeTraceDeleteId = null;
 let tracesLoaded = false;
 let audioUnlockBound = false;
 let audioShouldPlay = true;
@@ -678,8 +676,6 @@ function renderTraceList(entries) {
     return;
   }
 
-  traceEntries = entries;
-
   if (!entries.length) {
     traceList.innerHTML = `<p class="trace-empty">\uC544\uC9C1 \uB0A8\uACA8\uC9C4 \uD754\uC801\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.</p>`;
     return;
@@ -693,13 +689,6 @@ function renderTraceList(entries) {
           <span class="trace-entry-separator">/</span>
           <span class="trace-entry-name">${escapeHtml(entry.name)}</span>
         </div>
-        <button class="trace-delete" type="button" data-trace-delete-id="${entry.id}" aria-label="trace">×</button>
-        ${String(activeTraceDeleteId) === String(entry.id) ? `
-          <form class="trace-delete-form" data-trace-delete-form data-trace-id="${entry.id}">
-            <input class="trace-delete-input" type="password" autocomplete="off" inputmode="numeric" aria-label="삭제 비밀번호">
-            <button class="trace-delete-submit" type="submit" aria-label="삭제 확인">·</button>
-          </form>
-        ` : ""}
       </div>
     `)
     .join("");
@@ -777,65 +766,14 @@ async function submitTrace(event) {
   }
 }
 
-function openTraceDelete(entryId) {
-  activeTraceDeleteId = String(entryId);
-  renderTraceList(traceEntries);
-  window.requestAnimationFrame(() => {
-    traceList
-      ?.querySelector(`.trace-delete-form[data-trace-id="${CSS.escape(String(entryId))}"] .trace-delete-input`)
-      ?.focus();
-  });
-}
-
-async function submitTraceDelete(event) {
-  event.preventDefault();
-  const form = event.target.closest("[data-trace-delete-form]");
-  const entryId = form?.dataset.traceId;
-  const input = form?.querySelector(".trace-delete-input");
-  const password = input?.value || "";
-  if (!entryId || !password) {
-    return;
-  }
-
-  try {
-    const response = await fetch("/api/traces", {
-      method: "DELETE",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ id: entryId, password }),
-    });
-    const result = await response.json().catch(() => ({}));
-    if (!response.ok || !Array.isArray(result.entries)) {
-      throw new Error("delete-failed");
-    }
-
-    activeTraceDeleteId = null;
-    renderTraceCount(Number(result.count || 0));
-    renderTraceList(result.entries);
-    tracesLoaded = true;
-    setTraceStatus("");
-  } catch (error) {
-    if (input) {
-      input.value = "";
-      input.focus();
-    }
-  }
-}
-
 function openTraceOverlay() {
   closeHistoryOverlay();
   closeContactOverlay();
-  activeTraceDeleteId = null;
-  renderTraceList(traceEntries);
   openInfoOverlay(traceOverlay, traceTrigger, "is-trace-open", traceCloseTimeoutId);
   loadTraces();
 }
 
 function closeTraceOverlay() {
-  activeTraceDeleteId = null;
-  renderTraceList(traceEntries);
   closeInfoOverlay(
     traceOverlay,
     traceTrigger,
@@ -991,15 +929,6 @@ tracePanel?.addEventListener("click", (event) => {
   event.stopPropagation();
 });
 traceForm?.addEventListener("submit", submitTrace);
-traceList?.addEventListener("click", (event) => {
-  const deleteButton = event.target.closest("[data-trace-delete-id]");
-  if (!deleteButton) {
-    return;
-  }
-
-  openTraceDelete(deleteButton.dataset.traceDeleteId);
-});
-traceList?.addEventListener("submit", submitTraceDelete);
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") {
     closeLightbox();
