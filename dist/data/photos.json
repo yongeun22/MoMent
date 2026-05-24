@@ -373,6 +373,149 @@
       "photographer": "26 박슬기",
       "createdAt": "2026-05-24T17:28:57+00:00",
       "updatedAt": "2026-05-24T17:28:57+00:00"
+    },
+    {
+      "id": 54,
+      "imageUrl": "/uploads/display/402683eb11d44efea4d0a84994d225f7.webp",
+      "lightboxUrl": "/uploads/lightbox/402683eb11d44efea4d0a84994d225f7.webp",
+      "originalName": "25.04.05_일본 나라.jpg",
+      "date": "2025.04.05",
+      "location": "일본 나라",
+      "photographer": "24 김지원",
+      "createdAt": "2026-05-24T17:35:45+00:00",
+      "updatedAt": "2026-05-24T17:35:45+00:00"
+    },
+    {
+      "id": 55,
+      "imageUrl": "/uploads/display/6ef8ff2631e84bcdb8ac446746144e02.webp",
+      "lightboxUrl": "/uploads/lightbox/6ef8ff2631e84bcdb8ac446746144e02.webp",
+      "originalName": "25.04.19_경주 남산 칠불암.jpg",
+      "date": "2025.04.19",
+      "location": "경주 남산 칠불암",
+      "photographer": "24 김지원",
+      "createdAt": "2026-05-24T17:36:01+00:00",
+      "updatedAt": "2026-05-24T17:36:01+00:00"
+    },
+    {
+      "id": 56,
+      "imageUrl": "/uploads/display/76e2d04c26464a6fbcf0fba1420e3c78.webp",
+      "lightboxUrl": "/uploads/lightbox/76e2d04c26464a6fbcf0fba1420e3c78.webp",
+      "originalName": "25.07.01_경주 동궁과 월지.jpg",
+      "date": "2025.07.01",
+      "location": "경주 동궁과 월지",
+      "photographer": "24 김지원",
+      "createdAt": "2026-05-24T17:36:13+00:00",
+      "updatedAt": "2026-05-24T17:36:13+00:00"
+    },
+    {
+      "id": 57,
+      "imageUrl": "/uploads/display/ac484724663f40148d1cbda6d45df1ce.webp",
+      "lightboxUrl": "/uploads/lightbox/ac484724663f40148d1cbda6d45df1ce.webp",
+      "originalName": "25.07.02_통도사성보박물관.jpg",
+      "date": "2025.07.02",
+      "location": "양산 통도사성보박물관",
+      "photographer": "24 김지원",
+      "createdAt": "2026-05-24T17:36:54+00:00",
+      "updatedAt": "2026-05-24T17:36:54+00:00"
+    },
+    {
+      "id": 58,
+      "imageUrl": "/uploads/display/e5731c0abccd4802b09a32f5e5b3ee4a.webp",
+      "lightboxUrl": "/uploads/lightbox/e5731c0abccd4802b09a32f5e5b3ee4a.webp",
+      "originalName": "25.07.05_일본아소산.jpg",
+      "date": "2025.07.05",
+      "location": "일본 아소산",
+      "photographer": "24 김지원",
+      "createdAt": "2026-05-24T17:37:09+00:00",
+      "updatedAt": "2026-05-24T17:37:09+00:00"
+    },
+    {
+      "id": 59,
+      "imageUrl": "/uploads/display/31cb4e6e15794f82bf1b59c0d1af7aab.webp",
+      "lightboxUrl": "/uploads/lightbox/31cb4e6e15794f82bf1b59c0d1af7aab.webp",
+      "originalName": "25.09.09_제주도.jpg",
+      "date": "2025.09.09",
+      "location": "제주도",
+      "photographer": "24 김지원",
+      "createdAt": "2026-05-24T17:37:19+00:00",
+      "updatedAt": "2026-05-24T17:37:19+00:00"
+    },
+    {
+      "id": 60,
+      "imageUrl": "/uploads/display/073363eb457c40bbb04fdb2a2a496c87.webp",
+      "lightboxUrl": "/uploads/lightbox/073363eb457c40bbb04fdb2a2a496c87.webp",
+      "originalName": "25.09.09_제주도소천지.jpg",
+      "date": "2025.09.09",
+      "location": "제주도 소천지",
+      "photographer": "24 김지원",
+      "createdAt": "2026-05-24T17:40:40+00:00",
+      "updatedAt": "2026-05-24T17:40:40+00:00"
+    },
+    {
+      "id": 61,
+      "imageUrl": "/uploads/display/82e21caa6c1341fca2d0b105a0b8a532.webp",
+      "lightboxUrl": "/uploads/lightbox/82e21caa6c1341fca2d0b105a0b8a532.webp",
+      "originalName": "25.10.07_안성.jpg",
+      "date": "2025.10.07",
+      "location": "안성시",
+      "photographer": "24 김지원",
+      "createdAt": "2026-05-24T17:40:54+00:00",
+      "updatedAt": "2026-05-24T17:40:54+00:00"
+    },
+    {
+      "id": 62,
+      "imageUrl": "/uploads/display/dfff8f6a253c4c57ae10cc9d91dbccef.webp",
+      "lightboxUrl": "/uploads/lightbox/dfff8f6a253c4c57ae10cc9d91dbccef.webp",
+      "originalName": "25년4월5일_진평왕릉.jpg",
+      "date": "2025.04.05",
+      "location": "경주 진평왕릉",
+      "photographer": "24 김지원",
+      "createdAt": "2026-05-24T17:41:11+00:00",
+      "updatedAt": "2026-05-24T17:41:11+00:00"
+    },
+    {
+      "id": 63,
+      "imageUrl": "/uploads/display/0b9ed395b8e74d06ba70ef6f504db3b8.webp",
+      "lightboxUrl": "/uploads/lightbox/0b9ed395b8e74d06ba70ef6f504db3b8.webp",
+      "originalName": "26.02.06_호류지.jpg",
+      "date": "2026.02.06",
+      "location": "일본 호류지",
+      "photographer": "24 김지원",
+      "createdAt": "2026-05-24T17:41:21+00:00",
+      "updatedAt": "2026-05-24T17:41:21+00:00"
+    },
+    {
+      "id": 64,
+      "imageUrl": "/uploads/display/774ed20c4b3e4c9bb408a3e2b5fe9a5b.webp",
+      "lightboxUrl": "/uploads/lightbox/774ed20c4b3e4c9bb408a3e2b5fe9a5b.webp",
+      "originalName": "26.02.06_호류지2.jpg",
+      "date": "2026.02.06",
+      "location": "일본 호류지",
+      "photographer": "24 김지원",
+      "createdAt": "2026-05-24T17:41:31+00:00",
+      "updatedAt": "2026-05-24T17:48:50+00:00"
+    },
+    {
+      "id": 65,
+      "imageUrl": "/uploads/display/31b77e961aa843508147b58a443c800f.webp",
+      "lightboxUrl": "/uploads/lightbox/31b77e961aa843508147b58a443c800f.webp",
+      "originalName": "26.02.08_교토.jpg",
+      "date": "2026.02.08",
+      "location": "일본 교토",
+      "photographer": "24 김지원",
+      "createdAt": "2026-05-24T17:41:47+00:00",
+      "updatedAt": "2026-05-24T17:41:47+00:00"
+    },
+    {
+      "id": 66,
+      "imageUrl": "/uploads/display/da1d5d1f3cc647bc947f3fa99d6c9e22.webp",
+      "lightboxUrl": "/uploads/lightbox/da1d5d1f3cc647bc947f3fa99d6c9e22.webp",
+      "originalName": "26.05.02_봉황대.jpg",
+      "date": "2026.05.02",
+      "location": "경주 봉황대",
+      "photographer": "24 김지원",
+      "createdAt": "2026-05-24T17:41:57+00:00",
+      "updatedAt": "2026-05-24T17:41:57+00:00"
     }
   ]
 }
