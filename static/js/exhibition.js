@@ -200,7 +200,7 @@ async function startBackgroundAudio() {
     return;
   }
 
-  backgroundAudio.volume = 0.10;
+  backgroundAudio.volume = 0.05;
   ensureAudioSource();
 
   try {
@@ -696,7 +696,8 @@ function renderTraceList(entries) {
         <button class="trace-delete" type="button" data-trace-delete-id="${entry.id}" aria-label="trace">×</button>
         ${String(activeTraceDeleteId) === String(entry.id) ? `
           <form class="trace-delete-form" data-trace-delete-form data-trace-id="${entry.id}">
-            <input class="trace-delete-input" type="password" autocomplete="off" inputmode="numeric">
+            <input class="trace-delete-input" type="password" autocomplete="off" inputmode="numeric" aria-label="삭제 비밀번호">
+            <button class="trace-delete-submit" type="submit" aria-label="삭제 확인">·</button>
           </form>
         ` : ""}
       </div>
@@ -826,11 +827,15 @@ async function submitTraceDelete(event) {
 function openTraceOverlay() {
   closeHistoryOverlay();
   closeContactOverlay();
+  activeTraceDeleteId = null;
+  renderTraceList(traceEntries);
   openInfoOverlay(traceOverlay, traceTrigger, "is-trace-open", traceCloseTimeoutId);
   loadTraces();
 }
 
 function closeTraceOverlay() {
+  activeTraceDeleteId = null;
+  renderTraceList(traceEntries);
   closeInfoOverlay(
     traceOverlay,
     traceTrigger,
@@ -1010,7 +1015,6 @@ backgroundAudio?.addEventListener("play", updateAudioToggle);
 backgroundAudio?.addEventListener("pause", updateAudioToggle);
 backgroundAudio?.addEventListener("ended", playNextTrack);
 
-introEnter?.focus({ preventScroll: true });
 syncTopbarState();
 loadPhotos();
 runNonCriticalTasks();

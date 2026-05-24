@@ -324,6 +324,9 @@ img {
 .intro-enter:focus-visible {
   opacity: 0.72;
   transform: translateY(-1px);
+}
+
+.intro-enter:focus-visible {
   outline: 1px solid rgba(255, 255, 255, 0.72);
   outline-offset: 0.34rem;
 }
@@ -568,13 +571,17 @@ img {
 
 .trace-delete-form {
   grid-column: 1 / -1;
-  display: grid;
+  display: inline-grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  justify-self: end;
+  align-items: center;
+  gap: 0.28rem;
   margin-top: 0.25rem;
+  width: min(100%, 260px);
 }
 
 .trace-delete-input {
-  width: min(100%, 220px);
-  justify-self: end;
+  width: 100%;
   padding: 0.32rem 0.42rem;
   border: 0;
   border-radius: 0.2rem;
@@ -582,6 +589,27 @@ img {
   color: #000000;
   font-size: 0.82rem;
   outline: none;
+}
+
+.trace-delete-submit {
+  width: 1.35rem;
+  height: 1.35rem;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.86);
+  color: #000000;
+  font: inherit;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.trace-delete-submit:hover,
+.trace-delete-submit:focus-visible {
+  background: #ffffff;
+  outline: 1px solid rgba(255, 255, 255, 0.72);
+  outline-offset: 0.12rem;
 }
 
 .exhibition-stream {
