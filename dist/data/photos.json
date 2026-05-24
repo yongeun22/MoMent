@@ -23,17 +23,6 @@
       "updatedAt": "2026-04-01T17:34:49+00:00"
     },
     {
-      "id": 17,
-      "imageUrl": "/uploads/display/8486d517b2cf4bffa3a3fd9507191b8c.webp",
-      "lightboxUrl": "/uploads/lightbox/8486d517b2cf4bffa3a3fd9507191b8c.webp",
-      "originalName": "어디울주군.jpg",
-      "date": "2025.11.02",
-      "location": "울산광역시 울주군",
-      "photographer": "24 신용은",
-      "createdAt": "2026-04-01T12:58:41+00:00",
-      "updatedAt": "2026-04-01T17:34:53+00:00"
-    },
-    {
       "id": 20,
       "imageUrl": "/uploads/display/c310a19a2dcc4c368b37b2f7eb53fd05.webp",
       "lightboxUrl": "/uploads/lightbox/c310a19a2dcc4c368b37b2f7eb53fd05.webp",
@@ -171,10 +160,10 @@
       "lightboxUrl": "/uploads/lightbox/62a8ba1901e24416b1738bf4fc6ba16e.webp",
       "originalName": "IMG_0862.PNG",
       "date": "2024.12.03",
-      "location": "경상북도 포항",
+      "location": "경북 포항",
       "photographer": "24 신용은",
       "createdAt": "2026-04-01T17:59:57+00:00",
-      "updatedAt": "2026-04-01T18:00:35+00:00"
+      "updatedAt": "2026-05-24T17:22:51+00:00"
     },
     {
       "id": 35,
@@ -197,6 +186,193 @@
       "photographer": "24 신용은",
       "createdAt": "2026-04-01T18:04:42+00:00",
       "updatedAt": "2026-05-17T16:36:02+00:00"
+    },
+    {
+      "id": 37,
+      "imageUrl": "/uploads/display/326574239a07499c8ce403bedd27526a.webp",
+      "lightboxUrl": "/uploads/lightbox/326574239a07499c8ce403bedd27526a.webp",
+      "originalName": "20240323 부 ㄹ국사.jpg",
+      "date": "2024.03.23",
+      "location": "경주 불국사",
+      "photographer": "24 신용은",
+      "createdAt": "2026-05-24T17:22:21+00:00",
+      "updatedAt": "2026-05-24T17:22:21+00:00"
+    },
+    {
+      "id": 38,
+      "imageUrl": "/uploads/display/a7356478163946e3a005cda8b5f48c93.webp",
+      "lightboxUrl": "/uploads/lightbox/a7356478163946e3a005cda8b5f48c93.webp",
+      "originalName": "경복궁 20240331.jpg",
+      "date": "2024.03.31",
+      "location": "서울 경복궁",
+      "photographer": "26 박슬기",
+      "createdAt": "2026-05-24T17:24:29+00:00",
+      "updatedAt": "2026-05-24T17:25:13+00:00"
+    },
+    {
+      "id": 39,
+      "imageUrl": "/uploads/display/d3dc87393c324613a2c55bf8c11603a6.webp",
+      "lightboxUrl": "/uploads/lightbox/d3dc87393c324613a2c55bf8c11603a6.webp",
+      "originalName": "경복궁 집옥재 20251010.jpg",
+      "date": "2025.10.10",
+      "location": "서울 경복궁",
+      "photographer": "26 박슬기",
+      "createdAt": "2026-05-24T17:24:45+00:00",
+      "updatedAt": "2026-05-24T17:24:45+00:00"
+    },
+    {
+      "id": 40,
+      "imageUrl": "/uploads/display/815720492a004e96ae8032bd3840aa96.webp",
+      "lightboxUrl": "/uploads/lightbox/815720492a004e96ae8032bd3840aa96.webp",
+      "originalName": "경복궁 협길당 20251010.jpg",
+      "date": "2025.10.10",
+      "location": "서울 경복궁",
+      "photographer": "26 박슬기",
+      "createdAt": "2026-05-24T17:25:03+00:00",
+      "updatedAt": "2026-05-24T17:25:03+00:00"
+    },
+    {
+      "id": 41,
+      "imageUrl": "/uploads/display/bfdd0e8811864e359d7bb88584257cc3.webp",
+      "lightboxUrl": "/uploads/lightbox/bfdd0e8811864e359d7bb88584257cc3.webp",
+      "originalName": "경주 동궁과 월지 20221002.jpg",
+      "date": "2022.10.02",
+      "location": "경주 동궁과 월지",
+      "photographer": "26 박슬기",
+      "createdAt": "2026-05-24T17:25:39+00:00",
+      "updatedAt": "2026-05-24T17:25:39+00:00"
+    },
+    {
+      "id": 42,
+      "imageUrl": "/uploads/display/15e43bedb1bb482e82d299b86f6d1e59.webp",
+      "lightboxUrl": "/uploads/lightbox/15e43bedb1bb482e82d299b86f6d1e59.webp",
+      "originalName": "교토 난젠지 수로각 20250505.jpg",
+      "date": "2025.05.05",
+      "location": "일본 교토",
+      "photographer": "26 박슬기",
+      "createdAt": "2026-05-24T17:25:58+00:00",
+      "updatedAt": "2026-05-24T17:25:58+00:00"
+    },
+    {
+      "id": 43,
+      "imageUrl": "/uploads/display/8e6aebd1742b458a80a53ad8c7aafb68.webp",
+      "lightboxUrl": "/uploads/lightbox/8e6aebd1742b458a80a53ad8c7aafb68.webp",
+      "originalName": "구리 동구릉 20251018.jpg",
+      "date": "2025.10.18",
+      "location": "구리 동구릉",
+      "photographer": "26 박슬기",
+      "createdAt": "2026-05-24T17:26:08+00:00",
+      "updatedAt": "2026-05-24T17:26:08+00:00"
+    },
+    {
+      "id": 44,
+      "imageUrl": "/uploads/display/623151da4d02411db0dc465e57d1d0ce.webp",
+      "lightboxUrl": "/uploads/lightbox/623151da4d02411db0dc465e57d1d0ce.webp",
+      "originalName": "국립중앙박물관 20230604.jpg",
+      "date": "2023.06.04",
+      "location": "서울 국립중앙박물관",
+      "photographer": "26 박슬기",
+      "createdAt": "2026-05-24T17:26:28+00:00",
+      "updatedAt": "2026-05-24T17:26:28+00:00"
+    },
+    {
+      "id": 45,
+      "imageUrl": "/uploads/display/c9b88b83c4cc48a6a513f46490e14a39.webp",
+      "lightboxUrl": "/uploads/lightbox/c9b88b83c4cc48a6a513f46490e14a39.webp",
+      "originalName": "나라 동대사 20250504.jpg",
+      "date": "2025.05.04",
+      "location": "일본 나라 동대사",
+      "photographer": "26 박슬기",
+      "createdAt": "2026-05-24T17:26:53+00:00",
+      "updatedAt": "2026-05-24T17:26:53+00:00"
+    },
+    {
+      "id": 46,
+      "imageUrl": "/uploads/display/dc73f363e73849d59d9e704a76101fa3.webp",
+      "lightboxUrl": "/uploads/lightbox/dc73f363e73849d59d9e704a76101fa3.webp",
+      "originalName": "대구 동화사 20260325.jpg",
+      "date": "2026.03.25",
+      "location": "대구 동화사",
+      "photographer": "26 박슬기",
+      "createdAt": "2026-05-24T17:27:06+00:00",
+      "updatedAt": "2026-05-24T17:27:06+00:00"
+    },
+    {
+      "id": 47,
+      "imageUrl": "/uploads/display/640be1ffe57b4870a5a35588b93b7ded.webp",
+      "lightboxUrl": "/uploads/lightbox/640be1ffe57b4870a5a35588b93b7ded.webp",
+      "originalName": "대한민국역사박물관 20260501.jpg",
+      "date": "2026.05.01",
+      "location": "서울",
+      "photographer": "26 박슬기",
+      "createdAt": "2026-05-24T17:27:28+00:00",
+      "updatedAt": "2026-05-24T17:27:28+00:00"
+    },
+    {
+      "id": 48,
+      "imageUrl": "/uploads/display/fc4d89ad263440dc9cb82e2b428a3dc6.webp",
+      "lightboxUrl": "/uploads/lightbox/fc4d89ad263440dc9cb82e2b428a3dc6.webp",
+      "originalName": "안동 법흥사지칠층전탑 20260326 .jpg",
+      "date": "2026.03.26",
+      "location": "안동 법흥사지",
+      "photographer": "26 박슬기",
+      "createdAt": "2026-05-24T17:27:44+00:00",
+      "updatedAt": "2026-05-24T17:27:44+00:00"
+    },
+    {
+      "id": 49,
+      "imageUrl": "/uploads/display/57f457a97cde42909537b7560707181f.webp",
+      "lightboxUrl": "/uploads/lightbox/57f457a97cde42909537b7560707181f.webp",
+      "originalName": "안동 하회마을 20251008.jpg",
+      "date": "2025.10.08",
+      "location": "안동 하회마을",
+      "photographer": "26 박슬기",
+      "createdAt": "2026-05-24T17:27:56+00:00",
+      "updatedAt": "2026-05-24T17:27:56+00:00"
+    },
+    {
+      "id": 50,
+      "imageUrl": "/uploads/display/85f1448a83c94bdfb9ff7ea46406e7d5.webp",
+      "lightboxUrl": "/uploads/lightbox/85f1448a83c94bdfb9ff7ea46406e7d5.webp",
+      "originalName": "양산 통도사 20260221.jpg",
+      "date": "2026.02.21",
+      "location": "양산 통도사",
+      "photographer": "26 박슬기",
+      "createdAt": "2026-05-24T17:28:08+00:00",
+      "updatedAt": "2026-05-24T17:28:08+00:00"
+    },
+    {
+      "id": 51,
+      "imageUrl": "/uploads/display/84ce696165a84ac2ba5b9fad9a5efe6a.webp",
+      "lightboxUrl": "/uploads/lightbox/84ce696165a84ac2ba5b9fad9a5efe6a.webp",
+      "originalName": "진주성 공북문 20230528.jpg",
+      "date": "2023.05.28",
+      "location": "진주 진주성",
+      "photographer": "26 박슬기",
+      "createdAt": "2026-05-24T17:28:34+00:00",
+      "updatedAt": "2026-05-24T17:28:34+00:00"
+    },
+    {
+      "id": 52,
+      "imageUrl": "/uploads/display/6d0ff5472fb94696819d00af09ec8a53.webp",
+      "lightboxUrl": "/uploads/lightbox/6d0ff5472fb94696819d00af09ec8a53.webp",
+      "originalName": "창덕궁 상량정 20230602.jpg",
+      "date": "2023.06.02",
+      "location": "서울 창덕궁",
+      "photographer": "26 박슬기",
+      "createdAt": "2026-05-24T17:28:46+00:00",
+      "updatedAt": "2026-05-24T17:28:46+00:00"
+    },
+    {
+      "id": 53,
+      "imageUrl": "/uploads/display/37b7a952b7a04d45977d936c04e41626.webp",
+      "lightboxUrl": "/uploads/lightbox/37b7a952b7a04d45977d936c04e41626.webp",
+      "originalName": "창덕궁 후원 20230602.jpg",
+      "date": "2023.06.02",
+      "location": "서울 창덕궁",
+      "photographer": "26 박슬기",
+      "createdAt": "2026-05-24T17:28:57+00:00",
+      "updatedAt": "2026-05-24T17:28:57+00:00"
     }
   ]
 }
