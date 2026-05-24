@@ -2,6 +2,7 @@ const stream = document.getElementById("photoStream");
 const emptyState = document.getElementById("emptyState");
 const introOverlay = document.getElementById("introOverlay");
 const introCopy = document.getElementById("introCopy");
+const introEnter = document.getElementById("introEnter");
 const siteTopbar = document.getElementById("siteTopbar");
 const lightbox = document.getElementById("lightbox");
 const lightboxContent = document.getElementById("lightboxContent");
@@ -52,54 +53,28 @@ function resetLightboxBuffer() {
   lightboxImageBuffer.classList.remove("is-visible");
   lightboxImageBuffer.removeAttribute("src");
 }
-function pickIntroAnchor(options) {
-  return options[Math.floor(Math.random() * options.length)];
-}
-
-const introAnchor = {
-  x: pickIntroAnchor([0.16, 0.3, 0.7, 0.84]),
-  y: pickIntroAnchor([0.18, 0.34, 0.66, 0.82])
-};
-
 document.body.classList.add("is-intro-active");
 
 function positionIntroCopy() {
-  if (!introOverlay || !introCopy) {
+  if (!introCopy) {
     return;
   }
 
   introCopy.style.setProperty("--intro-left", "50%");
   introCopy.style.setProperty("--intro-top", "50%");
-
-  const overlayRect = introOverlay.getBoundingClientRect();
-  const copyRect = introCopy.getBoundingClientRect();
-  const marginX = window.innerWidth <= 768 ? 18 : 40;
-  const marginY = window.innerWidth <= 768 ? 20 : 48;
-  const minLeft = copyRect.width / 2 + marginX;
-  const maxLeft = overlayRect.width - copyRect.width / 2 - marginX;
-  const minTop = copyRect.height / 2 + marginY;
-  const maxTop = overlayRect.height - copyRect.height / 2 - marginY;
-
-  const leftPx = maxLeft > minLeft
-    ? minLeft + (maxLeft - minLeft) * introAnchor.x
-    : overlayRect.width / 2;
-  const topPx = maxTop > minTop
-    ? minTop + (maxTop - minTop) * introAnchor.y
-    : overlayRect.height / 2;
-
-  introCopy.style.setProperty("--intro-left", `${(leftPx / overlayRect.width) * 100}%`);
-  introCopy.style.setProperty("--intro-top", `${(topPx / overlayRect.height) * 100}%`);
 }
 
 function fadeIntro() {
+  if (!introOverlay || introOverlay.hidden) {
+    return;
+  }
+
   window.clearTimeout(introTimeoutId);
+  introOverlay.classList.add("is-fading");
   introTimeoutId = window.setTimeout(() => {
-    introOverlay.classList.add("is-fading");
-    window.setTimeout(() => {
-      introOverlay.hidden = true;
-      document.body.classList.remove("is-intro-active");
-    }, 950);
-  }, 2000);
+    introOverlay.hidden = true;
+    document.body.classList.remove("is-intro-active");
+  }, 950);
 }
 
 function getAudioPlaylist() {
@@ -1038,6 +1013,7 @@ document.addEventListener("keydown", (event) => {
 });
 window.addEventListener("scroll", syncTopbarState, { passive: true });
 window.addEventListener("resize", positionIntroCopy, { passive: true });
+introEnter?.addEventListener("click", fadeIntro);
 audioToggle?.addEventListener("click", toggleBackgroundAudio);
 backgroundAudio?.addEventListener("play", updateAudioToggle);
 backgroundAudio?.addEventListener("pause", updateAudioToggle);
@@ -1045,7 +1021,7 @@ backgroundAudio?.addEventListener("ended", playNextTrack);
 
 positionIntroCopy();
 document.fonts?.ready.then(positionIntroCopy).catch(() => {});
-fadeIntro();
+introEnter?.focus({ preventScroll: true });
 syncTopbarState();
 loadPhotos();
 runNonCriticalTasks();

@@ -231,8 +231,9 @@ img {
   display: grid;
   justify-items: center;
   text-align: center;
-  padding: 2rem;
-  width: max-content;
+  gap: 0.34rem;
+  padding: 2rem 1.45rem;
+  width: min(100%, 760px);
   max-width: calc(100vw - 4rem);
   margin: 0 auto;
 }
@@ -250,7 +251,7 @@ img {
 }
 
 .intro-subtitle {
-  margin: 0 0 0.04rem;
+  margin: 0;
   font-family: var(--meta-font);
   font-size: clamp(0.88rem, 1.45vw, 1.02rem);
   font-weight: 500;
@@ -263,7 +264,7 @@ img {
 }
 
 .intro-lead {
-  margin-top: 1.08rem;
+  margin: 0.58rem 0 0;
   font-family: var(--meta-font);
   font-size: clamp(0.88rem, 1.45vw, 1.02rem);
   font-weight: 500;
@@ -272,6 +273,59 @@ img {
   letter-spacing: 0.08em;
   text-align: center;
   width: auto;
+}
+
+.intro-instructions {
+  display: grid;
+  gap: 0.42rem;
+  width: min(100%, 540px);
+  margin: 1.28rem 0 0.82rem;
+  padding: 0;
+  list-style: none;
+  color: rgba(255, 255, 255, 0.76);
+  font-family: var(--meta-font);
+  font-size: clamp(0.82rem, 1.25vw, 0.94rem);
+  line-height: 1.62;
+  letter-spacing: 0.02em;
+  text-align: center;
+}
+
+.intro-instructions li {
+  position: relative;
+  padding-left: 1rem;
+  width: fit-content;
+  max-width: 100%;
+  justify-self: center;
+  text-align: left;
+}
+
+.intro-instructions li::before {
+  content: "-";
+  position: absolute;
+  left: 0;
+  color: rgba(255, 255, 255, 0.52);
+}
+
+.intro-enter {
+  margin-top: 0.28rem;
+  padding: 0.36rem 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #ffffff;
+  font-family: var(--title-font);
+  font-size: clamp(0.82rem, 1.2vw, 0.96rem);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.intro-enter:hover,
+.intro-enter:focus-visible {
+  opacity: 0.72;
+  transform: translateY(-1px);
+  outline: none;
 }
 
 .info-overlay {
