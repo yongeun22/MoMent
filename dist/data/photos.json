@@ -516,6 +516,105 @@
       "photographer": "24 김지원",
       "createdAt": "2026-05-24T17:41:57+00:00",
       "updatedAt": "2026-05-24T17:41:57+00:00"
+    },
+    {
+      "id": 67,
+      "imageUrl": "/uploads/display/61c5f94b0c1248dea1f8ce6e666ddaae.webp",
+      "lightboxUrl": "/uploads/lightbox/61c5f94b0c1248dea1f8ce6e666ddaae.webp",
+      "originalName": "2026.04.11 서울 국립중앙박물관.jpg",
+      "date": "2026.04.11",
+      "location": "서울 국립중앙박물관",
+      "photographer": "26 유제이",
+      "createdAt": "2026-05-24T17:54:53+00:00",
+      "updatedAt": "2026-05-24T17:54:53+00:00"
+    },
+    {
+      "id": 68,
+      "imageUrl": "/uploads/display/6b7d43f5161c4b8c8ba75eacaae7a622.webp",
+      "lightboxUrl": "/uploads/lightbox/6b7d43f5161c4b8c8ba75eacaae7a622.webp",
+      "originalName": "2026.04.26  서울 창경궁 인정전.jpg",
+      "date": "2026.04.26",
+      "location": "서울 창경궁",
+      "photographer": "26 유제이",
+      "createdAt": "2026-05-24T17:55:08+00:00",
+      "updatedAt": "2026-05-24T17:55:08+00:00"
+    },
+    {
+      "id": 69,
+      "imageUrl": "/uploads/display/89bb4749deef4b44924739b172f1f639.webp",
+      "lightboxUrl": "/uploads/lightbox/89bb4749deef4b44924739b172f1f639.webp",
+      "originalName": "2026.04.26 서울 창경궁 규장각.jpg",
+      "date": "2026.04.26",
+      "location": "서울 창경궁",
+      "photographer": "26 유제이",
+      "createdAt": "2026-05-24T17:55:21+00:00",
+      "updatedAt": "2026-05-24T17:55:21+00:00"
+    },
+    {
+      "id": 70,
+      "imageUrl": "/uploads/display/f7067a6441aa418b851f82795a304cff.webp",
+      "lightboxUrl": "/uploads/lightbox/f7067a6441aa418b851f82795a304cff.webp",
+      "originalName": "2026.04.26 서울 창경궁 인정전.jpg",
+      "date": "2026.04.26",
+      "location": "서울 창경궁",
+      "photographer": "26 유제이",
+      "createdAt": "2026-05-24T17:55:35+00:00",
+      "updatedAt": "2026-05-24T17:55:35+00:00"
+    },
+    {
+      "id": 71,
+      "imageUrl": "/uploads/display/6409d2e46d884205a42a407f7501adca.webp",
+      "lightboxUrl": "/uploads/lightbox/6409d2e46d884205a42a407f7501adca.webp",
+      "originalName": "20231022 고창 선운사 마애불.jpg",
+      "date": "2023.10.22",
+      "location": "고창 선운사",
+      "photographer": "25 박채윤",
+      "createdAt": "2026-05-24T17:55:59+00:00",
+      "updatedAt": "2026-05-24T17:55:59+00:00"
+    },
+    {
+      "id": 72,
+      "imageUrl": "/uploads/display/f75390357fe44889a4b8cf1798585167.webp",
+      "lightboxUrl": "/uploads/lightbox/f75390357fe44889a4b8cf1798585167.webp",
+      "originalName": "20231022 고창 선운사.jpg",
+      "date": "2023.10.22",
+      "location": "고창 선운사",
+      "photographer": "25 박채윤",
+      "createdAt": "2026-05-24T17:56:10+00:00",
+      "updatedAt": "2026-05-24T17:56:10+00:00"
+    },
+    {
+      "id": 73,
+      "imageUrl": "/uploads/display/5caca3c2030f4fdc9539bd973ac04217.webp",
+      "lightboxUrl": "/uploads/lightbox/5caca3c2030f4fdc9539bd973ac04217.webp",
+      "originalName": "20241207 오대산 월정사.jpg",
+      "date": "2024.12.07",
+      "location": "평창 오대산 월정사",
+      "photographer": "25 박채윤",
+      "createdAt": "2026-05-24T17:56:44+00:00",
+      "updatedAt": "2026-05-24T17:56:44+00:00"
+    },
+    {
+      "id": 74,
+      "imageUrl": "/uploads/display/11dbe6f1278b460f98aac80e2810231f.webp",
+      "lightboxUrl": "/uploads/lightbox/11dbe6f1278b460f98aac80e2810231f.webp",
+      "originalName": "20251008 북촌 한옥마을.jpg",
+      "date": "2025.10.08",
+      "location": "서울 북촌 한옥마을",
+      "photographer": "25 박채윤",
+      "createdAt": "2026-05-24T17:57:08+00:00",
+      "updatedAt": "2026-05-24T17:57:08+00:00"
+    },
+    {
+      "id": 75,
+      "imageUrl": "/uploads/display/0e72f62b4014408db55e9e413ccc10ea.webp",
+      "lightboxUrl": "/uploads/lightbox/0e72f62b4014408db55e9e413ccc10ea.webp",
+      "originalName": "20260325 대구 동화사.jpg",
+      "date": "2026.03.25",
+      "location": "대구 동화사",
+      "photographer": "25 박채윤",
+      "createdAt": "2026-05-24T17:57:20+00:00",
+      "updatedAt": "2026-05-24T17:57:20+00:00"
     }
   ]
 }
