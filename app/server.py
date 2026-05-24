@@ -401,7 +401,6 @@ def build_handler(config: AppConfig, database: Database, secret_key: bytes):
                     date_text=normalized["date_text"],
                     location=normalized["location"],
                     photographer=normalized["photographer"],
-                    copyright_text="",
                 )
             except Exception:
                 upload_path = config.uploads_dir / stored_filename
@@ -459,7 +458,6 @@ def build_handler(config: AppConfig, database: Database, secret_key: bytes):
                     date_text=normalized["date_text"],
                     location=normalized["location"],
                     photographer=normalized["photographer"],
-                    copyright_text="",
                     filename=stored_filename,
                     original_name=image_file["filename"] if image_file and stored_filename else None,
                 )

@@ -1,7 +1,6 @@
 const MAX_ENTRIES = 80;
 const MAX_AFFILIATION_LENGTH = 80;
 const MAX_NAME_LENGTH = 40;
-const TRACE_DELETE_PASSWORD_HASH = "8a7177fcda2d2eefc04849818b92cdd4444b23cfa993f103c1a9577dcc9f7028";
 
 function json(body, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -62,8 +61,22 @@ async function sha256Hex(value) {
     .join("");
 }
 
-async function verifyDeletePassword(password) {
-  return (await sha256Hex(password)) === TRACE_DELETE_PASSWORD_HASH;
+function getDeletePasswordHash(env) {
+  const candidates = [
+    env?.TRACE_DELETE_PASSWORD_HASH,
+    env?.MOMENT_TRACE_DELETE_PASSWORD_HASH,
+  ];
+  const configuredHash = candidates.find((value) => typeof value === "string" && value.trim().length > 0);
+  return configuredHash ? configuredHash.trim().toLowerCase() : "";
+}
+
+async function verifyDeletePassword(password, env) {
+  const expectedHash = getDeletePasswordHash(env);
+  if (!expectedHash) {
+    return false;
+  }
+
+  return (await sha256Hex(password)) === expectedHash;
 }
 
 async function readPayload(request) {
@@ -163,7 +176,7 @@ export async function onRequestDelete(context) {
       return json({ error: "Not found." }, 404);
     }
 
-    if (!(await verifyDeletePassword(payload.password))) {
+    if (!(await verifyDeletePassword(payload.password, context.env))) {
       return json({ error: "Not found." }, 404);
     }
 

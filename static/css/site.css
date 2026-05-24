@@ -150,7 +150,8 @@ img {
 .audio-toggle:focus-visible,
 .trace-submit:focus-visible,
 .exhibition-logo:focus-visible {
-  outline: none;
+  outline: 1px solid rgba(255, 255, 255, 0.72);
+  outline-offset: 0.28rem;
 }
 
 .site-brand {
@@ -223,19 +224,29 @@ img {
   padding: 0.95rem clamp(0.75rem, 2vw, 1.5rem) 2.5rem;
 }
 
-.intro-copy {
+.intro-brand,
+.intro-guide {
   position: absolute;
-  left: var(--intro-left, 50%);
-  top: var(--intro-top, 50%);
-  transform: translate(-50%, -50%);
+  left: 50%;
+  transform: translateX(-50%);
   display: grid;
   justify-items: center;
   text-align: center;
-  gap: 0.34rem;
-  padding: 2rem 1.45rem;
   width: min(100%, 760px);
   max-width: calc(100vw - 4rem);
   margin: 0 auto;
+}
+
+.intro-brand {
+  top: clamp(4.2rem, 18vh, 9.5rem);
+  gap: 0.34rem;
+  padding: 2rem 1.45rem;
+}
+
+.intro-guide {
+  bottom: clamp(2.7rem, 10vh, 6.6rem);
+  gap: 0.82rem;
+  padding: 0 1.45rem;
 }
 
 .intro-title {
@@ -263,23 +274,11 @@ img {
   white-space: nowrap;
 }
 
-.intro-lead {
-  margin: 0.58rem 0 0;
-  font-family: var(--meta-font);
-  font-size: clamp(0.88rem, 1.45vw, 1.02rem);
-  font-weight: 500;
-  line-height: 1.5;
-  color: rgba(255, 255, 255, 0.72);
-  letter-spacing: 0.08em;
-  text-align: center;
-  width: auto;
-}
-
 .intro-instructions {
   display: grid;
   gap: 0.42rem;
   width: min(100%, 540px);
-  margin: 1.28rem 0 0.82rem;
+  margin: 0;
   padding: 0;
   list-style: none;
   color: rgba(255, 255, 255, 0.76);
@@ -307,14 +306,14 @@ img {
 }
 
 .intro-enter {
-  margin-top: 0.28rem;
+  margin-top: 0.14rem;
   padding: 0.36rem 0;
   border: 0;
   border-radius: 0;
   background: transparent;
   color: #ffffff;
   font-family: var(--title-font);
-  font-size: clamp(0.82rem, 1.2vw, 0.96rem);
+  font-size: clamp(0.98rem, 1.42vw, 1.16rem);
   font-weight: 800;
   letter-spacing: 0.08em;
   cursor: pointer;
@@ -325,7 +324,8 @@ img {
 .intro-enter:focus-visible {
   opacity: 0.72;
   transform: translateY(-1px);
-  outline: none;
+  outline: 1px solid rgba(255, 255, 255, 0.72);
+  outline-offset: 0.34rem;
 }
 
 .info-overlay {
@@ -562,7 +562,8 @@ img {
 .trace-delete:focus-visible {
   background: rgba(255, 255, 255, 0.08);
   color: #ffffff;
-  outline: none;
+  outline: 1px solid rgba(255, 255, 255, 0.58);
+  outline-offset: 0.16rem;
 }
 
 .trace-delete-form {
@@ -860,9 +861,18 @@ img {
     padding: 1.25rem;
   }
 
-  .intro-copy {
+  .intro-brand,
+  .intro-guide {
     padding: 1.4rem 1.2rem;
     max-width: calc(100vw - 2rem);
+  }
+
+  .intro-brand {
+    top: clamp(2.6rem, 12vh, 5.2rem);
+  }
+
+  .intro-guide {
+    bottom: clamp(1.7rem, 7vh, 3.7rem);
   }
 
   .intro-subtitle {

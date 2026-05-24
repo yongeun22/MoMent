@@ -1,6 +1,6 @@
 # MoMent
 
-Quiet online photography exhibition space for the archaeology and art history department photo club.
+Quiet online photography exhibition space for MoMent, the cultural heritage photography club in the archaeology and art history department.
 
 ## Stack
 
@@ -24,7 +24,7 @@ py -m pip install -r requirements.txt
 - `app/auth.py`: password hashing and signed admin session cookies
 - `app/http_utils.py`: multipart parsing and upload validation helpers
 - `app/image_validation.py`: server-side image file validation
-- `app/guestbook.py`: public trace guestbook validation
+- `app/guestbook.py`: public trace guestbook validation and hidden deletion password verification
 - `app/public_site.py`: public photo serialization and static export helpers
 - `app/server.py`: HTTP routes for the public site, admin auth, and photo CRUD
 - `static/index.html`: public exhibition page
@@ -79,6 +79,7 @@ This creates a `dist/` folder containing:
 
 The admin page is not exported. Admin editing remains local in the Python app.
 The public trace guestbook uses `/api/traces`; on Cloudflare Pages it requires the D1 binding named `VISITS_DB`.
+Hidden trace deletion also requires a SHA-256 password hash environment variable. Use `TRACE_DELETE_PASSWORD_HASH` on Cloudflare Pages, or `MOMENT_TRACE_DELETE_PASSWORD_HASH` in local `.env`.
 
 ## Cloudflare Pages workflow
 
@@ -101,8 +102,8 @@ The public trace guestbook uses `/api/traces`; on Cloudflare Pages it requires t
 ## Notes
 
 - The public site shows metadata only on desktop hover or mobile tap.
-- The intro overlay fades out automatically after two seconds.
-- Desktop images render at their natural size until they need to scale down to fit the viewport.
+- The intro overlay stays visible until the visitor presses `입장>`, then fades into the exhibition.
+- The public exhibition uses a responsive masonry layout and shuffles photo order on each visit.
 - Uploads are stored in `uploads/`, while metadata is stored in SQLite.
 - When `MOMENT_HOST=0.0.0.0`, the server prints both the local `127.0.0.1` address and the current LAN address for same-WiFi sharing.
 - Static assets and uploaded images are cacheable, so repeated visits do not need to re-download every file from scratch.

@@ -1,9 +1,9 @@
 const stream = document.getElementById("photoStream");
 const emptyState = document.getElementById("emptyState");
 const introOverlay = document.getElementById("introOverlay");
-const introCopy = document.getElementById("introCopy");
 const introEnter = document.getElementById("introEnter");
 const siteTopbar = document.getElementById("siteTopbar");
+const exhibitionLogo = document.querySelector(".exhibition-logo");
 const lightbox = document.getElementById("lightbox");
 const lightboxContent = document.getElementById("lightboxContent");
 const lightboxImageShell = document.getElementById("lightboxImageShell");
@@ -55,15 +55,6 @@ function resetLightboxBuffer() {
 }
 document.body.classList.add("is-intro-active");
 
-function positionIntroCopy() {
-  if (!introCopy) {
-    return;
-  }
-
-  introCopy.style.setProperty("--intro-left", "50%");
-  introCopy.style.setProperty("--intro-top", "50%");
-}
-
 function fadeIntro() {
   if (!introOverlay || introOverlay.hidden) {
     return;
@@ -74,6 +65,7 @@ function fadeIntro() {
   introTimeoutId = window.setTimeout(() => {
     introOverlay.hidden = true;
     document.body.classList.remove("is-intro-active");
+    exhibitionLogo?.focus({ preventScroll: true });
   }, 950);
 }
 
@@ -208,7 +200,7 @@ async function startBackgroundAudio() {
     return;
   }
 
-  backgroundAudio.volume = 0.15;
+  backgroundAudio.volume = 0.10;
   ensureAudioSource();
 
   try {
@@ -1012,15 +1004,12 @@ document.addEventListener("keydown", (event) => {
   }
 });
 window.addEventListener("scroll", syncTopbarState, { passive: true });
-window.addEventListener("resize", positionIntroCopy, { passive: true });
 introEnter?.addEventListener("click", fadeIntro);
 audioToggle?.addEventListener("click", toggleBackgroundAudio);
 backgroundAudio?.addEventListener("play", updateAudioToggle);
 backgroundAudio?.addEventListener("pause", updateAudioToggle);
 backgroundAudio?.addEventListener("ended", playNextTrack);
 
-positionIntroCopy();
-document.fonts?.ready.then(positionIntroCopy).catch(() => {});
 introEnter?.focus({ preventScroll: true });
 syncTopbarState();
 loadPhotos();

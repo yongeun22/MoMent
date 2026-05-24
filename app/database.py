@@ -24,8 +24,6 @@ CREATE TABLE IF NOT EXISTS photos (
     date_text TEXT NOT NULL,
     location TEXT NOT NULL,
     photographer TEXT NOT NULL,
-    copyright_text TEXT NOT NULL,
-    display_order INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
 );
@@ -62,6 +60,7 @@ class Database:
         with self.connection() as connection:
             connection.executescript(SCHEMA)
             self._ensure_admin_columns(connection)
+            self._ensure_photo_columns(connection)
 
     def _ensure_admin_columns(self, connection: sqlite3.Connection) -> None:
         columns = {
@@ -72,6 +71,68 @@ class Database:
             connection.execute(
                 "ALTER TABLE admins ADD COLUMN session_version INTEGER NOT NULL DEFAULT 1"
             )
+
+    def _ensure_photo_columns(self, connection: sqlite3.Connection) -> None:
+        columns = [
+            row["name"]
+            for row in connection.execute("PRAGMA table_info(photos)").fetchall()
+        ]
+        expected_columns = [
+            "id",
+            "filename",
+            "original_name",
+            "date_text",
+            "location",
+            "photographer",
+            "created_at",
+            "updated_at",
+        ]
+        if columns == expected_columns:
+            return
+
+        if "copyright_text" not in columns and "display_order" not in columns:
+            return
+
+        connection.execute("ALTER TABLE photos RENAME TO photos_legacy")
+        connection.execute(
+            """
+            CREATE TABLE photos (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                filename TEXT NOT NULL UNIQUE,
+                original_name TEXT NOT NULL,
+                date_text TEXT NOT NULL,
+                location TEXT NOT NULL,
+                photographer TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            )
+            """
+        )
+        connection.execute(
+            """
+            INSERT INTO photos (
+                id,
+                filename,
+                original_name,
+                date_text,
+                location,
+                photographer,
+                created_at,
+                updated_at
+            )
+            SELECT
+                id,
+                filename,
+                original_name,
+                date_text,
+                location,
+                photographer,
+                created_at,
+                updated_at
+            FROM photos_legacy
+            """
+        )
+        connection.execute("DROP TABLE photos_legacy")
 
     def has_admin(self) -> bool:
         with self.connection() as connection:
@@ -161,7 +222,6 @@ class Database:
         date_text: str,
         location: str,
         photographer: str,
-        copyright_text: str,
     ) -> dict:
         timestamp = utc_now_iso()
         with self.connection() as connection:
@@ -173,11 +233,10 @@ class Database:
                     date_text,
                     location,
                     photographer,
-                    copyright_text,
                     created_at,
                     updated_at
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     filename,
@@ -185,7 +244,6 @@ class Database:
                     date_text,
                     location,
                     photographer,
-                    copyright_text,
                     timestamp,
                     timestamp,
                 ),
@@ -201,7 +259,6 @@ class Database:
         date_text: str,
         location: str,
         photographer: str,
-        copyright_text: str,
         filename: str | None = None,
         original_name: str | None = None,
     ) -> dict | None:
@@ -222,7 +279,6 @@ class Database:
                     date_text = ?,
                     location = ?,
                     photographer = ?,
-                    copyright_text = ?,
                     updated_at = ?
                 WHERE id = ?
                 """,
@@ -232,7 +288,6 @@ class Database:
                     date_text,
                     location,
                     photographer,
-                    copyright_text,
                     timestamp,
                     photo_id,
                 ),
