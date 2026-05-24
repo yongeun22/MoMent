@@ -1,8 +1,12 @@
 from __future__ import annotations
 
+from hashlib import sha256
+from hmac import compare_digest
+
 
 MAX_AFFILIATION_LENGTH = 80
 MAX_NAME_LENGTH = 40
+TRACE_DELETE_PASSWORD_HASH = "8a7177fcda2d2eefc04849818b92cdd4444b23cfa993f103c1a9577dcc9f7028"
 
 
 def normalize_guestbook_fields(payload: dict) -> dict:
@@ -22,3 +26,8 @@ def normalize_guestbook_fields(payload: dict) -> dict:
         "affiliation": affiliation,
         "name": name,
     }
+
+
+def verify_guestbook_delete_password(password: str) -> bool:
+    candidate_hash = sha256(str(password).encode("utf-8")).hexdigest()
+    return compare_digest(candidate_hash, TRACE_DELETE_PASSWORD_HASH)

@@ -15,7 +15,7 @@ import uuid
 from .auth import create_session_token, generate_salt, hash_password, verify_password, verify_session_token
 from .config import AppConfig
 from .database import Database
-from .guestbook import normalize_guestbook_fields
+from .guestbook import normalize_guestbook_fields, verify_guestbook_delete_password
 from .html_templates import render_html_template
 from .http_utils import normalize_photo_fields, parse_multipart_form, read_json, safe_relative_path
 from .image_validation import detect_image_extension
@@ -193,6 +193,10 @@ def build_handler(config: AppConfig, database: Database, secret_key: bytes):
         def _do_delete_impl(self) -> None:
             parsed = urlparse(self.path)
             path = parsed.path
+
+            if path == "/api/traces":
+                self._handle_guestbook_delete()
+                return
 
             if path.startswith("/api/admin/photos/"):
                 if not self._require_admin():
@@ -526,6 +530,40 @@ def build_handler(config: AppConfig, database: Database, secret_key: bytes):
                     "entries": database.list_guestbook_entries(),
                 },
                 status=HTTPStatus.CREATED,
+            )
+
+        def _handle_guestbook_delete(self) -> None:
+            body = self._read_body(max_bytes=20_000)
+            if body is None:
+                return
+
+            try:
+                payload = read_json(body)
+            except json.JSONDecodeError:
+                self._send_json({"error": "Invalid JSON payload."}, status=HTTPStatus.BAD_REQUEST)
+                return
+
+            try:
+                entry_id = int(payload.get("id"))
+            except (TypeError, ValueError):
+                self._send_json({"error": "Invalid trace id."}, status=HTTPStatus.BAD_REQUEST)
+                return
+
+            if not verify_guestbook_delete_password(str(payload.get("password", ""))):
+                self._send_json({"error": "Not found."}, status=HTTPStatus.NOT_FOUND)
+                return
+
+            deleted = database.delete_guestbook_entry(entry_id)
+            if not deleted:
+                self._send_json({"error": "Not found."}, status=HTTPStatus.NOT_FOUND)
+                return
+
+            self._send_json(
+                {
+                    "deleted": True,
+                    "count": database.get_guestbook_count(),
+                    "entries": database.list_guestbook_entries(),
+                },
             )
 
         def _save_upload(self, image_file: dict) -> str:

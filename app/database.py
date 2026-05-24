@@ -289,3 +289,11 @@ class Database:
                 (cursor.lastrowid,),
             ).fetchone()
         return dict(row)
+
+    def delete_guestbook_entry(self, entry_id: int) -> bool:
+        with self.connection() as connection:
+            cursor = connection.execute(
+                "DELETE FROM guestbook_entries WHERE id = ?",
+                (entry_id,),
+            )
+        return cursor.rowcount > 0

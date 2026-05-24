@@ -1,6 +1,7 @@
 const MAX_ENTRIES = 80;
 const MAX_AFFILIATION_LENGTH = 80;
 const MAX_NAME_LENGTH = 40;
+const TRACE_DELETE_PASSWORD_HASH = "8a7177fcda2d2eefc04849818b92cdd4444b23cfa993f103c1a9577dcc9f7028";
 
 function json(body, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -51,6 +52,18 @@ function validatePayload(payload) {
   }
 
   return { affiliation, name };
+}
+
+async function sha256Hex(value) {
+  const bytes = new TextEncoder().encode(String(value || ""));
+  const hashBuffer = await crypto.subtle.digest("SHA-256", bytes);
+  return [...new Uint8Array(hashBuffer)]
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+async function verifyDeletePassword(password) {
+  return (await sha256Hex(password)) === TRACE_DELETE_PASSWORD_HASH;
 }
 
 async function readPayload(request) {
@@ -132,5 +145,39 @@ export async function onRequestPost(context) {
   } catch (error) {
     console.error("Failed to create trace", error);
     return json({ error: "\uD754\uC801\uC744 \uB0A8\uAE30\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4." }, 500);
+  }
+}
+
+export async function onRequestDelete(context) {
+  try {
+    const db = getDatabase(context.env);
+    if (!db) {
+      console.error("Missing D1 binding: VISITS_DB");
+      return json({ error: "Not found." }, 404);
+    }
+
+    await ensureSchema(db);
+    const payload = await readPayload(context.request);
+    const entryId = Number.parseInt(String(payload.id || ""), 10);
+    if (!Number.isFinite(entryId) || entryId <= 0) {
+      return json({ error: "Not found." }, 404);
+    }
+
+    if (!(await verifyDeletePassword(payload.password))) {
+      return json({ error: "Not found." }, 404);
+    }
+
+    await db
+      .prepare("DELETE FROM guestbook_entries WHERE id = ?")
+      .bind(entryId)
+      .run();
+
+    return json({
+      deleted: true,
+      ...(await readEntries(db)),
+    });
+  } catch (error) {
+    console.error("Failed to delete trace", error);
+    return json({ error: "Not found." }, 404);
   }
 }
