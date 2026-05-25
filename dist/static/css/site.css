@@ -98,8 +98,8 @@ img {
   border-radius: 0;
   background: transparent;
   color: #ffffff;
-  font-size: 0.68rem;
-  letter-spacing: 0.09em;
+  font-size: 0.82rem;
+  letter-spacing: 0.07em;
   cursor: pointer;
   transition: opacity 180ms ease;
 }
@@ -127,7 +127,7 @@ img {
 
 .site-menu-separator {
   color: rgba(255, 255, 255, 0.38);
-  font-size: 0.78rem;
+  font-size: 0.9rem;
   line-height: 1;
   pointer-events: none;
   user-select: none;
@@ -805,13 +805,13 @@ img {
   .trace-trigger,
   .audio-toggle {
     padding: 0.12rem 0;
-    font-size: 0.6rem;
-    letter-spacing: 0.04em;
+    font-size: 0.66rem;
+    letter-spacing: 0.02em;
     white-space: nowrap;
   }
 
   .site-menu-separator {
-    font-size: 0.58rem;
+    font-size: 0.64rem;
   }
 
   .trace-submit {
@@ -825,13 +825,13 @@ img {
 
   .site-actions {
     grid-area: actions;
-    justify-self: start;
+    justify-self: end;
     gap: 0.34rem;
   }
 
   .site-links {
     grid-area: links;
-    justify-self: end;
+    justify-self: start;
     gap: 0.34rem;
   }
 
@@ -926,8 +926,8 @@ img {
   .contact-trigger,
   .trace-trigger,
   .audio-toggle {
-    font-size: 0.52rem;
-    letter-spacing: 0.02em;
+    font-size: 0.6rem;
+    letter-spacing: 0.01em;
   }
 
   .exhibition-logo {
@@ -936,7 +936,7 @@ img {
   }
 
   .site-menu-separator {
-    font-size: 0.52rem;
+    font-size: 0.59rem;
   }
 
   .site-credit {
