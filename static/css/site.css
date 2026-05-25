@@ -805,13 +805,13 @@ img {
   .trace-trigger,
   .audio-toggle {
     padding: 0.12rem 0;
-    font-size: 0.66rem;
-    letter-spacing: 0.02em;
+    font-size: 0.69rem;
+    letter-spacing: 0.015em;
     white-space: nowrap;
   }
 
   .site-menu-separator {
-    font-size: 0.64rem;
+    font-size: 0.67rem;
   }
 
   .trace-submit {
@@ -926,8 +926,8 @@ img {
   .contact-trigger,
   .trace-trigger,
   .audio-toggle {
-    font-size: 0.6rem;
-    letter-spacing: 0.01em;
+    font-size: 0.63rem;
+    letter-spacing: 0;
   }
 
   .exhibition-logo {
@@ -936,7 +936,7 @@ img {
   }
 
   .site-menu-separator {
-    font-size: 0.59rem;
+    font-size: 0.62rem;
   }
 
   .site-credit {
