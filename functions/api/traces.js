@@ -115,14 +115,14 @@ export async function onRequestGet(context) {
     const db = getDatabase(context.env);
     if (!db) {
       console.error("Missing D1 binding: VISITS_DB");
-      return json({ error: "\uD754\uC801\uC744 \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4." }, 503);
+      return json({ error: "\uBC29\uBA85\uB85D\uC744 \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4." }, 503);
     }
 
     await ensureSchema(db);
     return json(await readEntries(db));
   } catch (error) {
     console.error("Failed to read traces", error);
-    return json({ error: "\uD754\uC801\uC744 \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4." }, 500);
+    return json({ error: "\uBC29\uBA85\uB85D\uC744 \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4." }, 500);
   }
 }
 
@@ -131,7 +131,7 @@ export async function onRequestPost(context) {
     const db = getDatabase(context.env);
     if (!db) {
       console.error("Missing D1 binding: VISITS_DB");
-      return json({ error: "\uD754\uC801\uC744 \uB0A8\uAE30\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4." }, 503);
+      return json({ error: "\uBC29\uBA85\uB85D\uC744 \uB0A8\uAE30\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4." }, 503);
     }
 
     await ensureSchema(db);
@@ -160,7 +160,7 @@ export async function onRequestPost(context) {
     );
   } catch (error) {
     console.error("Failed to create trace", error);
-    return json({ error: "\uD754\uC801\uC744 \uB0A8\uAE30\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4." }, 500);
+    return json({ error: "\uBC29\uBA85\uB85D\uC744 \uB0A8\uAE30\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4." }, 500);
   }
 }
 

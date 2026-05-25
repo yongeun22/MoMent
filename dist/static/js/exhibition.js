@@ -668,7 +668,7 @@ function renderTraceCount(count) {
   }
 
   const safeCount = Number.isFinite(count) ? count : 0;
-  traceCountText.textContent = `\uC9C0\uAE08\uAE4C\uC9C0 ${safeCount}\uAC1C\uC758 \uD754\uC801\uC774 \uB0A8\uC558\uC2B5\uB2C8\uB2E4`;
+  traceCountText.textContent = `\uC9C0\uAE08\uAE4C\uC9C0 ${safeCount}\uAC1C\uC758 \uBC29\uBA85\uB85D\uC774 \uB0A8\uC558\uC2B5\uB2C8\uB2E4`;
 }
 
 function renderTraceList(entries) {
@@ -677,7 +677,7 @@ function renderTraceList(entries) {
   }
 
   if (!entries.length) {
-    traceList.innerHTML = `<p class="trace-empty">\uC544\uC9C1 \uB0A8\uACA8\uC9C4 \uD754\uC801\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.</p>`;
+    traceList.innerHTML = `<p class="trace-empty">\uC544\uC9C1 \uB0A8\uACA8\uC9C4 \uBC29\uBA85\uB85D\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.</p>`;
     return;
   }
 
@@ -699,7 +699,7 @@ async function loadTraces({ force = false } = {}) {
     return;
   }
 
-  setTraceStatus("\uD754\uC801\uC744 \uBD88\uB7EC\uC624\uB294 \uC911\uC785\uB2C8\uB2E4.");
+  setTraceStatus("\uBC29\uBA85\uB85D\uC744 \uBD88\uB7EC\uC624\uB294 \uC911\uC785\uB2C8\uB2E4.");
 
   try {
     const response = await fetch("/api/traces", {
@@ -707,7 +707,7 @@ async function loadTraces({ force = false } = {}) {
     });
     const payload = await response.json().catch(() => ({}));
     if (!response.ok || !Array.isArray(payload.entries)) {
-      throw new Error(payload.error || "\uD754\uC801\uC744 \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.");
+      throw new Error(payload.error || "\uBC29\uBA85\uB85D\uC744 \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.");
     }
 
     renderTraceCount(Number(payload.count || 0));
@@ -715,7 +715,7 @@ async function loadTraces({ force = false } = {}) {
     tracesLoaded = true;
     setTraceStatus("");
   } catch (error) {
-    setTraceStatus(error.message || "\uD754\uC801\uC744 \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.", true);
+    setTraceStatus(error.message || "\uBC29\uBA85\uB85D\uC744 \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.", true);
   }
 }
 
@@ -738,7 +738,7 @@ async function submitTrace(event) {
   }
 
   submitButton?.setAttribute("disabled", "disabled");
-  setTraceStatus("\uD754\uC801\uC744 \uB0A8\uAE30\uB294 \uC911\uC785\uB2C8\uB2E4.");
+  setTraceStatus("\uBC29\uBA85\uB85D\uC744 \uB0A8\uAE30\uB294 \uC911\uC785\uB2C8\uB2E4.");
 
   try {
     const response = await fetch("/api/traces", {
@@ -751,7 +751,7 @@ async function submitTrace(event) {
     });
     const result = await response.json().catch(() => ({}));
     if (!response.ok || !Array.isArray(result.entries)) {
-      throw new Error(result.error || "\uD754\uC801\uC744 \uB0A8\uAE30\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.");
+      throw new Error(result.error || "\uBC29\uBA85\uB85D\uC744 \uB0A8\uAE30\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.");
     }
 
     traceForm.reset();
@@ -760,7 +760,7 @@ async function submitTrace(event) {
     tracesLoaded = true;
     setTraceStatus("");
   } catch (error) {
-    setTraceStatus(error.message || "\uD754\uC801\uC744 \uB0A8\uAE30\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.", true);
+    setTraceStatus(error.message || "\uBC29\uBA85\uB85D\uC744 \uB0A8\uAE30\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.", true);
   } finally {
     submitButton?.removeAttribute("disabled");
   }

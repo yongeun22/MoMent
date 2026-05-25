@@ -19,8 +19,8 @@
   <meta name="twitter:image" content="https://moment-exhibition.pages.dev/static/og/moment-share.png">
   <link rel="canonical" href="https://moment-exhibition.pages.dev/">
 
-  <link rel="stylesheet" href="/static/css/site.css?v=18b2a150d9d99af4-41d8">
-  <script src="/static/js/exhibition.js?v=18b2a148dc04022c-6a13" defer></script>
+  <link rel="stylesheet" href="/static/css/site.css?v=18b2c9fc11e7e170-408d">
+  <script src="/static/js/exhibition.js?v=18b2c7e70215a8ac-6a43" defer></script>
 </head>
 <body>
   <audio
@@ -37,14 +37,7 @@
         <div class="intro-title">MoMent</div>
       </div>
       <div class="intro-guide">
-        <ul class="intro-instructions" aria-label="관람 안내">
-          <li>PC에서 관람하시면 더욱 쾌적하게 이용하실 수 있습니다.</li>
-          <li>사진을 클릭하면 확대되며, 관련 정보를 확인하실 수 있습니다.</li>
-          <li>여백을 클릭하면 원래 화면으로 돌아갑니다.</li>
-          <li>상단 메뉴를 눌러 다양한 내용을 살펴보세요.</li>
-          <li>사진은 매달 새롭게 갱신됩니다.</li>
-          <li>익숙한 장소가 있는지 찾아보세요!</li>
-        </ul>
+        <p class="intro-instructions">사진을 클릭해 감상하세요.</p>
         <button class="intro-enter" id="introEnter" type="button">입장&gt;</button>
       </div>
     </div>
@@ -97,11 +90,11 @@
       id="tracePanel"
       role="dialog"
       aria-modal="true"
-      aria-label="흔적"
+      aria-label="방명록"
     >
       <div class="trace-lines info-lines">
-        <p class="trace-title" id="traceCountText">지금까지 -개의 흔적이 남았습니다</p>
-        <p class="trace-note">한 번 남긴 흔적은 지울 수 없으니 신중하게 적어주세요.</p>
+        <p class="trace-title" id="traceCountText">지금까지 -개의 방명록이 남았습니다</p>
+        <p class="trace-note">한 번 남긴 방명록은 지울 수 없으니 신중하게 적어주세요.</p>
         <form class="trace-form" id="traceForm">
           <label class="trace-field">
             <span>학교/학과명</span>
@@ -175,7 +168,7 @@
             aria-controls="traceOverlay"
             aria-expanded="false"
           >
-            흔적
+            방명록
           </button>
           <button class="audio-toggle" id="audioToggle" type="button" aria-pressed="false">
             &#xC74C;&#xC545; OFF

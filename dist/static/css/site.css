@@ -275,34 +275,15 @@ img {
 }
 
 .intro-instructions {
-  display: grid;
-  gap: 0.42rem;
   width: min(100%, 540px);
   margin: 0;
   padding: 0;
-  list-style: none;
   color: rgba(255, 255, 255, 0.76);
   font-family: var(--meta-font);
   font-size: clamp(0.82rem, 1.25vw, 0.94rem);
   line-height: 1.62;
   letter-spacing: 0.02em;
   text-align: center;
-}
-
-.intro-instructions li {
-  position: relative;
-  padding-left: 1rem;
-  width: fit-content;
-  max-width: 100%;
-  justify-self: center;
-  text-align: left;
-}
-
-.intro-instructions li::before {
-  content: "-";
-  position: absolute;
-  left: 0;
-  color: rgba(255, 255, 255, 0.52);
 }
 
 .intro-enter {
