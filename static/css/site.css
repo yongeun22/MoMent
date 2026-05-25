@@ -217,18 +217,18 @@ img {
 }
 
 .intro-shell {
-  position: relative;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 0.86rem;
   width: min(100%, 1560px);
   min-height: 100vh;
   margin: 0 auto;
-  padding: 0.95rem clamp(0.75rem, 2vw, 1.5rem) 2.5rem;
+  padding: 2.5rem clamp(0.75rem, 2vw, 1.5rem);
 }
 
 .intro-brand,
 .intro-guide {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
   display: grid;
   justify-items: center;
   text-align: center;
@@ -238,14 +238,12 @@ img {
 }
 
 .intro-brand {
-  top: clamp(4.2rem, 18vh, 9.5rem);
-  gap: 0.34rem;
-  padding: 2rem 1.45rem;
+  gap: 0.22rem;
+  padding: 0 1.45rem;
 }
 
 .intro-guide {
-  bottom: clamp(2.7rem, 10vh, 6.6rem);
-  gap: 0.82rem;
+  gap: 0.64rem;
   padding: 0 1.45rem;
 }
 
@@ -803,16 +801,8 @@ img {
 
   .intro-brand,
   .intro-guide {
-    padding: 1.4rem 1.2rem;
+    padding: 0 1.2rem;
     max-width: calc(100vw - 2rem);
-  }
-
-  .intro-brand {
-    top: clamp(2.6rem, 12vh, 5.2rem);
-  }
-
-  .intro-guide {
-    bottom: clamp(1.7rem, 7vh, 3.7rem);
   }
 
   .intro-subtitle {
