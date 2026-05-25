@@ -198,7 +198,7 @@ async function startBackgroundAudio() {
     return;
   }
 
-  backgroundAudio.volume = 0.05;
+  backgroundAudio.volume = 0.025;
   ensureAudioSource();
 
   try {
