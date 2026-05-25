@@ -19,7 +19,7 @@
   <meta name="twitter:image" content="https://moment-exhibition.pages.dev/static/og/moment-share.png">
   <link rel="canonical" href="https://moment-exhibition.pages.dev/">
 
-  <link rel="stylesheet" href="/static/css/site.css?v=18b2d8bc8dcf4f48-42a7">
+  <link rel="stylesheet" href="/static/css/site.css?v=18b2efd965242d28-41e2">
   <script src="/static/js/exhibition.js?v=18b2d167595b5f4c-6a31" defer></script>
 </head>
 <body>
@@ -49,7 +49,7 @@
       id="historyPanel"
       role="dialog"
       aria-modal="true"
-      aria-label="&#xB3D9;&#xC544;&#xB9AC; &#xC5F0;&#xD601;"
+      aria-label="&#xC5F0;&#xD601;"
     >
       <div class="history-lines info-lines">
         <p class="history-heading info-heading">&#xACE0;&#xACE0;&#xBBF8;&#xC220;&#xC0AC;&#xD559;&#xACFC; &#xB3D9;&#xC544;&#xB9AC; MoMent</p>
@@ -131,7 +131,7 @@
 
     <header class="site-topbar" id="siteTopbar">
       <div class="site-nav-card">
-        <div class="site-links">
+        <nav class="site-menu" aria-label="&#xC804;&#xC2DC; &#xBA54;&#xB274;">
           <button
             class="history-trigger"
             id="historyTrigger"
@@ -140,8 +140,9 @@
             aria-controls="historyOverlay"
             aria-expanded="false"
           >
-            &#xB3D9;&#xC544;&#xB9AC; &#xC5F0;&#xD601;
+            &#xC5F0;&#xD601;
           </button>
+          <span class="site-menu-separator" aria-hidden="true">&#x3163;</span>
           <button
             class="contact-trigger"
             id="contactTrigger"
@@ -152,14 +153,14 @@
           >
             &#xBB38;&#xC758;
           </button>
-        </div>
+          <span class="site-menu-separator" aria-hidden="true">&#x3163;</span>
 
         <div class="site-brand">
           <a class="exhibition-logo" href="/">MoMent</a>
-          <p class="site-credit" aria-hidden="true">&#xACE0;&#xACE0;&#xBBF8;&#xC220;&#xC0AC;&#xD559;&#xACFC; &#xB3D9;&#xC544;&#xB9AC;</p>
+          <p class="site-credit" aria-hidden="true">&#xACE0;&#xACE0;&#xBBF8;&#xC220;&#xC0AC;&#xD559;&#xACFC; &#xBB38;&#xD654;&#xC720;&#xC0B0; &#xC0AC;&#xC9C4; &#xB3D9;&#xC544;&#xB9AC;</p>
         </div>
+          <span class="site-menu-separator" aria-hidden="true">&#x3163;</span>
 
-        <div class="site-actions">
           <button
             class="trace-trigger"
             id="traceTrigger"
@@ -170,10 +171,11 @@
           >
             방명록
           </button>
+          <span class="site-menu-separator" aria-hidden="true">&#x3163;</span>
           <button class="audio-toggle" id="audioToggle" type="button" aria-pressed="false">
             &#xC74C;&#xC545; OFF
           </button>
-        </div>
+        </nav>
       </div>
     </header>
 
