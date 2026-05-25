@@ -1,8 +1,30 @@
 const MAX_ENTRIES = 80;
 const MAX_AFFILIATION_LENGTH = 80;
 const MAX_NAME_LENGTH = 40;
-const FALLBACK_DELETE_PASSWORD_HASH =
-  "8a7177fcda2d2eefc04849818b92cdd4444b23cfa993f103c1a9577dcc9f7028";
+const MAX_JSON_BODY_BYTES = 2 * 1024;
+const RATE_LIMIT_WINDOW_SECONDS = 15 * 60;
+const RATE_LIMIT_MAX_SUBMISSIONS = 12;
+const BLOCKED_GUESTBOOK_TERMS = [
+  "\uC2DC\uBC1C",
+  "\uC2DC\uBE68",
+  "\uC2DC\uD314",
+  "\uC528\uBC1C",
+  "\uC528\uBE68",
+  "\uC528\uD314",
+  "\u3145\u3142",
+  "\u3146\u3142",
+  "\uC874\uB098",
+  "\u3148\u3134",
+  "\uC886",
+  "\uBCD1\uC2E0",
+  "\uBE05\uC2E0",
+  "\u3142\u3145",
+  "\uAC1C\uC0C8\uB07C",
+  "\uAC1C\uC0C9\uAE30",
+  "\uB2C8\uC560\uBBF8",
+  "\uB290\uAE08",
+];
+const MODERATION_ERROR = "\uB4F1\uB85D\uD560 \uC218 \uC5C6\uB294 \uD45C\uD604\uC774 \uD3EC\uD568\uB418\uC5B4 \uC788\uC2B5\uB2C8\uB2E4.";
 
 function json(body, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -29,10 +51,37 @@ async function ensureSchema(db) {
       )
     `)
     .run();
+  await db
+    .prepare(`
+      CREATE TABLE IF NOT EXISTS guestbook_rate_limits (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        client_key TEXT NOT NULL,
+        created_at TEXT NOT NULL
+      )
+    `)
+    .run();
+  await db
+    .prepare(`
+      CREATE INDEX IF NOT EXISTS idx_guestbook_rate_limits_client_created
+      ON guestbook_rate_limits (client_key, created_at)
+    `)
+    .run();
 }
 
 function normalizeText(value) {
   return String(value || "").trim();
+}
+
+function normalizeForModeration(value) {
+  return String(value || "")
+    .normalize("NFKC")
+    .toLowerCase()
+    .replace(/[^0-9a-z\u3131-\u318e\uac00-\ud7a3]+/g, "");
+}
+
+function hasBlockedGuestbookTerm(...values) {
+  const normalized = normalizeForModeration(values.join(" "));
+  return BLOCKED_GUESTBOOK_TERMS.some((term) => normalized.includes(term));
 }
 
 function validatePayload(payload) {
@@ -40,16 +89,19 @@ function validatePayload(payload) {
   const name = normalizeText(payload.name);
 
   if (!affiliation) {
-    return { error: "\uD559\uAD50/\uD559\uACFC\uBA85\uC740 \uD544\uC218\uC785\uB2C8\uB2E4." };
+    return { error: "\uC18C\uC18D\uC740 \uD544\uC218\uC785\uB2C8\uB2E4." };
   }
   if (!name) {
     return { error: "\uC774\uB984\uC740 \uD544\uC218\uC785\uB2C8\uB2E4." };
   }
   if (affiliation.length > MAX_AFFILIATION_LENGTH) {
-    return { error: `\uD559\uAD50/\uD559\uACFC\uBA85\uC740 ${MAX_AFFILIATION_LENGTH}\uC790 \uC774\uD558\uB85C \uC785\uB825\uD574 \uC8FC\uC138\uC694.` };
+    return { error: `\uC18C\uC18D\uC740 ${MAX_AFFILIATION_LENGTH}\uC790 \uC774\uD558\uB85C \uC785\uB825\uD574 \uC8FC\uC138\uC694.` };
   }
   if (name.length > MAX_NAME_LENGTH) {
     return { error: `\uC774\uB984\uC740 ${MAX_NAME_LENGTH}\uC790 \uC774\uD558\uB85C \uC785\uB825\uD574 \uC8FC\uC138\uC694.` };
+  }
+  if (hasBlockedGuestbookTerm(affiliation, name)) {
+    return { error: MODERATION_ERROR };
   }
 
   return { affiliation, name };
@@ -63,11 +115,30 @@ async function sha256Hex(value) {
     .join("");
 }
 
+function hexToBytes(hex) {
+  const bytes = new Uint8Array(hex.length / 2);
+  for (let index = 0; index < bytes.length; index += 1) {
+    bytes[index] = Number.parseInt(hex.slice(index * 2, index * 2 + 2), 16);
+  }
+  return bytes;
+}
+
+function constantTimeEqual(left, right) {
+  if (left.byteLength !== right.byteLength) {
+    return false;
+  }
+
+  let difference = 0;
+  for (let index = 0; index < left.byteLength; index += 1) {
+    difference |= left[index] ^ right[index];
+  }
+  return difference === 0;
+}
+
 function getDeletePasswordHash(env) {
   const candidates = [
     env?.TRACE_DELETE_PASSWORD_HASH,
     env?.MOMENT_TRACE_DELETE_PASSWORD_HASH,
-    FALLBACK_DELETE_PASSWORD_HASH,
   ];
   const configuredHash = candidates.find((value) => typeof value === "string" && value.trim().length > 0);
   return configuredHash ? configuredHash.trim().toLowerCase() : "";
@@ -75,19 +146,119 @@ function getDeletePasswordHash(env) {
 
 async function verifyDeletePassword(password, env) {
   const expectedHash = getDeletePasswordHash(env);
-  if (!expectedHash) {
+  if (!/^[a-f0-9]{64}$/.test(expectedHash)) {
     return false;
   }
 
-  return (await sha256Hex(password)) === expectedHash;
+  const candidateHash = await sha256Hex(password);
+  return constantTimeEqual(hexToBytes(candidateHash), hexToBytes(expectedHash));
+}
+
+class PayloadError extends Error {
+  constructor(message, status = 400) {
+    super(message);
+    this.status = status;
+  }
+}
+
+function validateJsonHeaders(request) {
+  const contentType = request.headers.get("Content-Type") || "";
+  if (!contentType.toLowerCase().includes("application/json")) {
+    throw new PayloadError("Invalid JSON payload.", 415);
+  }
+
+  const contentLength = request.headers.get("Content-Length");
+  if (!contentLength) {
+    return;
+  }
+
+  const parsedLength = Number.parseInt(contentLength, 10);
+  if (!Number.isFinite(parsedLength) || parsedLength < 0) {
+    throw new PayloadError("Invalid request body.", 400);
+  }
+  if (parsedLength > MAX_JSON_BODY_BYTES) {
+    throw new PayloadError("Request body is too large.", 413);
+  }
 }
 
 async function readPayload(request) {
+  validateJsonHeaders(request);
+
   try {
-    return await request.json();
+    const reader = request.body?.getReader();
+    if (!reader) {
+      return {};
+    }
+
+    let totalBytes = 0;
+    const chunks = [];
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) {
+        break;
+      }
+
+      totalBytes += value.byteLength;
+      if (totalBytes > MAX_JSON_BODY_BYTES) {
+        await reader.cancel();
+        throw new PayloadError("Request body is too large.", 413);
+      }
+      chunks.push(value);
+    }
+
+    const body = new Uint8Array(totalBytes);
+    let offset = 0;
+    for (const chunk of chunks) {
+      body.set(chunk, offset);
+      offset += chunk.byteLength;
+    }
+
+    const text = new TextDecoder().decode(body).trim();
+    if (!text) {
+      return {};
+    }
+
+    return JSON.parse(text);
   } catch (error) {
-    return {};
+    if (error instanceof PayloadError) {
+      throw error;
+    }
+    throw new PayloadError("Invalid JSON payload.", 400);
   }
+}
+
+function getClientIdentity(request) {
+  const forwardedFor = request.headers.get("CF-Connecting-IP") || request.headers.get("X-Forwarded-For") || "";
+  const userAgent = request.headers.get("User-Agent") || "";
+  return `${forwardedFor.split(",")[0].trim()}|${userAgent.slice(0, 160)}`;
+}
+
+async function enforceLooseRateLimit(db, request) {
+  const clientKey = await sha256Hex(getClientIdentity(request));
+  const now = new Date();
+  const cutoff = new Date(now.getTime() - RATE_LIMIT_WINDOW_SECONDS * 1000).toISOString();
+
+  await db
+    .prepare("DELETE FROM guestbook_rate_limits WHERE created_at < ?")
+    .bind(cutoff)
+    .run();
+
+  const row = await db
+    .prepare("SELECT COUNT(*) AS total FROM guestbook_rate_limits WHERE client_key = ? AND created_at >= ?")
+    .bind(clientKey, cutoff)
+    .first();
+
+  if (Number(row?.total || 0) >= RATE_LIMIT_MAX_SUBMISSIONS) {
+    return false;
+  }
+
+  await db
+    .prepare("INSERT INTO guestbook_rate_limits (client_key, created_at) VALUES (?, ?)")
+    .bind(clientKey, now.toISOString())
+    .run();
+
+  return true;
 }
 
 async function readEntries(db) {
@@ -141,6 +312,10 @@ export async function onRequestPost(context) {
       return json({ error: normalized.error }, 400);
     }
 
+    if (!(await enforceLooseRateLimit(db, context.request))) {
+      return json({ error: "\uC7A0\uC2DC \uD6C4 \uB2E4\uC2DC \uB0A8\uACA8\uC8FC\uC138\uC694." }, 429);
+    }
+
     const createdAt = new Date().toISOString();
     const entry = await db
       .prepare(`
@@ -159,6 +334,9 @@ export async function onRequestPost(context) {
       201,
     );
   } catch (error) {
+    if (error instanceof PayloadError) {
+      return json({ error: error.message }, error.status);
+    }
     console.error("Failed to create trace", error);
     return json({ error: "\uBC29\uBA85\uB85D\uC744 \uB0A8\uAE30\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4." }, 500);
   }
@@ -193,6 +371,9 @@ export async function onRequestDelete(context) {
       ...(await readEntries(db)),
     });
   } catch (error) {
+    if (error instanceof PayloadError) {
+      return json({ error: "Not found." }, 404);
+    }
     console.error("Failed to delete trace", error);
     return json({ error: "Not found." }, 404);
   }

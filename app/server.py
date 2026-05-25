@@ -9,13 +9,20 @@ import json
 import logging
 import mimetypes
 import socket
+import time
 import traceback
 import uuid
 
 from .auth import create_session_token, generate_salt, hash_password, verify_password, verify_session_token
 from .config import AppConfig
 from .database import Database
-from .guestbook import normalize_guestbook_fields, verify_guestbook_delete_password
+from .guestbook import (
+    MAX_GUESTBOOK_BODY_BYTES,
+    guestbook_rate_limit_key,
+    normalize_guestbook_fields,
+    record_guestbook_submission,
+    verify_guestbook_delete_password,
+)
 from .html_templates import render_html_template
 from .http_utils import normalize_photo_fields, parse_multipart_form, read_json, safe_relative_path
 from .image_validation import detect_image_extension
@@ -63,6 +70,8 @@ def bootstrap_admin(config: AppConfig, database: Database) -> None:
     )
 
 def build_handler(config: AppConfig, database: Database, secret_key: bytes):
+    guestbook_submission_times: dict[str, list[float]] = {}
+
     class MomentRequestHandler(BaseHTTPRequestHandler):
         protocol_version = "HTTP/1.1"
         server_version = "MoMentHTTP/1.1"
@@ -75,6 +84,12 @@ def build_handler(config: AppConfig, database: Database, secret_key: bytes):
 
         def do_DELETE(self) -> None:
             self._safe_dispatch(self._do_delete_impl)
+
+        def handle(self) -> None:
+            try:
+                super().handle()
+            except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
+                LOGGER.info("Client disconnected during %s %s", getattr(self, "command", "-"), getattr(self, "path", "-"))
 
         def _do_get_impl(self) -> None:
             parsed = urlparse(self.path)
@@ -270,6 +285,9 @@ def build_handler(config: AppConfig, database: Database, secret_key: bytes):
                 return None
 
             return self.rfile.read(length)
+
+        def _is_json_request(self) -> bool:
+            return "application/json" in self.headers.get("Content-Type", "").lower()
 
         def _handle_login(self) -> None:
             if not database.has_admin():
@@ -502,8 +520,19 @@ def build_handler(config: AppConfig, database: Database, secret_key: bytes):
                 "entries": database.list_guestbook_entries(),
             }
 
+        def _allow_guestbook_submission(self) -> bool:
+            client_ip = self.client_address[0] if self.client_address else ""
+            user_agent = self.headers.get("User-Agent", "")
+            key = guestbook_rate_limit_key(client_ip, user_agent)
+            timestamps = guestbook_submission_times.setdefault(key, [])
+            return record_guestbook_submission(timestamps, time.monotonic())
+
         def _handle_guestbook_create(self) -> None:
-            body = self._read_body(max_bytes=20_000)
+            if not self._is_json_request():
+                self._send_json({"error": "Invalid JSON payload."}, status=HTTPStatus.UNSUPPORTED_MEDIA_TYPE)
+                return
+
+            body = self._read_body(max_bytes=MAX_GUESTBOOK_BODY_BYTES)
             if body is None:
                 return
 
@@ -515,6 +544,13 @@ def build_handler(config: AppConfig, database: Database, secret_key: bytes):
                 return
             except ValueError as exc:
                 self._send_json({"error": str(exc)}, status=HTTPStatus.BAD_REQUEST)
+                return
+
+            if not self._allow_guestbook_submission():
+                self._send_json(
+                    {"error": "\uC7A0\uC2DC \uD6C4 \uB2E4\uC2DC \uB0A8\uACA8\uC8FC\uC138\uC694."},
+                    status=HTTPStatus.TOO_MANY_REQUESTS,
+                )
                 return
 
             entry = database.create_guestbook_entry(
@@ -531,7 +567,11 @@ def build_handler(config: AppConfig, database: Database, secret_key: bytes):
             )
 
         def _handle_guestbook_delete(self) -> None:
-            body = self._read_body(max_bytes=20_000)
+            if not self._is_json_request():
+                self._send_json({"error": "Invalid JSON payload."}, status=HTTPStatus.UNSUPPORTED_MEDIA_TYPE)
+                return
+
+            body = self._read_body(max_bytes=MAX_GUESTBOOK_BODY_BYTES)
             if body is None:
                 return
 

@@ -156,6 +156,12 @@ def export_static_site(
     (output_dir / "_headers").write_text(
         "\n".join(
             [
+                "/*",
+                "  X-Content-Type-Options: nosniff",
+                "  Referrer-Policy: strict-origin-when-cross-origin",
+                "  X-Frame-Options: DENY",
+                "  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()",
+                "",
                 "/static/css/*",
                 "  Cache-Control: public, max-age=31536000, immutable",
                 "",

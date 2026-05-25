@@ -79,7 +79,9 @@ This creates a `dist/` folder containing:
 
 The admin page is not exported. Admin editing remains local in the Python app.
 The public trace guestbook uses `/api/traces`; on Cloudflare Pages it requires the D1 binding named `VISITS_DB`.
-Hidden trace deletion also requires a SHA-256 password hash environment variable. Use `TRACE_DELETE_PASSWORD_HASH` on Cloudflare Pages, or `MOMENT_TRACE_DELETE_PASSWORD_HASH` in local `.env`.
+Hidden trace deletion also requires a SHA-256 password hash environment variable. Use `TRACE_DELETE_PASSWORD_HASH` on Cloudflare Pages, or `MOMENT_TRACE_DELETE_PASSWORD_HASH` in local `.env`. No fallback deletion password is stored in source code.
+Guestbook submissions are lightly rate-limited to reduce accidental spam without limiting total stored entries.
+Guestbook moderation uses a conservative blocked-terms list for clear profanity while avoiding broad filters that could block ordinary names.
 
 ## Cloudflare Pages workflow
 

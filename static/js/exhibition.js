@@ -733,7 +733,7 @@ async function submitTrace(event) {
   };
 
   if (!payload.affiliation || !payload.name) {
-    setTraceStatus("\uD559\uAD50/\uD559\uACFC\uBA85\uACFC \uC774\uB984\uC744 \uBAA8\uB450 \uC785\uB825\uD574 \uC8FC\uC138\uC694.", true);
+    setTraceStatus("\uC18C\uC18D\uACFC \uC774\uB984\uC744 \uBAA8\uB450 \uC785\uB825\uD574 \uC8FC\uC138\uC694.", true);
     return;
   }
 
