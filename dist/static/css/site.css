@@ -208,17 +208,6 @@ img {
   opacity: 0.78;
 }
 
-.site-credit {
-  display: none;
-}
-
-.site-topbar.is-compact .site-credit {
-  opacity: 0;
-  max-height: 0;
-  transform: translate(-50%, -0.3rem);
-  overflow: hidden;
-}
-
 .intro-overlay {
   position: fixed;
   inset: 0;
@@ -828,11 +817,6 @@ img {
     letter-spacing: 0.1em;
   }
 
-  .site-credit {
-    font-size: 0.58rem;
-    letter-spacing: 0.11em;
-  }
-
   .info-overlay {
     padding: 1.25rem;
   }
@@ -925,11 +909,6 @@ img {
 
   .site-menu-separator {
     font-size: 0.62rem;
-  }
-
-  .site-credit {
-    font-size: 0.54rem;
-    letter-spacing: 0.08em;
   }
 
   .exhibition-stream {
