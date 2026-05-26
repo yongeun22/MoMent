@@ -184,6 +184,7 @@ img {
   justify-content: center;
   text-align: center;
   min-width: 0;
+  transform: translateY(-0.12rem);
 }
 
 .exhibition-logo {
@@ -821,6 +822,7 @@ img {
 
   .site-brand {
     grid-area: brand;
+    transform: none;
   }
 
   .site-actions {
