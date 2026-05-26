@@ -184,7 +184,6 @@ img {
   justify-content: center;
   text-align: center;
   min-width: 0;
-  transform: translateY(-0.24rem);
 }
 
 .exhibition-logo {
@@ -210,19 +209,7 @@ img {
 }
 
 .site-credit {
-  position: absolute;
-  top: calc(100% + 0.28rem);
-  left: 50%;
-  margin: 0;
-  max-height: 2rem;
-  font-size: 0.66rem;
-  letter-spacing: 0.14em;
-  color: rgba(255, 255, 255, 0.68);
-  pointer-events: none;
-  user-select: none;
-  transform: translateX(-50%);
-  white-space: nowrap;
-  transition: opacity 260ms ease, transform 260ms ease, max-height 260ms ease;
+  display: none;
 }
 
 .site-topbar.is-compact .site-credit {
@@ -822,7 +809,6 @@ img {
 
   .site-brand {
     grid-area: brand;
-    transform: none;
   }
 
   .site-actions {
