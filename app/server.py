@@ -111,6 +111,10 @@ def build_handler(config: AppConfig, database: Database, secret_key: bytes):
                 self._send_json(self._guestbook_payload())
                 return
 
+            if path == "/api/visits":
+                self._send_json({"count": database.get_visit_count()})
+                return
+
             if path == "/data/photos.json":
                 self._send_json(build_public_payload(database, config.uploads_dir))
                 return
@@ -177,6 +181,10 @@ def build_handler(config: AppConfig, database: Database, secret_key: bytes):
 
             if path == "/api/traces":
                 self._handle_guestbook_create()
+                return
+
+            if path == "/api/visits":
+                self._send_json({"count": database.record_visit()}, status=HTTPStatus.CREATED)
                 return
 
             if path == "/api/admin/logout":

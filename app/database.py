@@ -34,6 +34,12 @@ CREATE TABLE IF NOT EXISTS guestbook_entries (
     name TEXT NOT NULL,
     created_at TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS site_visit_counter (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    count INTEGER NOT NULL DEFAULT 0,
+    updated_at TEXT NOT NULL
+);
 """
 
 
@@ -324,6 +330,35 @@ class Database:
                 "SELECT COUNT(*) AS total FROM guestbook_entries",
             ).fetchone()
         return int(row["total"]) if row else 0
+
+    def get_visit_count(self) -> int:
+        with self.connection() as connection:
+            row = connection.execute(
+                "SELECT count FROM site_visit_counter WHERE id = 1",
+            ).fetchone()
+        return int(row["count"]) if row else 0
+
+    def record_visit(self) -> int:
+        timestamp = utc_now_iso()
+        with self.connection() as connection:
+            connection.execute(
+                """
+                INSERT INTO site_visit_counter (id, count, updated_at)
+                VALUES (1, 0, ?)
+                ON CONFLICT(id) DO NOTHING
+                """,
+                (timestamp,),
+            )
+            row = connection.execute(
+                """
+                UPDATE site_visit_counter
+                SET count = count + 1, updated_at = ?
+                WHERE id = 1
+                RETURNING count
+                """,
+                (timestamp,),
+            ).fetchone()
+        return int(row["count"]) if row else self.get_visit_count()
 
     def create_guestbook_entry(self, *, affiliation: str, name: str) -> dict:
         timestamp = utc_now_iso()

@@ -23,6 +23,8 @@ const traceForm = document.getElementById("traceForm");
 const traceCountText = document.getElementById("traceCountText");
 const traceList = document.getElementById("traceList");
 const traceStatus = document.getElementById("traceStatus");
+const visitorCount = document.getElementById("visitorCount");
+const visitorSeparator = document.querySelector(".site-visitor-separator");
 const backgroundAudio = document.getElementById("backgroundAudio");
 const audioToggle = document.getElementById("audioToggle");
 const hoverQuery = window.matchMedia("(hover: hover) and (pointer: fine)");
@@ -182,6 +184,7 @@ function bindAudioUnlock() {
 
 function runNonCriticalTasks() {
   const execute = () => {
+    recordVisit();
     startBackgroundAudio();
   };
 
@@ -599,6 +602,33 @@ function openInfoOverlay(overlay, trigger, bodyClass, closeTimeoutId) {
   window.requestAnimationFrame(() => {
     overlay.classList.add("is-visible");
   });
+}
+
+async function recordVisit() {
+  try {
+    const response = await fetch("/api/visits", {
+      method: "POST",
+      headers: { Accept: "application/json" },
+      keepalive: true,
+    });
+    if (!response.ok) {
+      return;
+    }
+
+    const payload = await response.json();
+    const count = Number(payload.count || 0);
+    if (!visitorCount || !Number.isFinite(count) || count <= 0) {
+      return;
+    }
+
+    visitorCount.textContent = `방문자 ${count.toLocaleString("ko-KR")}`;
+    visitorCount.hidden = false;
+    if (visitorSeparator) {
+      visitorSeparator.hidden = false;
+    }
+  } catch (error) {
+    // Visit counting should never block the exhibition UI.
+  }
 }
 
 function closeInfoOverlay(overlay, trigger, bodyClass, closeTimeoutId, setCloseTimeoutId) {

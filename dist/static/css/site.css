@@ -91,7 +91,8 @@ img {
 .history-trigger,
 .contact-trigger,
 .trace-trigger,
-.audio-toggle {
+.audio-toggle,
+.site-visitor-count {
   margin: 0;
   padding: 0.18rem 0;
   border: 0;
@@ -102,6 +103,17 @@ img {
   letter-spacing: 0.07em;
   cursor: pointer;
   transition: opacity 180ms ease;
+}
+
+.site-visitor-count {
+  cursor: default;
+  pointer-events: none;
+  user-select: none;
+}
+
+.site-visitor-count[hidden],
+.site-visitor-separator[hidden] {
+  display: none;
 }
 
 .trace-submit {
@@ -785,6 +797,11 @@ img {
     font-size: 0.69rem;
     letter-spacing: 0.015em;
     white-space: nowrap;
+  }
+
+  .site-visitor-count,
+  .site-visitor-separator {
+    display: none;
   }
 
   .site-menu-separator {
