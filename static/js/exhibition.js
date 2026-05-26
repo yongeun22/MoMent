@@ -621,7 +621,7 @@ async function recordVisit() {
       return;
     }
 
-    visitorCount.textContent = `방문자 ${count.toLocaleString("ko-KR")}`;
+    visitorCount.textContent = `\uBC29\uBB38\uC790 ${count.toLocaleString("ko-KR")}`;
     visitorCount.hidden = false;
     if (visitorSeparator) {
       visitorSeparator.hidden = false;
