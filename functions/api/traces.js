@@ -281,6 +281,17 @@ async function readEntries(db) {
   };
 }
 
+async function applyOneOffCorrections(db) {
+  await db
+    .prepare(`
+      UPDATE guestbook_entries
+      SET name = ?
+      WHERE id = ? AND affiliation = ? AND name = ?
+    `)
+    .bind("부선장 허키", 32, "하키포키스튜디오", "부선장 허키시바세키")
+    .run();
+}
+
 export async function onRequestGet(context) {
   try {
     const db = getDatabase(context.env);
@@ -290,6 +301,7 @@ export async function onRequestGet(context) {
     }
 
     await ensureSchema(db);
+    await applyOneOffCorrections(db);
     return json(await readEntries(db));
   } catch (error) {
     console.error("Failed to read traces", error);
