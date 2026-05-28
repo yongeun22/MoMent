@@ -890,6 +890,28 @@
       "photographer": "25 이선혜",
       "createdAt": "2026-05-28T03:31:57+00:00",
       "updatedAt": "2026-05-28T03:31:57+00:00"
+    },
+    {
+      "id": 101,
+      "imageUrl": "/uploads/display/41fa162a0ad247348957b2e7648159ee.webp",
+      "lightboxUrl": "/uploads/lightbox/41fa162a0ad247348957b2e7648159ee.webp",
+      "originalName": "20241224.jpg",
+      "date": "2024.12.24.",
+      "location": "경주 감은사지",
+      "photographer": "24 신용은",
+      "createdAt": "2026-05-28T05:19:15+00:00",
+      "updatedAt": "2026-05-28T05:19:15+00:00"
+    },
+    {
+      "id": 102,
+      "imageUrl": "/uploads/display/a02fcabdbfd6454980daaaa17c8dc251.webp",
+      "lightboxUrl": "/uploads/lightbox/a02fcabdbfd6454980daaaa17c8dc251.webp",
+      "originalName": "20250226.jpg",
+      "date": "2025.02.26.",
+      "location": "경주 감은사지",
+      "photographer": "24 신용은",
+      "createdAt": "2026-05-28T05:19:30+00:00",
+      "updatedAt": "2026-05-28T05:19:30+00:00"
     }
   ]
 }
