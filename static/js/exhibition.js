@@ -65,7 +65,6 @@ function fadeIntro() {
   introTimeoutId = window.setTimeout(() => {
     introOverlay.hidden = true;
     document.body.classList.remove("is-intro-active");
-    exhibitionLogo?.focus({ preventScroll: true });
   }, 950);
 }
 

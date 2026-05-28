@@ -310,8 +310,8 @@ class Database:
             connection.execute("DELETE FROM photos WHERE id = ?", (photo_id,))
         return current
 
-    def list_guestbook_entries(self, *, limit: int = 80) -> list[dict]:
-        safe_limit = max(1, min(int(limit), 100))
+    def list_guestbook_entries(self, *, limit: int = 200) -> list[dict]:
+        safe_limit = max(1, min(int(limit), 200))
         with self.connection() as connection:
             rows = connection.execute(
                 """

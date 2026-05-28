@@ -413,9 +413,11 @@ img {
 
 .trace-panel {
   width: min(100%, 660px);
-  max-height: min(78vh, 760px);
+  max-height: min(calc(100dvh - 4rem), 760px);
   overflow: auto;
+  overscroll-behavior: contain;
   scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
 }
 
 .trace-title {
@@ -505,6 +507,7 @@ img {
   gap: 0.5rem;
   width: min(100%, 500px);
   margin: 0 auto;
+  padding-bottom: 0.3rem;
 }
 
 .trace-entry,
@@ -836,6 +839,10 @@ img {
 
   .info-overlay {
     padding: 1.25rem;
+  }
+
+  .trace-panel {
+    max-height: calc(100dvh - 2.5rem);
   }
 
   .intro-brand,
