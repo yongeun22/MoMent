@@ -912,6 +912,61 @@
       "photographer": "24 신용은",
       "createdAt": "2026-05-28T05:19:30+00:00",
       "updatedAt": "2026-05-28T05:19:30+00:00"
+    },
+    {
+      "id": 103,
+      "imageUrl": "/uploads/display/7ed1fd0d38734c46968bf9e23fe961b5.webp",
+      "lightboxUrl": "/uploads/lightbox/7ed1fd0d38734c46968bf9e23fe961b5.webp",
+      "originalName": "영주 부석사 무량수전 20260326.jpg",
+      "date": "2026.03.26.",
+      "location": "영주 부석사",
+      "photographer": "26 전하늘",
+      "createdAt": "2026-05-29T17:15:16+00:00",
+      "updatedAt": "2026-05-29T17:15:16+00:00"
+    },
+    {
+      "id": 104,
+      "imageUrl": "/uploads/display/ac2b5057ace440778c1dfa57a91a4033.webp",
+      "lightboxUrl": "/uploads/lightbox/ac2b5057ace440778c1dfa57a91a4033.webp",
+      "originalName": "안동 도산서원 20260326.jpg",
+      "date": "2026.03.26.",
+      "location": "안동 도산서원",
+      "photographer": "26 전하늘",
+      "createdAt": "2026-05-29T17:15:25+00:00",
+      "updatedAt": "2026-05-29T17:15:25+00:00"
+    },
+    {
+      "id": 105,
+      "imageUrl": "/uploads/display/78998adc7bc5431bb57d10807b74e808.webp",
+      "lightboxUrl": "/uploads/lightbox/78998adc7bc5431bb57d10807b74e808.webp",
+      "originalName": "부여 정림사지 5층 석탑 20260502.jpg",
+      "date": "2026.05.02.",
+      "location": "부여 정림사지",
+      "photographer": "26 전하늘",
+      "createdAt": "2026-05-29T17:15:37+00:00",
+      "updatedAt": "2026-05-29T17:15:37+00:00"
+    },
+    {
+      "id": 106,
+      "imageUrl": "/uploads/display/7b80152933fe474bb6e8e55b2cef3c9f.webp",
+      "lightboxUrl": "/uploads/lightbox/7b80152933fe474bb6e8e55b2cef3c9f.webp",
+      "originalName": "동국대학교 20260514.jpg",
+      "date": "2026.05.14.",
+      "location": "동국대학교 WISE캠퍼스",
+      "photographer": "26 전하늘",
+      "createdAt": "2026-05-29T17:15:52+00:00",
+      "updatedAt": "2026-05-29T17:15:52+00:00"
+    },
+    {
+      "id": 107,
+      "imageUrl": "/uploads/display/778015e44cd6413e8dfbff39c6e945e4.webp",
+      "lightboxUrl": "/uploads/lightbox/778015e44cd6413e8dfbff39c6e945e4.webp",
+      "originalName": "논산 반야사 20260201.jpg",
+      "date": "2026.02.01.",
+      "location": "논산 반야사",
+      "photographer": "26 전하늘",
+      "createdAt": "2026-05-29T17:16:17+00:00",
+      "updatedAt": "2026-05-29T17:16:17+00:00"
     }
   ]
 }
