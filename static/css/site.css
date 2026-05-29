@@ -412,12 +412,42 @@ img {
 }
 
 .trace-panel {
+  position: relative;
   width: min(100%, 660px);
   max-height: min(calc(100dvh - 4rem), 760px);
   overflow: auto;
   overscroll-behavior: contain;
   scrollbar-width: thin;
   -webkit-overflow-scrolling: touch;
+}
+
+.trace-close {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  display: grid;
+  place-items: center;
+  width: 2.15rem;
+  height: 2.15rem;
+  margin: -0.35rem -0.35rem 0.35rem auto;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.68);
+  color: #ffffff;
+  font: inherit;
+  font-size: 1.45rem;
+  font-weight: 400;
+  line-height: 1;
+  cursor: pointer;
+  transition: border-color 180ms ease, background 180ms ease, transform 180ms ease;
+}
+
+.trace-close:hover,
+.trace-close:focus-visible {
+  border-color: rgba(255, 255, 255, 0.46);
+  background: rgba(0, 0, 0, 0.82);
+  transform: translateY(-1px);
+  outline: none;
 }
 
 .trace-title {
@@ -843,6 +873,13 @@ img {
 
   .trace-panel {
     max-height: calc(100dvh - 2.5rem);
+  }
+
+  .trace-close {
+    width: 2rem;
+    height: 2rem;
+    margin: -0.2rem -0.2rem 0.32rem auto;
+    font-size: 1.28rem;
   }
 
   .intro-brand,

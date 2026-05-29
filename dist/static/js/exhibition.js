@@ -19,6 +19,7 @@ const contactPanel = document.getElementById("contactPanel");
 const traceTrigger = document.getElementById("traceTrigger");
 const traceOverlay = document.getElementById("traceOverlay");
 const tracePanel = document.getElementById("tracePanel");
+const traceClose = document.getElementById("traceClose");
 const traceForm = document.getElementById("traceForm");
 const traceCountText = document.getElementById("traceCountText");
 const traceList = document.getElementById("traceList");
@@ -957,6 +958,7 @@ traceOverlay?.addEventListener("click", (event) => {
 tracePanel?.addEventListener("click", (event) => {
   event.stopPropagation();
 });
+traceClose?.addEventListener("click", closeTraceOverlay);
 traceForm?.addEventListener("submit", submitTrace);
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") {

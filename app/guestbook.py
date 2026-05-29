@@ -35,6 +35,16 @@ BLOCKED_GUESTBOOK_TERMS = (
     "니애미",
     "느금",
 )
+REMOVED_GUESTBOOK_ENTRIES = (
+    {
+        "affiliation": "\uB178\uBB34\uD604",
+        "name": "\uC800\uB294....\uC0B4\uC544\uC788\uC2B5\uB2C8\uB2E4",
+    },
+    {
+        "affiliation": "\uB3D9\uACE0\uBABD",
+        "name": "\uAC04\uC9C0\uB7FD\uB2E4",
+    },
+)
 MODERATION_ERROR = "\uB4F1\uB85D\uD560 \uC218 \uC5C6\uB294 \uD45C\uD604\uC774 \uD3EC\uD568\uB418\uC5B4 \uC788\uC2B5\uB2C8\uB2E4."
 
 
@@ -45,6 +55,13 @@ def normalize_for_moderation(value: str) -> str:
 def has_blocked_guestbook_term(*values: str) -> bool:
     normalized = normalize_for_moderation(" ".join(values))
     return any(term in normalized for term in BLOCKED_GUESTBOOK_TERMS)
+
+
+def is_removed_guestbook_entry(affiliation: str, name: str) -> bool:
+    return any(
+        entry["affiliation"] == affiliation and entry["name"] == name
+        for entry in REMOVED_GUESTBOOK_ENTRIES
+    )
 
 
 def normalize_guestbook_fields(payload: dict) -> dict:
@@ -60,6 +77,8 @@ def normalize_guestbook_fields(payload: dict) -> dict:
     if len(name) > MAX_NAME_LENGTH:
         raise ValueError(f"\uC774\uB984\uC740 {MAX_NAME_LENGTH}\uC790 \uC774\uD558\uB85C \uC785\uB825\uD574 \uC8FC\uC138\uC694.")
     if has_blocked_guestbook_term(affiliation, name):
+        raise ValueError(MODERATION_ERROR)
+    if is_removed_guestbook_entry(affiliation, name):
         raise ValueError(MODERATION_ERROR)
 
     return {

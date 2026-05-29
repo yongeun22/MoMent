@@ -24,6 +24,16 @@ const BLOCKED_GUESTBOOK_TERMS = [
   "\uB2C8\uC560\uBBF8",
   "\uB290\uAE08",
 ];
+const REMOVED_GUESTBOOK_ENTRIES = [
+  {
+    affiliation: "\uB178\uBB34\uD604",
+    name: "\uC800\uB294....\uC0B4\uC544\uC788\uC2B5\uB2C8\uB2E4",
+  },
+  {
+    affiliation: "\uB3D9\uACE0\uBABD",
+    name: "\uAC04\uC9C0\uB7FD\uB2E4",
+  },
+];
 const MODERATION_ERROR = "\uB4F1\uB85D\uD560 \uC218 \uC5C6\uB294 \uD45C\uD604\uC774 \uD3EC\uD568\uB418\uC5B4 \uC788\uC2B5\uB2C8\uB2E4.";
 
 function json(body, status = 200) {
@@ -68,6 +78,16 @@ async function ensureSchema(db) {
     .run();
 }
 
+async function removeModeratedEntries(db) {
+  await db.batch(
+    REMOVED_GUESTBOOK_ENTRIES.map((entry) =>
+      db
+        .prepare("DELETE FROM guestbook_entries WHERE affiliation = ? AND name = ?")
+        .bind(entry.affiliation, entry.name),
+    ),
+  );
+}
+
 function normalizeText(value) {
   return String(value || "").trim();
 }
@@ -82,6 +102,12 @@ function normalizeForModeration(value) {
 function hasBlockedGuestbookTerm(...values) {
   const normalized = normalizeForModeration(values.join(" "));
   return BLOCKED_GUESTBOOK_TERMS.some((term) => normalized.includes(term));
+}
+
+function isRemovedGuestbookEntry(affiliation, name) {
+  return REMOVED_GUESTBOOK_ENTRIES.some(
+    (entry) => entry.affiliation === affiliation && entry.name === name,
+  );
 }
 
 function validatePayload(payload) {
@@ -101,6 +127,9 @@ function validatePayload(payload) {
     return { error: `\uC774\uB984\uC740 ${MAX_NAME_LENGTH}\uC790 \uC774\uD558\uB85C \uC785\uB825\uD574 \uC8FC\uC138\uC694.` };
   }
   if (hasBlockedGuestbookTerm(affiliation, name)) {
+    return { error: MODERATION_ERROR };
+  }
+  if (isRemovedGuestbookEntry(affiliation, name)) {
     return { error: MODERATION_ERROR };
   }
 
@@ -290,6 +319,7 @@ export async function onRequestGet(context) {
     }
 
     await ensureSchema(db);
+    await removeModeratedEntries(db);
     return json(await readEntries(db));
   } catch (error) {
     console.error("Failed to read traces", error);
@@ -306,6 +336,7 @@ export async function onRequestPost(context) {
     }
 
     await ensureSchema(db);
+    await removeModeratedEntries(db);
     const payload = await readPayload(context.request);
     const normalized = validatePayload(payload);
     if (normalized.error) {
