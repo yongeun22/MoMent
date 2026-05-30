@@ -1,17 +1,6 @@
 {
   "photos": [
     {
-      "id": 14,
-      "imageUrl": "/uploads/display/05c6245a851441c7bfac90965630eb9e.webp",
-      "lightboxUrl": "/uploads/lightbox/05c6245a851441c7bfac90965630eb9e.webp",
-      "originalName": "당진왜목마을.jpg",
-      "date": "2026.01.01.",
-      "location": "당진 왜목마을",
-      "photographer": "24 신용은",
-      "createdAt": "2026-04-01T12:47:01+00:00",
-      "updatedAt": "2026-04-01T17:34:47+00:00"
-    },
-    {
       "id": 15,
       "imageUrl": "/uploads/display/9d4a89ad80ae41a59dd92358c06858a3.webp",
       "lightboxUrl": "/uploads/lightbox/9d4a89ad80ae41a59dd92358c06858a3.webp",
@@ -76,17 +65,6 @@
       "photographer": "24 신용은",
       "createdAt": "2026-04-01T13:13:37+00:00",
       "updatedAt": "2026-04-01T17:35:04+00:00"
-    },
-    {
-      "id": 26,
-      "imageUrl": "/uploads/display/0799210b3c99446ab127ef6bda66a34d.webp",
-      "lightboxUrl": "/uploads/lightbox/0799210b3c99446ab127ef6bda66a34d.webp",
-      "originalName": "251123 교촌.jpg",
-      "date": "2025.11.23.",
-      "location": "경주 교촌마을",
-      "photographer": "24 신용은",
-      "createdAt": "2026-04-01T13:13:58+00:00",
-      "updatedAt": "2026-04-01T17:35:10+00:00"
     },
     {
       "id": 27,
@@ -967,6 +945,17 @@
       "photographer": "26 전하늘",
       "createdAt": "2026-05-29T17:16:17+00:00",
       "updatedAt": "2026-05-29T17:16:17+00:00"
+    },
+    {
+      "id": 108,
+      "imageUrl": "/uploads/display/c1b6114ea3f54217a46e0853d3ce0215.webp",
+      "lightboxUrl": "/uploads/lightbox/c1b6114ea3f54217a46e0853d3ce0215.webp",
+      "originalName": "IMG_4549.jpg",
+      "date": "2026.05.29.",
+      "location": "국립경주박물관",
+      "photographer": "24 신용은",
+      "createdAt": "2026-05-30T14:35:37+00:00",
+      "updatedAt": "2026-05-30T14:35:37+00:00"
     }
   ]
 }
