@@ -328,6 +328,20 @@ img {
   outline-offset: 0.34rem;
 }
 
+.intro-updated {
+  margin: -0.12rem 0 0;
+  color: rgba(255, 255, 255, 0.48);
+  font-family: var(--meta-font);
+  font-size: clamp(0.66rem, 1vw, 0.76rem);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  line-height: 1.45;
+}
+
+.intro-updated[hidden] {
+  display: none;
+}
+
 .info-overlay {
   position: fixed;
   inset: 0;

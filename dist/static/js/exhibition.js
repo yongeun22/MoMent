@@ -2,6 +2,7 @@ const stream = document.getElementById("photoStream");
 const emptyState = document.getElementById("emptyState");
 const introOverlay = document.getElementById("introOverlay");
 const introEnter = document.getElementById("introEnter");
+const statusUpdated = document.getElementById("statusUpdated");
 const siteTopbar = document.getElementById("siteTopbar");
 const exhibitionLogo = document.querySelector(".exhibition-logo");
 const lightbox = document.getElementById("lightbox");
@@ -184,6 +185,7 @@ function bindAudioUnlock() {
 
 function runNonCriticalTasks() {
   const execute = () => {
+    loadStatusUpdate();
     recordVisit();
     startBackgroundAudio();
   };
@@ -194,6 +196,50 @@ function runNonCriticalTasks() {
   }
 
   window.setTimeout(execute, 320);
+}
+
+function formatKoreanUpdateTime(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  const formatter = new Intl.DateTimeFormat("ko-KR", {
+    timeZone: "Asia/Seoul",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+  const parts = Object.fromEntries(formatter.formatToParts(date).map((part) => [part.type, part.value]));
+  return `${parts.month}/${parts.day} ${parts.hour}시:${parts.minute}분`;
+}
+
+async function loadStatusUpdate() {
+  if (!statusUpdated) {
+    return;
+  }
+
+  try {
+    const response = await fetch("/api/status-update", {
+      headers: { Accept: "application/json" },
+    });
+    if (!response.ok) {
+      return;
+    }
+
+    const payload = await response.json();
+    const formatted = formatKoreanUpdateTime(payload.updatedAt);
+    if (!formatted) {
+      return;
+    }
+
+    statusUpdated.textContent = `최근 업데이트 ${formatted}`;
+    statusUpdated.hidden = false;
+  } catch (error) {
+    // Status update metadata is optional and should not block the intro.
+  }
 }
 
 async function startBackgroundAudio() {
