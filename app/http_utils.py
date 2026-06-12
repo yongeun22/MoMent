@@ -79,15 +79,15 @@ def safe_relative_path(raw_path: str) -> str | None:
     if not relative_path:
         return None
 
+    if any(part in {"..", ".", ""} for part in relative_path.split("/")):
+        return None
+
     windows_candidate = PureWindowsPath(relative_path)
     if windows_candidate.is_absolute() or windows_candidate.drive or windows_candidate.root:
         return None
 
     posix_candidate = PurePosixPath(relative_path)
     if posix_candidate.is_absolute():
-        return None
-
-    if any(part in {"..", ".", ""} for part in posix_candidate.parts):
         return None
 
     return posix_candidate.as_posix()

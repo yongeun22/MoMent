@@ -28,6 +28,15 @@ from .http_utils import normalize_photo_fields, parse_multipart_form, read_json,
 from .image_validation import detect_image_extension
 from .image_variants import ensure_display_variant, display_variant_path, lightbox_variant_path
 from .public_site import build_public_payload, serialize_public_photo
+from .rate_limit import (
+    LOGIN_IP_RATE_LIMIT_MAX_FAILURES,
+    LOGIN_RATE_LIMIT_MAX_FAILURES,
+    LOGIN_RATE_LIMIT_WINDOW_SECONDS,
+    WindowRateLimiter,
+    admin_login_ip_rate_limit_key,
+    admin_login_rate_limit_key,
+)
+from .security import build_session_cookie, iter_security_headers
 
 
 LOGGER = logging.getLogger("moment.server")
@@ -71,6 +80,14 @@ def bootstrap_admin(config: AppConfig, database: Database) -> None:
 
 def build_handler(config: AppConfig, database: Database, secret_key: bytes):
     guestbook_submission_times: dict[str, list[float]] = {}
+    login_rate_limiter = WindowRateLimiter(
+        max_failures=LOGIN_RATE_LIMIT_MAX_FAILURES,
+        window_seconds=LOGIN_RATE_LIMIT_WINDOW_SECONDS,
+    )
+    login_ip_rate_limiter = WindowRateLimiter(
+        max_failures=LOGIN_IP_RATE_LIMIT_MAX_FAILURES,
+        window_seconds=LOGIN_RATE_LIMIT_WINDOW_SECONDS,
+    )
 
     class MomentRequestHandler(BaseHTTPRequestHandler):
         protocol_version = "HTTP/1.1"
@@ -165,6 +182,7 @@ def build_handler(config: AppConfig, database: Database, secret_key: bytes):
 
             if path == "/favicon.ico":
                 self.send_response(HTTPStatus.NO_CONTENT)
+                self._send_security_headers()
                 self.send_header("Content-Length", "0")
                 self.end_headers()
                 return
@@ -248,6 +266,7 @@ def build_handler(config: AppConfig, database: Database, secret_key: bytes):
 
                 body = "\uC11C\uBC84\uC5D0 \uB0B4\uBD80 \uC624\uB958\uAC00 \uBC1C\uC0DD\uD588\uC2B5\uB2C8\uB2E4.".encode("utf-8")
                 self.send_response(HTTPStatus.INTERNAL_SERVER_ERROR)
+                self._send_security_headers()
                 self.send_header("Content-Type", "text/plain; charset=utf-8")
                 self.send_header("Content-Length", str(len(body)))
                 self.end_headers()
@@ -270,6 +289,10 @@ def build_handler(config: AppConfig, database: Database, secret_key: bytes):
             try:
                 length = int(length_header)
             except ValueError:
+                self._send_json({"error": "Invalid request body."}, status=HTTPStatus.BAD_REQUEST)
+                return None
+
+            if length < 0:
                 self._send_json({"error": "Invalid request body."}, status=HTTPStatus.BAD_REQUEST)
                 return None
 
@@ -319,20 +342,42 @@ def build_handler(config: AppConfig, database: Database, secret_key: bytes):
 
             username = str(payload.get("username", "")).strip()
             password = str(payload.get("password", ""))
+            client_ip = self.client_address[0] if self.client_address else ""
+            ip_rate_limit_key = admin_login_ip_rate_limit_key(client_ip)
+            rate_limit_key = admin_login_rate_limit_key(client_ip, username)
+            retry_after = self._blocked_login_retry_after(
+                login_ip_rate_limiter.check(ip_rate_limit_key),
+                login_rate_limiter.check(rate_limit_key),
+            )
+            if retry_after is not None:
+                self._send_login_rate_limit_response(retry_after)
+                return
+
             admin = database.get_admin(username)
 
             if not admin or not verify_password(password, admin["password_salt"], admin["password_hash"]):
+                retry_after = self._blocked_login_retry_after(
+                    login_ip_rate_limiter.consume_failure(ip_rate_limit_key),
+                    login_rate_limiter.consume_failure(rate_limit_key),
+                )
+                if retry_after is not None:
+                    self._send_login_rate_limit_response(retry_after)
+                    return
                 self._send_json({"error": "Incorrect username or password."}, status=HTTPStatus.UNAUTHORIZED)
                 return
 
+            login_rate_limiter.reset(rate_limit_key)
             token = create_session_token(
                 username,
                 int(admin["session_version"]),
                 secret_key,
                 config.session_max_age,
             )
-            cookie = (
-                f"{config.session_cookie_name}={token}; Path=/; HttpOnly; SameSite=Strict; Max-Age={config.session_max_age}"
+            cookie = build_session_cookie(
+                config.session_cookie_name,
+                token,
+                max_age=config.session_max_age,
+                secure=config.secure_cookies,
             )
             self._send_json(
                 {"authenticated": True, "username": username},
@@ -345,7 +390,12 @@ def build_handler(config: AppConfig, database: Database, secret_key: bytes):
                 return
 
             database.rotate_admin_session_version(admin["username"])
-            expired_cookie = f"{config.session_cookie_name}=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0"
+            expired_cookie = build_session_cookie(
+                config.session_cookie_name,
+                "",
+                max_age=0,
+                secure=config.secure_cookies,
+            )
             self._send_json({"authenticated": False}, headers={"Set-Cookie": expired_cookie})
 
         def _handle_password_change(self, admin: dict) -> None:
@@ -386,10 +436,30 @@ def build_handler(config: AppConfig, database: Database, secret_key: bytes):
                 secret_key,
                 config.session_max_age,
             )
-            cookie = (
-                f"{config.session_cookie_name}={token}; Path=/; HttpOnly; SameSite=Strict; Max-Age={config.session_max_age}"
+            cookie = build_session_cookie(
+                config.session_cookie_name,
+                token,
+                max_age=config.session_max_age,
+                secure=config.secure_cookies,
             )
             self._send_json({"updated": True}, headers={"Set-Cookie": cookie})
+
+        def _blocked_login_retry_after(self, *decisions) -> int | None:
+            retry_after_values = [
+                decision.retry_after_seconds
+                for decision in decisions
+                if not decision.allowed
+            ]
+            if not retry_after_values:
+                return None
+            return max(retry_after_values)
+
+        def _send_login_rate_limit_response(self, retry_after_seconds: int) -> None:
+            self._send_json(
+                {"error": "Too many login attempts. Try again later."},
+                status=HTTPStatus.TOO_MANY_REQUESTS,
+                headers={"Retry-After": str(max(1, int(retry_after_seconds)))},
+            )
 
         def _handle_photo_create(self) -> None:
             body = self._read_body()
@@ -678,6 +748,7 @@ def build_handler(config: AppConfig, database: Database, secret_key: bytes):
             start, end = self._resolve_byte_range(file_size)
             if start is None or end is None:
                 self.send_response(HTTPStatus.REQUESTED_RANGE_NOT_SATISFIABLE)
+                self._send_security_headers()
                 self.send_header("Accept-Ranges", "bytes")
                 self.send_header("Content-Range", f"bytes */{file_size}")
                 self.send_header("Content-Length", "0")
@@ -688,6 +759,7 @@ def build_handler(config: AppConfig, database: Database, secret_key: bytes):
             content_length = end - start + 1
 
             self.send_response(HTTPStatus.PARTIAL_CONTENT if is_partial else HTTPStatus.OK)
+            self._send_security_headers()
             self.send_header("Content-Type", content_type)
             self.send_header("Content-Length", str(content_length))
             self.send_header("Cache-Control", f"public, max-age={cache_seconds}")
@@ -723,6 +795,7 @@ def build_handler(config: AppConfig, database: Database, secret_key: bytes):
                 public_url=config.public_url or self._request_origin(),
             ).encode("utf-8")
             self.send_response(HTTPStatus.OK)
+            self._send_security_headers()
             self.send_header("Content-Type", "text/html; charset=utf-8")
             self.send_header("Content-Length", str(len(body)))
             self.send_header("Cache-Control", "no-store")
@@ -777,6 +850,7 @@ def build_handler(config: AppConfig, database: Database, secret_key: bytes):
         ) -> None:
             body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
             self.send_response(status)
+            self._send_security_headers()
             self.send_header("Content-Type", "application/json; charset=utf-8")
             self.send_header("Content-Length", str(len(body)))
             self.send_header("Cache-Control", "no-store")
@@ -785,6 +859,10 @@ def build_handler(config: AppConfig, database: Database, secret_key: bytes):
                     self.send_header(key, value)
             self.end_headers()
             self.wfile.write(body)
+
+        def _send_security_headers(self) -> None:
+            for key, value in iter_security_headers():
+                self.send_header(key, value)
 
     return MomentRequestHandler
 

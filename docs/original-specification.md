@@ -1,4 +1,4 @@
-Create a minimalist online photography exhibition website for the archaeology/art history department photo club “MoMent”.
+Create a minimalist online photography exhibition website for the archaeology/art history department photo club "MoMent".
 
 Project goal:
 This site is a permanent online photo exhibition space, not a generic gallery board. It should feel quiet, minimal, and exhibition-like. The design should prioritize the photographs themselves over interface elements or long text.

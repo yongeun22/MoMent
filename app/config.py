@@ -27,6 +27,8 @@ class AppConfig:
     bootstrap_admin_password: str | None
     admin_path: str
     public_url: str | None
+    admin_url: str | None
+    secure_cookies: bool
 
 
 def _load_env_file(env_path: Path) -> None:
@@ -67,6 +69,17 @@ def _normalize_public_url(raw_url: str | None) -> str | None:
     return cleaned.rstrip("/")
 
 
+def _parse_bool(value: str) -> bool:
+    return value.strip().casefold() in {"1", "true", "yes", "on"}
+
+
+def _resolve_secure_cookies(raw_value: str | None, admin_url: str | None) -> bool:
+    cleaned = (raw_value or "auto").strip().casefold()
+    if cleaned in {"", "auto"}:
+        return bool(admin_url and admin_url.casefold().startswith("https://"))
+    return _parse_bool(cleaned)
+
+
 def load_config() -> AppConfig:
     _load_env_file(ENV_PATH)
 
@@ -79,6 +92,9 @@ def load_config() -> AppConfig:
     data_dir.mkdir(parents=True, exist_ok=True)
     uploads_dir.mkdir(parents=True, exist_ok=True)
     _ensure_secret_key(secret_key_path)
+
+    public_url = _normalize_public_url(os.getenv("MOMENT_PUBLIC_URL"))
+    admin_url = _normalize_public_url(os.getenv("MOMENT_ADMIN_URL"))
 
     return AppConfig(
         root_dir=ROOT_DIR,
@@ -95,5 +111,7 @@ def load_config() -> AppConfig:
         bootstrap_admin_username=os.getenv("MOMENT_ADMIN_USERNAME") or None,
         bootstrap_admin_password=os.getenv("MOMENT_ADMIN_PASSWORD") or None,
         admin_path=_normalize_admin_path(os.getenv("MOMENT_ADMIN_PATH", "/admin")),
-        public_url=_normalize_public_url(os.getenv("MOMENT_PUBLIC_URL")),
+        public_url=public_url,
+        admin_url=admin_url,
+        secure_cookies=_resolve_secure_cookies(os.getenv("MOMENT_SECURE_COOKIES"), admin_url),
     )

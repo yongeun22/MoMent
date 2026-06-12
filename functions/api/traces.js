@@ -1,3 +1,5 @@
+import { json } from "../_shared/response.js";
+
 const MAX_ENTRIES = 200;
 const MAX_AFFILIATION_LENGTH = 80;
 const MAX_NAME_LENGTH = 40;
@@ -35,16 +37,6 @@ const REMOVED_GUESTBOOK_ENTRIES = [
   },
 ];
 const MODERATION_ERROR = "\uB4F1\uB85D\uD560 \uC218 \uC5C6\uB294 \uD45C\uD604\uC774 \uD3EC\uD568\uB418\uC5B4 \uC788\uC2B5\uB2C8\uB2E4.";
-
-function json(body, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: {
-      "Content-Type": "application/json; charset=utf-8",
-      "Cache-Control": "no-store",
-    },
-  });
-}
 
 function getDatabase(env) {
   return env?.VISITS_DB || null;

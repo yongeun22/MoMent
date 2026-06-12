@@ -12,6 +12,7 @@ from .image_variants import (
     ensure_lightbox_variants,
     lightbox_variant_relative_path,
 )
+from .security import iter_security_headers
 
 
 EXPORT_MARKER = ".moment-static-export"
@@ -153,41 +154,40 @@ def export_static_site(
         encoding="utf-8",
     )
 
+    headers_lines = ["/*"]
+    headers_lines.extend(f"  {key}: {value}" for key, value in iter_security_headers())
+    headers_lines.extend(
+        [
+            "",
+            "/static/css/*",
+            "  Cache-Control: public, max-age=31536000, immutable",
+            "",
+            "/static/js/*",
+            "  Cache-Control: public, max-age=31536000, immutable",
+            "",
+            "/static/audio/*",
+            "  Cache-Control: public, max-age=31536000, immutable",
+            "",
+            "/static/og/*",
+            "  Cache-Control: public, max-age=31536000, immutable",
+            "",
+            "/static/qr/*",
+            "  Cache-Control: public, max-age=31536000, immutable",
+            "",
+            "/static/icons/*",
+            "  Cache-Control: public, max-age=31536000, immutable",
+            "",
+            "/uploads/*",
+            "  Cache-Control: public, max-age=31536000, immutable",
+            "",
+            "/data/photos.json",
+            "  Cache-Control: public, max-age=0, must-revalidate",
+            "",
+        ]
+    )
+
     (output_dir / "_headers").write_text(
-        "\n".join(
-            [
-                "/*",
-                "  X-Content-Type-Options: nosniff",
-                "  Referrer-Policy: strict-origin-when-cross-origin",
-                "  X-Frame-Options: DENY",
-                "  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()",
-                "",
-                "/static/css/*",
-                "  Cache-Control: public, max-age=31536000, immutable",
-                "",
-                "/static/js/*",
-                "  Cache-Control: public, max-age=31536000, immutable",
-                "",
-                "/static/audio/*",
-                "  Cache-Control: public, max-age=31536000, immutable",
-                "",
-                "/static/og/*",
-                "  Cache-Control: public, max-age=31536000, immutable",
-                "",
-                "/static/qr/*",
-                "  Cache-Control: public, max-age=31536000, immutable",
-                "",
-                "/static/icons/*",
-                "  Cache-Control: public, max-age=31536000, immutable",
-                "",
-                "/uploads/*",
-                "  Cache-Control: public, max-age=31536000, immutable",
-                "",
-                "/data/photos.json",
-                "  Cache-Control: public, max-age=0, must-revalidate",
-                "",
-            ]
-        ),
+        "\n".join(headers_lines),
         encoding="utf-8",
     )
 

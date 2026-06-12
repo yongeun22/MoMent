@@ -1,12 +1,4 @@
-function json(body, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: {
-      "Content-Type": "application/json; charset=utf-8",
-      "Cache-Control": "no-store",
-    },
-  });
-}
+import { json } from "../_shared/response.js";
 
 function getDatabase(env) {
   return env?.VISITS_DB || null;

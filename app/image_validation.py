@@ -1,9 +1,13 @@
 from __future__ import annotations
 
 from io import BytesIO
+import warnings
 
 from PIL import Image, UnidentifiedImageError
 
+
+MAX_IMAGE_PIXELS = 60_000_000
+Image.MAX_IMAGE_PIXELS = MAX_IMAGE_PIXELS
 
 FORMAT_EXTENSION_MAP = {
     "JPEG": ".jpg",
@@ -18,10 +22,18 @@ def detect_image_extension(content: bytes) -> str:
         raise ValueError("\uC774\uBBF8\uC9C0 \uD30C\uC77C\uC744 \uC120\uD0DD\uD574 \uC8FC\uC138\uC694.")
 
     try:
-        with Image.open(BytesIO(content)) as image:
-            image.verify()
-            image_format = image.format
-    except (UnidentifiedImageError, OSError, ValueError) as exc:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", Image.DecompressionBombWarning)
+            with Image.open(BytesIO(content)) as image:
+                image.verify()
+                image_format = image.format
+    except (
+        Image.DecompressionBombError,
+        Image.DecompressionBombWarning,
+        UnidentifiedImageError,
+        OSError,
+        ValueError,
+    ) as exc:
         raise ValueError("\uC774\uBBF8\uC9C0 \uD30C\uC77C\uB9CC \uC5C5\uB85C\uB4DC\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.") from exc
 
     extension = FORMAT_EXTENSION_MAP.get(str(image_format).upper())

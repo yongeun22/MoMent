@@ -1,14 +1,6 @@
-const STATUS_UPDATE_ID = "moment-status-report";
+import { json } from "../_shared/response.js";
 
-function json(body, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: {
-      "Content-Type": "application/json; charset=utf-8",
-      "Cache-Control": "no-store",
-    },
-  });
-}
+const STATUS_UPDATE_ID = "moment-status-report";
 
 function getDatabase(env) {
   return env?.VISITS_DB || null;

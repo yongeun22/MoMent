@@ -7,3 +7,4 @@ data/*.log
 uploads/*
 !uploads/.gitkeep
 data/.gitkeep
+dist-smoke/

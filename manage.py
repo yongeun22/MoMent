@@ -67,7 +67,7 @@ def main() -> int:
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     init_admin_parser = subparsers.add_parser("init-admin", help="Create or replace the single admin account")
-    init_admin_parser.add_argument("--username", default="yong1109", help="Admin username")
+    init_admin_parser.add_argument("--username", default="admin", help="Admin username")
     init_admin_parser.add_argument("--password", help="Admin password (optional; prompt if omitted)")
 
     export_static_parser = subparsers.add_parser("export-static", help="Export the public exhibition as a static site")
