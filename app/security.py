@@ -10,7 +10,7 @@ SECURITY_HEADERS = {
         "default-src 'self'; "
         "script-src 'self'; "
         "style-src 'self'; "
-        "img-src 'self' data: blob:; "
+        "img-src 'self' data: blob: https://tile.openstreetmap.org; "
         "media-src 'self'; "
         "connect-src 'self'; "
         "base-uri 'self'; "

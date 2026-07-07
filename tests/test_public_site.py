@@ -2,16 +2,19 @@ import tempfile
 import unittest
 from io import BytesIO
 from pathlib import Path
+import json
 
 from PIL import Image
 
 from app.database import Database
+from app.html_templates import asset_version, render_html_template
 from app.public_site import EXPORT_MARKER, export_static_site
 
 
 def write_static_fixture(static_dir: Path) -> None:
     (static_dir / "css").mkdir(parents=True)
     (static_dir / "js").mkdir()
+    (static_dir / "js" / "modules").mkdir()
     (static_dir / "audio").mkdir()
     (static_dir / "index.html").write_text(
         '<html><head>{{SITE_META_TAGS}}<link href="/static/css/site.css?v={{SITE_CSS_VERSION}}"></head>'
@@ -20,6 +23,7 @@ def write_static_fixture(static_dir: Path) -> None:
     )
     (static_dir / "css" / "site.css").write_text("body { margin: 0; }", encoding="utf-8")
     (static_dir / "js" / "exhibition.js").write_text("console.log('ok');", encoding="utf-8")
+    (static_dir / "js" / "modules" / "utils.js").write_text("export const ok = true;", encoding="utf-8")
 
 
 def write_image(path: Path) -> None:
@@ -29,6 +33,32 @@ def write_image(path: Path) -> None:
 
 
 class PublicSiteTests(unittest.TestCase):
+    def test_public_guestbook_uses_integrated_list_without_type_filters(self):
+        root = Path(__file__).resolve().parents[1]
+        index_html = (root / "static" / "index.html").read_text(encoding="utf-8")
+        guestbook_js = (root / "static" / "js" / "modules" / "guestbook.js").read_text(encoding="utf-8")
+
+        self.assertIn('id="traceList"', index_html)
+        self.assertNotIn("data-trace-filter", index_html)
+        self.assertNotIn("traceFilter", guestbook_js)
+        self.assertNotIn("일반 방명록", guestbook_js)
+        self.assertNotIn("사진 방명록", guestbook_js)
+
+    def test_exhibition_js_version_includes_module_files(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            static_dir = Path(temp_dir) / "static"
+            write_static_fixture(static_dir)
+
+            first_version = asset_version(static_dir / "js")
+            rendered = render_html_template(static_dir / "index.html", static_dir)
+            self.assertIn(f"/static/js/exhibition.js?v={first_version}", rendered)
+
+            (static_dir / "js" / "modules" / "utils.js").write_text(
+                "export const ok = false; export const changed = true;",
+                encoding="utf-8",
+            )
+            self.assertNotEqual(first_version, asset_version(static_dir / "js"))
+
     def test_export_static_site_creates_required_files_and_headers(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
@@ -49,6 +79,14 @@ class PublicSiteTests(unittest.TestCase):
                 date_text="2026",
                 location="Seoul",
                 photographer="MoMent",
+                year="2026",
+                region="서울·경기권",
+                category_json='["건축"]',
+                place_id="seoul",
+                location_name="Seoul Museum",
+                lat=37.5,
+                lng=127.0,
+                description="Public description",
             )
 
             export_static_site(
@@ -62,10 +100,22 @@ class PublicSiteTests(unittest.TestCase):
 
             self.assertTrue((output_dir / "index.html").exists())
             self.assertTrue((output_dir / "data" / "photos.json").exists())
+            self.assertTrue((output_dir / "static" / "js" / "modules" / "utils.js").exists())
             self.assertTrue((output_dir / EXPORT_MARKER).exists())
+            payload = json.loads((output_dir / "data" / "photos.json").read_text(encoding="utf-8"))
+            photo = payload["photos"][0]
+            self.assertEqual(photo["year"], "2026")
+            self.assertEqual(photo["region"], "서울·경기권")
+            self.assertEqual(photo["category"], ["건축"])
+            self.assertEqual(photo["placeId"], "seoul")
+            self.assertEqual(photo["locationName"], "Seoul Museum")
+            self.assertEqual(photo["lat"], 37.5)
+            self.assertEqual(photo["lng"], 127.0)
+            self.assertEqual(photo["description"], "Public description")
             headers_text = (output_dir / "_headers").read_text(encoding="utf-8")
             self.assertIn("Content-Security-Policy", headers_text)
             self.assertIn("img-src 'self' data: blob:", headers_text)
+            self.assertIn("/static/js/*\n  Cache-Control: public, max-age=0, must-revalidate", headers_text)
 
     def test_export_static_site_rejects_unsafe_output_paths(self):
         with tempfile.TemporaryDirectory() as temp_dir:

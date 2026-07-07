@@ -21,6 +21,7 @@ class SecurityTests(unittest.TestCase):
         self.assertEqual(headers["X-Frame-Options"], "DENY")
         self.assertIn("frame-ancestors 'none'", headers["Content-Security-Policy"])
         self.assertIn("img-src 'self' data: blob:", headers["Content-Security-Policy"])
+        self.assertIn("https://tile.openstreetmap.org", headers["Content-Security-Policy"])
 
     def test_admin_upload_preview_scheme_is_allowed_by_csp(self):
         admin_js = Path("static/js/admin.js").read_text(encoding="utf-8")

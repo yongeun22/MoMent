@@ -3,6 +3,7 @@ import { json } from "../_shared/response.js";
 const MAX_ENTRIES = 200;
 const MAX_AFFILIATION_LENGTH = 80;
 const MAX_NAME_LENGTH = 40;
+const MAX_TEXT_LENGTH = 500;
 const MAX_JSON_BODY_BYTES = 2 * 1024;
 const RATE_LIMIT_WINDOW_SECONDS = 15 * 60;
 const RATE_LIMIT_MAX_SUBMISSIONS = 12;
@@ -42,17 +43,39 @@ function getDatabase(env) {
   return env?.VISITS_DB || null;
 }
 
+async function existingColumns(db, tableName) {
+  const result = await db.prepare(`PRAGMA table_info(${tableName})`).all();
+  return new Set((result.results || []).map((row) => row.name));
+}
+
+async function addColumnIfMissing(db, tableName, columns, columnName, definition) {
+  if (columns.has(columnName)) {
+    return;
+  }
+  await db.prepare(`ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${definition}`).run();
+  columns.add(columnName);
+}
+
 async function ensureSchema(db) {
   await db
     .prepare(`
       CREATE TABLE IF NOT EXISTS guestbook_entries (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        type TEXT NOT NULL DEFAULT 'general',
+        photo_id INTEGER,
         affiliation TEXT NOT NULL,
         name TEXT NOT NULL,
+        body_text TEXT NOT NULL DEFAULT '',
         created_at TEXT NOT NULL
       )
     `)
     .run();
+
+  const guestbookColumns = await existingColumns(db, "guestbook_entries");
+  await addColumnIfMissing(db, "guestbook_entries", guestbookColumns, "type", "TEXT NOT NULL DEFAULT 'general'");
+  await addColumnIfMissing(db, "guestbook_entries", guestbookColumns, "photo_id", "INTEGER");
+  await addColumnIfMissing(db, "guestbook_entries", guestbookColumns, "body_text", "TEXT NOT NULL DEFAULT ''");
+
   await db
     .prepare(`
       CREATE TABLE IF NOT EXISTS guestbook_rate_limits (
@@ -66,6 +89,12 @@ async function ensureSchema(db) {
     .prepare(`
       CREATE INDEX IF NOT EXISTS idx_guestbook_rate_limits_client_created
       ON guestbook_rate_limits (client_key, created_at)
+    `)
+    .run();
+  await db
+    .prepare(`
+      CREATE INDEX IF NOT EXISTS idx_guestbook_entries_photo_id
+      ON guestbook_entries (photo_id, id)
     `)
     .run();
 }
@@ -103,14 +132,23 @@ function isRemovedGuestbookEntry(affiliation, name) {
 }
 
 function validatePayload(payload) {
+  const type = normalizeText(payload.type || "general");
   const affiliation = normalizeText(payload.affiliation);
   const name = normalizeText(payload.name);
+  const hasText = Object.prototype.hasOwnProperty.call(payload, "text");
+  const text = normalizeText(payload.text);
 
+  if (!["general", "photo"].includes(type)) {
+    return { error: "\uBC29\uBA85\uB85D \uC885\uB958\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4." };
+  }
   if (!affiliation) {
     return { error: "\uC18C\uC18D\uC740 \uD544\uC218\uC785\uB2C8\uB2E4." };
   }
   if (!name) {
     return { error: "\uC774\uB984\uC740 \uD544\uC218\uC785\uB2C8\uB2E4." };
+  }
+  if ((hasText || type === "photo") && !text) {
+    return { error: "\uB0B4\uC6A9\uC740 \uD544\uC218\uC785\uB2C8\uB2E4." };
   }
   if (affiliation.length > MAX_AFFILIATION_LENGTH) {
     return { error: `\uC18C\uC18D\uC740 ${MAX_AFFILIATION_LENGTH}\uC790 \uC774\uD558\uB85C \uC785\uB825\uD574 \uC8FC\uC138\uC694.` };
@@ -118,14 +156,25 @@ function validatePayload(payload) {
   if (name.length > MAX_NAME_LENGTH) {
     return { error: `\uC774\uB984\uC740 ${MAX_NAME_LENGTH}\uC790 \uC774\uD558\uB85C \uC785\uB825\uD574 \uC8FC\uC138\uC694.` };
   }
-  if (hasBlockedGuestbookTerm(affiliation, name)) {
+  if (text.length > MAX_TEXT_LENGTH) {
+    return { error: `\uB0B4\uC6A9\uC740 ${MAX_TEXT_LENGTH}\uC790 \uC774\uD558\uB85C \uC785\uB825\uD574 \uC8FC\uC138\uC694.` };
+  }
+  if (hasBlockedGuestbookTerm(affiliation, name, text)) {
     return { error: MODERATION_ERROR };
   }
   if (isRemovedGuestbookEntry(affiliation, name)) {
     return { error: MODERATION_ERROR };
   }
 
-  return { affiliation, name };
+  let photoId = null;
+  if (type === "photo") {
+    photoId = Number.parseInt(String(payload.photoId || payload.photo_id || ""), 10);
+    if (!Number.isFinite(photoId) || photoId <= 0) {
+      return { error: "\uC0AC\uC9C4 \uBC29\uBA85\uB85D\uC5D0\uB294 \uC0AC\uC9C4 ID\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4." };
+    }
+  }
+
+  return { type, photoId, affiliation, name, text };
 }
 
 async function sha256Hex(value) {
@@ -282,19 +331,52 @@ async function enforceLooseRateLimit(db, request) {
   return true;
 }
 
-async function readEntries(db) {
-  const countRow = await db
-    .prepare("SELECT COUNT(*) AS total FROM guestbook_entries")
-    .first();
-  const rows = await db
-    .prepare(`
-      SELECT id, affiliation, name, created_at
+function buildEntryFilters(url) {
+  const clauses = [];
+  const bindings = [];
+  const rawPhotoId = url.searchParams.get("photoId");
+  const type = url.searchParams.get("type");
+
+  if (rawPhotoId) {
+    const photoId = Number.parseInt(rawPhotoId, 10);
+    if (!Number.isFinite(photoId) || photoId <= 0) {
+      throw new PayloadError("Invalid photo id.", 400);
+    }
+    clauses.push("photo_id = ?");
+    bindings.push(photoId);
+  }
+  if (type) {
+    if (!["general", "photo"].includes(type)) {
+      throw new PayloadError("Invalid guestbook type.", 400);
+    }
+    clauses.push("type = ?");
+    bindings.push(type);
+  }
+
+  return {
+    where: clauses.length ? `WHERE ${clauses.join(" AND ")}` : "",
+    bindings,
+  };
+}
+
+async function readEntries(db, requestUrl = null) {
+  const filters = requestUrl ? buildEntryFilters(requestUrl) : { where: "", bindings: [] };
+  const countStatement = db.prepare(`SELECT COUNT(*) AS total FROM guestbook_entries ${filters.where}`);
+  const countRow = await (filters.bindings.length ? countStatement.bind(...filters.bindings) : countStatement).first();
+  const rowsStatement = db.prepare(`
+      SELECT id,
+             type,
+             photo_id AS photoId,
+             affiliation,
+             name,
+             body_text AS text,
+             created_at AS createdAt
       FROM guestbook_entries
+      ${filters.where}
       ORDER BY id DESC
       LIMIT ?
-    `)
-    .bind(MAX_ENTRIES)
-    .all();
+    `);
+  const rows = await rowsStatement.bind(...filters.bindings, MAX_ENTRIES).all();
 
   return {
     count: Number(countRow?.total || 0),
@@ -312,8 +394,11 @@ export async function onRequestGet(context) {
 
     await ensureSchema(db);
     await removeModeratedEntries(db);
-    return json(await readEntries(db));
+    return json(await readEntries(db, new URL(context.request.url)));
   } catch (error) {
+    if (error instanceof PayloadError) {
+      return json({ error: error.message }, error.status);
+    }
     console.error("Failed to read traces", error);
     return json({ error: "\uBC29\uBA85\uB85D\uC744 \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4." }, 500);
   }
@@ -342,11 +427,17 @@ export async function onRequestPost(context) {
     const createdAt = new Date().toISOString();
     const entry = await db
       .prepare(`
-        INSERT INTO guestbook_entries (affiliation, name, created_at)
-        VALUES (?, ?, ?)
-        RETURNING id, affiliation, name, created_at
+        INSERT INTO guestbook_entries (type, photo_id, affiliation, name, body_text, created_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+        RETURNING id,
+                  type,
+                  photo_id AS photoId,
+                  affiliation,
+                  name,
+                  body_text AS text,
+                  created_at AS createdAt
       `)
-      .bind(normalized.affiliation, normalized.name, createdAt)
+      .bind(normalized.type, normalized.photoId, normalized.affiliation, normalized.name, normalized.text, createdAt)
       .first();
 
     return json(

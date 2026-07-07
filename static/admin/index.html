@@ -70,8 +70,46 @@
             <input type="text" name="location" placeholder="&#xB3D9;&#xAD6D;&#xB300;&#xD559;&#xAD50;" required>
           </label>
           <label class="field">
+            <span>&#xD45C;&#xC2DC; &#xC7A5;&#xC18C;&#xBA85;</span>
+            <input type="text" name="locationName" placeholder="&#xB3D9;&#xAD6D;&#xB300;&#xD559;&#xAD50;">
+          </label>
+          <label class="field">
             <span>&#xCD2C;&#xC601;</span>
             <input type="text" name="photographer" placeholder="&#xC2E0;&#xC6A9;&#xC740;" required>
+          </label>
+          <label class="field">
+            <span>&#xC5F0;&#xB3C4;</span>
+            <input type="text" name="year" placeholder="2026" pattern="(19|20)[0-9]{2}">
+          </label>
+          <label class="field">
+            <span>&#xAD8C;&#xC5ED;</span>
+            <select name="region">
+              <option value="&#xC11C;&#xC6B8;&#xB7;&#xACBD;&#xAE30;&#xAD8C;">&#xC11C;&#xC6B8;&#xB7;&#xACBD;&#xAE30;&#xAD8C;</option>
+              <option value="&#xAC15;&#xC6D0;&#xAD8C;">&#xAC15;&#xC6D0;&#xAD8C;</option>
+              <option value="&#xCDA9;&#xCCAD;&#xAD8C;">&#xCDA9;&#xCCAD;&#xAD8C;</option>
+              <option value="&#xC804;&#xB77C;&#xAD8C;">&#xC804;&#xB77C;&#xAD8C;</option>
+              <option value="&#xACBD;&#xC0C1;&#xAD8C;">&#xACBD;&#xC0C1;&#xAD8C;</option>
+              <option value="&#xACBD;&#xC8FC;&#xAD8C;">&#xACBD;&#xC8FC;&#xAD8C;</option>
+              <option value="&#xC81C;&#xC8FC;&#xAD8C;">&#xC81C;&#xC8FC;&#xAD8C;</option>
+              <option value="&#xD574;&#xC678;">&#xD574;&#xC678;</option>
+              <option value="&#xAE30;&#xD0C0;" selected>&#xAE30;&#xD0C0;</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>placeId</span>
+            <input type="text" name="placeId" placeholder="&#xBE44;&#xC6CC;&#xB450;&#xBA74; &#xC790;&#xB3D9; &#xC0DD;&#xC131;">
+          </label>
+          <label class="field">
+            <span>&#xC704;&#xB3C4;</span>
+            <input type="number" name="lat" step="any" min="-90" max="90" placeholder="35.7900">
+          </label>
+          <label class="field">
+            <span>&#xACBD;&#xB3C4;</span>
+            <input type="number" name="lng" step="any" min="-180" max="180" placeholder="129.3320">
+          </label>
+          <label class="field field-wide">
+            <span>&#xC124;&#xBA85;</span>
+            <textarea name="description" rows="3" maxlength="1000" placeholder="&#xC0AC;&#xC9C4; &#xC124;&#xBA85;"></textarea>
           </label>
           <button type="submit" class="primary-button">&#xCD9C;&#xD488;</button>
         </form>

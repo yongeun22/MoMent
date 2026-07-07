@@ -4,7 +4,7 @@ from http import HTTPStatus
 from http.cookies import SimpleCookie
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlparse
 import json
 import logging
 import mimetypes
@@ -43,6 +43,10 @@ LOGGER = logging.getLogger("moment.server")
 STATIC_CACHE_MAX_AGE = 60 * 60 * 24 * 30
 UPLOAD_CACHE_MAX_AGE = 60 * 60 * 24 * 30
 STREAM_CHUNK_SIZE = 64 * 1024
+
+
+def static_cache_max_age(relative_path: str) -> int:
+    return 0 if relative_path.startswith("js/") else STATIC_CACHE_MAX_AGE
 
 
 def discover_access_urls(host: str, port: int) -> list[str]:
@@ -125,7 +129,16 @@ def build_handler(config: AppConfig, database: Database, secret_key: bytes):
                 return
 
             if path == "/api/traces":
-                self._send_json(self._guestbook_payload())
+                query = parse_qs(parsed.query)
+                photo_id = self._parse_optional_photo_id(query.get("photoId", [""])[0])
+                if photo_id == "invalid":
+                    self._send_json({"error": "Invalid photo id."}, status=HTTPStatus.BAD_REQUEST)
+                    return
+                entry_type = query.get("type", [""])[0].strip() or None
+                if entry_type not in {None, "general", "photo"}:
+                    self._send_json({"error": "Invalid guestbook type."}, status=HTTPStatus.BAD_REQUEST)
+                    return
+                self._send_json(self._guestbook_payload(photo_id=photo_id, entry_type=entry_type))
                 return
 
             if path == "/api/visits":
@@ -163,7 +176,7 @@ def build_handler(config: AppConfig, database: Database, secret_key: bytes):
                     return
                 self._serve_file(
                     config.static_dir / relative_path,
-                    cache_seconds=STATIC_CACHE_MAX_AGE,
+                    cache_seconds=static_cache_max_age(relative_path),
                     allowed_root=config.static_dir,
                 )
                 return
@@ -497,6 +510,14 @@ def build_handler(config: AppConfig, database: Database, secret_key: bytes):
                     date_text=normalized["date_text"],
                     location=normalized["location"],
                     photographer=normalized["photographer"],
+                    year=normalized["year"],
+                    region=normalized["region"],
+                    category_json=normalized["category_json"],
+                    place_id=normalized["place_id"],
+                    location_name=normalized["location_name"],
+                    lat=normalized["lat"],
+                    lng=normalized["lng"],
+                    description=normalized["description"],
                 )
             except Exception:
                 upload_path = config.uploads_dir / stored_filename
@@ -554,6 +575,14 @@ def build_handler(config: AppConfig, database: Database, secret_key: bytes):
                     date_text=normalized["date_text"],
                     location=normalized["location"],
                     photographer=normalized["photographer"],
+                    year=normalized["year"],
+                    region=normalized["region"],
+                    category_json=normalized["category_json"],
+                    place_id=normalized["place_id"],
+                    location_name=normalized["location_name"],
+                    lat=normalized["lat"],
+                    lng=normalized["lng"],
+                    description=normalized["description"],
                     filename=stored_filename,
                     original_name=image_file["filename"] if image_file and stored_filename else None,
                 )
@@ -592,10 +621,21 @@ def build_handler(config: AppConfig, database: Database, secret_key: bytes):
 
             self._send_json({"deleted": True})
 
-        def _guestbook_payload(self) -> dict:
+        def _parse_optional_photo_id(self, raw_value: str):
+            if raw_value == "":
+                return None
+            try:
+                photo_id = int(raw_value)
+            except ValueError:
+                return "invalid"
+            if photo_id <= 0:
+                return "invalid"
+            return photo_id
+
+        def _guestbook_payload(self, *, photo_id: int | None = None, entry_type: str | None = None) -> dict:
             return {
-                "count": database.get_guestbook_count(),
-                "entries": database.list_guestbook_entries(),
+                "count": database.get_guestbook_count(photo_id=photo_id, entry_type=entry_type),
+                "entries": database.list_guestbook_entries(photo_id=photo_id, entry_type=entry_type),
             }
 
         def _allow_guestbook_submission(self) -> bool:
@@ -631,9 +671,16 @@ def build_handler(config: AppConfig, database: Database, secret_key: bytes):
                 )
                 return
 
+            if normalized["type"] == "photo" and not database.get_photo(normalized["photo_id"]):
+                self._send_json({"error": "\uC0AC\uC9C4\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4."}, status=HTTPStatus.BAD_REQUEST)
+                return
+
             entry = database.create_guestbook_entry(
+                entry_type=normalized["type"],
+                photo_id=normalized["photo_id"],
                 affiliation=normalized["affiliation"],
                 name=normalized["name"],
+                text=normalized["text"],
             )
             self._send_json(
                 {

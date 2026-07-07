@@ -26,6 +26,15 @@ class CloudflareFunctionTests(unittest.TestCase):
                 self.assertIn('import { json } from "../_shared/response.js";', source)
                 self.assertNotIn("function json(", source)
 
+    def test_traces_function_supports_photo_guestbook_schema(self):
+        source = Path("functions/api/traces.js").read_text(encoding="utf-8")
+
+        self.assertIn("type TEXT NOT NULL DEFAULT 'general'", source)
+        self.assertIn("photo_id INTEGER", source)
+        self.assertIn("body_text TEXT NOT NULL DEFAULT ''", source)
+        self.assertIn('url.searchParams.get("photoId")', source)
+        self.assertIn("photo_id AS photoId", source)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -14,16 +14,41 @@ from app.guestbook import (
 
 class GuestbookTests(unittest.TestCase):
     def test_normalize_guestbook_fields(self):
-        normalized = normalize_guestbook_fields({"affiliation": " MoMent ", "name": " Admin "})
+        normalized = normalize_guestbook_fields(
+            {"type": "general", "affiliation": " MoMent ", "name": " Admin ", "text": " 잘 보고 갑니다. "}
+        )
 
-        self.assertEqual(normalized, {"affiliation": "MoMent", "name": "Admin"})
+        self.assertEqual(
+            normalized,
+            {
+                "type": "general",
+                "photo_id": None,
+                "affiliation": "MoMent",
+                "name": "Admin",
+                "text": "잘 보고 갑니다.",
+            },
+        )
+
+    def test_normalize_guestbook_fields_accepts_photo_entry(self):
+        normalized = normalize_guestbook_fields(
+            {"type": "photo", "photoId": "12", "affiliation": "MoMent", "name": "Admin", "text": "좋아요"}
+        )
+
+        self.assertEqual(normalized["type"], "photo")
+        self.assertEqual(normalized["photo_id"], 12)
 
     def test_normalize_guestbook_fields_rejects_invalid_input(self):
         with self.assertRaises(ValueError):
-            normalize_guestbook_fields({"affiliation": "", "name": "Admin"})
+            normalize_guestbook_fields({"affiliation": "", "name": "Admin", "text": "body"})
 
         with self.assertRaises(ValueError):
-            normalize_guestbook_fields({"affiliation": "A" * 81, "name": "Admin"})
+            normalize_guestbook_fields({"affiliation": "A" * 81, "name": "Admin", "text": "body"})
+
+        with self.assertRaises(ValueError):
+            normalize_guestbook_fields({"type": "photo", "affiliation": "A", "name": "B", "text": "body"})
+
+        with self.assertRaises(ValueError):
+            normalize_guestbook_fields({"type": "photo", "photoId": 1, "affiliation": "A", "name": "B", "text": ""})
 
     def test_guestbook_delete_password_requires_hash_env(self):
         password_hash = sha256(b"delete-password").hexdigest()

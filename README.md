@@ -10,10 +10,13 @@ Small exhibition teams often need a quiet online gallery that can be edited loca
 
 - Minimal public photography exhibition with intro overlay, responsive layout, hover/tap metadata, lightbox viewing, and optional background audio.
 - Local-only administrator interface for one admin account.
-- Photo upload, metadata editing, deletion, and generated display/lightbox image variants.
+- Photo upload, expanded metadata editing, deletion, and generated display/lightbox image variants.
+- Gallery filtering by year, region, photographer, and place.
+- Integrated public guestbook, with photo-specific entries also shown in each lightbox.
+- Lazy-loaded MoMent Map using self-hosted Leaflet assets and OpenStreetMap tiles for photos with coordinates.
 - SQLite storage for the local admin app.
 - Static export for Cloudflare Pages or another static host.
-- Public visit counter, latest-update marker, and trace guestbook through Cloudflare Pages Functions and a D1 binding.
+- Public visit counter, latest-update marker, and guestbook APIs through Cloudflare Pages Functions and a D1 binding.
 
 ## Live Demo
 
@@ -29,6 +32,7 @@ No screenshots are committed yet. Add real screenshots captured from the local a
 - SQLite
 - Plain HTML, CSS, and JavaScript
 - Pillow for image validation and display/lightbox variants
+- Leaflet 1.9.4 vendored in `static/vendor/leaflet/` for the optional map view
 - Cloudflare Pages Functions for public counters and guestbook APIs
 
 ## Requirements
@@ -79,6 +83,8 @@ The admin app is intended for local or private-network use. Do not expose the Py
 
 Uploaded originals are stored in `uploads/`. Metadata is stored in `data/moment.db`. Both are local runtime data and are ignored by git except for `uploads/.gitkeep`.
 
+Photo metadata includes the original date/location/photographer fields plus year, region, display place name, `placeId`, optional latitude/longitude, and an optional description. If `placeId` is left blank, MoMent generates a stable internal place id from the display place name.
+
 ## Static Export
 
 Export the public exhibition:
@@ -92,10 +98,12 @@ By default this writes to `dist/`. The export contains:
 - `index.html`
 - `static/css/site.css`
 - `static/js/exhibition.js`
+- `static/js/modules/`
 - `static/audio/`
 - `static/og/`
 - `static/qr/`
 - `static/icons/`
+- `static/vendor/leaflet/`
 - `uploads/` display and lightbox images used by the public site
 - `data/photos.json`
 - `_headers` for Cloudflare Pages cache and security headers
@@ -112,10 +120,12 @@ The admin page is not exported. Admin editing remains local in the Python app.
    - Framework preset: `None`
    - Build command: leave empty when `dist/` is already committed
    - Build output directory: `dist`
-5. Bind a D1 database named `VISITS_DB` if you want public visits, latest update, and trace guestbook APIs to work.
+5. Bind a D1 database named `VISITS_DB` if you want public visits, latest update, and guestbook APIs to work.
 6. Set `TRACE_DELETE_PASSWORD_HASH` in Cloudflare Pages if hidden trace deletion is needed. Use a SHA-256 hash, not the raw password.
 
 After each exhibition change, export again and redeploy the updated `dist/`.
+
+The map view requests OpenStreetMap raster tiles from `https://tile.openstreetmap.org` only when a visitor opens the `지도` panel. The static export CSP allows that tile host in `img-src`.
 
 ## Environment Variables
 
@@ -146,9 +156,10 @@ Copy `.env.example` to `.env` for local overrides. Do not commit `.env`.
 - `app/rate_limit.py`: small in-memory rate limiting helpers.
 - `app/security.py`: shared security headers and cookie helpers.
 - `app/http_utils.py`: JSON, multipart, photo field, and path helpers.
+- `app/photo_metadata.py`: photo metadata normalization and generated `placeId` helpers.
 - `app/image_validation.py`: image content validation.
 - `app/image_variants.py`: display and lightbox image generation.
-- `app/guestbook.py`: public trace guestbook validation and local rate limiting.
+- `app/guestbook.py`: public general/photo guestbook validation and local rate limiting.
 - `app/public_site.py`: public payload serialization and static export.
 - `static/`: public and admin frontend assets.
 - `functions/api/`: Cloudflare Pages Functions for public APIs.
@@ -163,8 +174,8 @@ Copy `.env.example` to `.env` for local overrides. Do not commit `.env`.
 - The admin path can reduce casual discovery, but real protection comes from authentication, signed sessions, and not exposing the admin server publicly.
 - Session cookies are `HttpOnly` and `SameSite=Strict`; set `MOMENT_ADMIN_URL=https://...` or `MOMENT_SECURE_COOKIES=true` when the admin server is served through HTTPS.
 - Admin login failures are rate-limited for 15 minutes by both IP+username pairs (5 failures) and the source IP overall (20 failures).
-- The static export includes Cloudflare `_headers` for basic browser security and long-lived asset caching.
-- The trace guestbook is public. It has basic validation and rate limiting, not full moderation tooling.
+- The static export includes Cloudflare `_headers` for basic browser security, long-lived asset caching for stable assets, and revalidation for JavaScript modules.
+- The guestbook is public. It has basic validation and rate limiting, not full moderation tooling.
 
 ## Contributing
 

@@ -27,7 +27,9 @@ body {
 }
 
 button,
-input {
+input,
+select,
+textarea {
   font: inherit;
 }
 
@@ -184,7 +186,9 @@ input {
   color: var(--muted);
 }
 
-.field input {
+.field input,
+.field select,
+.field textarea {
   width: 100%;
   padding: 0.84rem 0.92rem;
   border: 1px solid var(--line);
@@ -192,7 +196,14 @@ input {
   color: var(--text);
 }
 
-.field input:focus-visible {
+.field textarea {
+  min-height: 6rem;
+  resize: vertical;
+}
+
+.field input:focus-visible,
+.field select:focus-visible,
+.field textarea:focus-visible {
   outline: none;
   border-color: var(--line-strong);
   box-shadow: 0 0 0 4px var(--accent-soft);

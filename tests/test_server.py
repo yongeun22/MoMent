@@ -15,7 +15,7 @@ from app.auth import generate_salt, hash_password
 from app.config import AppConfig
 from app.database import Database
 from app.rate_limit import LOGIN_IP_RATE_LIMIT_MAX_FAILURES
-from app.server import build_handler
+from app.server import build_handler, static_cache_max_age
 
 
 def make_config(root: Path, *, secure_cookies: bool = False) -> AppConfig:
@@ -75,6 +75,11 @@ class TestServer:
 
 
 class ServerTests(unittest.TestCase):
+    def test_static_js_assets_revalidate(self):
+        self.assertEqual(static_cache_max_age("js/exhibition.js"), 0)
+        self.assertEqual(static_cache_max_age("js/modules/utils.js"), 0)
+        self.assertGreater(static_cache_max_age("css/site.css"), 0)
+
     def create_database_with_admin(self, config: AppConfig) -> Database:
         database = Database(config.db_path)
         database.initialize()
@@ -253,12 +258,29 @@ class ServerTests(unittest.TestCase):
 
                 create_status, _, create_payload = self.post_multipart(
                     f"{server.base_url}/api/admin/photos",
-                    fields={"date": "2026", "location": "Seoul", "photographer": "MoMent"},
+                    fields={
+                        "date": "2026",
+                        "location": "Seoul",
+                        "locationName": "Seoul Museum",
+                        "photographer": "MoMent",
+                        "year": "2026",
+                        "region": "서울·경기권",
+                        "category": "건축, 박물관",
+                        "placeId": "seoul_museum",
+                        "lat": "37.5",
+                        "lng": "127.0",
+                        "description": "Public description",
+                    },
                     file_bytes=self.make_png_bytes(),
                     cookie=cookie,
                 )
                 self.assertEqual(create_status, 201)
                 photo_id = create_payload["photo"]["id"]
+                self.assertEqual(create_payload["photo"]["locationName"], "Seoul Museum")
+                self.assertEqual(create_payload["photo"]["region"], "서울·경기권")
+                self.assertEqual(create_payload["photo"]["category"], ["건축", "박물관"])
+                self.assertEqual(create_payload["photo"]["placeId"], "seoul_museum")
+                self.assertEqual(create_payload["photo"]["lat"], 37.5)
 
                 list_status, _, list_payload = self.request(
                     f"{server.base_url}/api/admin/photos",
@@ -269,12 +291,26 @@ class ServerTests(unittest.TestCase):
 
                 update_status, _, update_payload = self.post_multipart(
                     f"{server.base_url}/api/admin/photos/{photo_id}/update",
-                    fields={"date": "2026 updated", "location": "Busan", "photographer": "MoMent"},
+                    fields={
+                        "date": "2026 updated",
+                        "location": "Busan",
+                        "locationName": "Busan Museum",
+                        "photographer": "MoMent",
+                        "year": "2026",
+                        "region": "경상권",
+                        "category": "박물관",
+                        "placeId": "busan_museum",
+                        "lat": "",
+                        "lng": "",
+                        "description": "",
+                    },
                     file_bytes=None,
                     cookie=cookie,
                 )
                 self.assertEqual(update_status, 200)
                 self.assertEqual(update_payload["photo"]["location"], "Busan")
+                self.assertEqual(update_payload["photo"]["locationName"], "Busan Museum")
+                self.assertEqual(update_payload["photo"]["region"], "경상권")
 
                 delete_status, _, delete_payload = self.request(
                     f"{server.base_url}/api/admin/photos/{photo_id}",
@@ -283,6 +319,53 @@ class ServerTests(unittest.TestCase):
                 )
                 self.assertEqual(delete_status, 200)
                 self.assertTrue(delete_payload["deleted"])
+
+    def test_guestbook_general_and_photo_filter_flow(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            config = make_config(Path(temp_dir))
+            database = Database(config.db_path)
+            database.initialize()
+            photo = database.create_photo(
+                filename="photo.png",
+                original_name="photo.png",
+                date_text="2026",
+                location="Seoul",
+                photographer="MoMent",
+            )
+
+            with TestServer(config, database) as server:
+                general_status, _, general_payload = self.post_json(
+                    f"{server.base_url}/api/traces",
+                    {
+                        "type": "general",
+                        "affiliation": "MoMent",
+                        "name": "Admin",
+                        "text": "잘 보고 갑니다.",
+                    },
+                )
+                photo_status, _, photo_payload = self.post_json(
+                    f"{server.base_url}/api/traces",
+                    {
+                        "type": "photo",
+                        "photoId": photo["id"],
+                        "affiliation": "MoMent",
+                        "name": "Admin",
+                        "text": "이 사진이 좋습니다.",
+                    },
+                )
+                filter_status, _, filter_payload = self.request(
+                    f"{server.base_url}/api/traces?photoId={photo['id']}",
+                    headers={"Accept": "application/json"},
+                )
+
+        self.assertEqual(general_status, 201)
+        self.assertEqual(general_payload["entry"]["type"], "general")
+        self.assertEqual(photo_status, 201)
+        self.assertEqual(photo_payload["entry"]["type"], "photo")
+        self.assertEqual(photo_payload["entry"]["photoId"], photo["id"])
+        self.assertEqual(filter_status, 200)
+        self.assertEqual(filter_payload["count"], 1)
+        self.assertEqual(filter_payload["entries"][0]["text"], "이 사진이 좋습니다.")
 
     def test_invalid_negative_content_length_returns_bad_request(self):
         with tempfile.TemporaryDirectory() as temp_dir:

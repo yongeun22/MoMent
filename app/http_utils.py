@@ -6,6 +6,8 @@ from pathlib import PurePosixPath, PureWindowsPath
 from urllib.parse import unquote
 import json
 
+from .photo_metadata import normalize_photo_payload
+
 
 def read_json(body: bytes) -> dict:
     if not body:
@@ -50,24 +52,7 @@ def parse_multipart_form(content_type: str, body: bytes) -> tuple[dict, dict]:
 
 
 def normalize_photo_fields(fields: dict) -> dict:
-    normalized = {
-        "date_text": fields.get("date", "").strip(),
-        "location": fields.get("location", "").strip(),
-        "photographer": fields.get("photographer", "").strip(),
-    }
-    labels = {
-        "date_text": "\uB0A0\uC9DC",
-        "location": "\uC7A5\uC18C",
-        "photographer": "\uCD2C\uC601",
-    }
-
-    for key, value in normalized.items():
-        if not value:
-            raise ValueError(f"{labels[key]}\uB294 \uD544\uC218\uC785\uB2C8\uB2E4.")
-        if len(value) > 200:
-            raise ValueError(f"{labels[key]}\uB294 200\uC790 \uC774\uD558\uB85C \uC785\uB825\uD574 \uC8FC\uC138\uC694.")
-
-    return normalized
+    return normalize_photo_payload(fields)
 
 
 def safe_relative_path(raw_path: str) -> str | None:

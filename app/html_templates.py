@@ -1,12 +1,13 @@
 from __future__ import annotations
 
+from hashlib import sha256
 from html import escape
 from pathlib import Path
 
 
 ASSET_VERSION_TOKENS = {
     "{{SITE_CSS_VERSION}}": Path("css/site.css"),
-    "{{EXHIBITION_JS_VERSION}}": Path("js/exhibition.js"),
+    "{{EXHIBITION_JS_VERSION}}": Path("js"),
     "{{ADMIN_CSS_VERSION}}": Path("css/admin.css"),
     "{{ADMIN_JS_VERSION}}": Path("js/admin.js"),
     "{{BGM_VERSION}}": Path("audio/moment-bgm.mp3"),
@@ -14,6 +15,14 @@ ASSET_VERSION_TOKENS = {
 
 
 def asset_version(file_path: Path) -> str:
+    if file_path.is_dir():
+        digest = sha256()
+        for child in sorted(path for path in file_path.rglob("*") if path.is_file()):
+            stat = child.stat()
+            digest.update(child.relative_to(file_path).as_posix().encode("utf-8"))
+            digest.update(f":{stat.st_mtime_ns:x}:{stat.st_size:x}\n".encode("ascii"))
+        return digest.hexdigest()[:16]
+
     stat = file_path.stat()
     return f"{stat.st_mtime_ns:x}-{stat.st_size:x}"
 

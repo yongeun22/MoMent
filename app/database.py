@@ -5,6 +5,14 @@ from datetime import datetime, timezone
 from pathlib import Path
 import sqlite3
 
+from .photo_metadata import (
+    DEFAULT_REGION,
+    categories_to_json,
+    extract_year,
+    normalize_region,
+    stable_place_id,
+)
+
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS admins (
@@ -24,15 +32,27 @@ CREATE TABLE IF NOT EXISTS photos (
     date_text TEXT NOT NULL,
     location TEXT NOT NULL,
     photographer TEXT NOT NULL,
+    year TEXT NOT NULL DEFAULT '',
+    region TEXT NOT NULL DEFAULT '기타',
+    category_json TEXT NOT NULL DEFAULT '[]',
+    place_id TEXT NOT NULL DEFAULT '',
+    location_name TEXT NOT NULL DEFAULT '',
+    lat REAL,
+    lng REAL,
+    description TEXT NOT NULL DEFAULT '',
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS guestbook_entries (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    type TEXT NOT NULL DEFAULT 'general',
+    photo_id INTEGER,
     affiliation TEXT NOT NULL,
     name TEXT NOT NULL,
-    created_at TEXT NOT NULL
+    body_text TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL,
+    FOREIGN KEY(photo_id) REFERENCES photos(id) ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS site_visit_counter (
@@ -67,6 +87,7 @@ class Database:
             connection.executescript(SCHEMA)
             self._ensure_admin_columns(connection)
             self._ensure_photo_columns(connection)
+            self._ensure_guestbook_columns(connection)
 
     def _ensure_admin_columns(self, connection: sqlite3.Connection) -> None:
         columns = {
@@ -79,66 +100,75 @@ class Database:
             )
 
     def _ensure_photo_columns(self, connection: sqlite3.Connection) -> None:
-        columns = [
+        columns = {
             row["name"]
             for row in connection.execute("PRAGMA table_info(photos)").fetchall()
-        ]
-        expected_columns = [
-            "id",
-            "filename",
-            "original_name",
-            "date_text",
-            "location",
-            "photographer",
-            "created_at",
-            "updated_at",
-        ]
-        if columns == expected_columns:
-            return
+        }
+        column_definitions = {
+            "year": "TEXT NOT NULL DEFAULT ''",
+            "region": f"TEXT NOT NULL DEFAULT '{DEFAULT_REGION}'",
+            "category_json": "TEXT NOT NULL DEFAULT '[]'",
+            "place_id": "TEXT NOT NULL DEFAULT ''",
+            "location_name": "TEXT NOT NULL DEFAULT ''",
+            "lat": "REAL",
+            "lng": "REAL",
+            "description": "TEXT NOT NULL DEFAULT ''",
+        }
+        for column_name, definition in column_definitions.items():
+            if column_name not in columns:
+                connection.execute(f"ALTER TABLE photos ADD COLUMN {column_name} {definition}")
 
-        if "copyright_text" not in columns and "display_order" not in columns:
-            return
+        rows = connection.execute(
+            """
+            SELECT id, date_text, location, year, region, category_json, place_id, location_name
+            FROM photos
+            """
+        ).fetchall()
+        for row in rows:
+            location_name = str(row["location_name"] or row["location"] or "").strip()
+            year = str(row["year"] or extract_year(row["date_text"]) or "").strip()
+            region = normalize_region(row["region"] or DEFAULT_REGION)
+            category_json = str(row["category_json"] or categories_to_json([])).strip()
+            place_id = str(row["place_id"] or stable_place_id(location_name)).strip()
+            connection.execute(
+                """
+                UPDATE photos
+                SET year = ?,
+                    region = ?,
+                    category_json = ?,
+                    place_id = ?,
+                    location_name = ?
+                WHERE id = ?
+                """,
+                (
+                    year,
+                    region,
+                    category_json,
+                    place_id,
+                    location_name,
+                    row["id"],
+                ),
+            )
 
-        connection.execute("ALTER TABLE photos RENAME TO photos_legacy")
+    def _ensure_guestbook_columns(self, connection: sqlite3.Connection) -> None:
+        columns = {
+            row["name"]
+            for row in connection.execute("PRAGMA table_info(guestbook_entries)").fetchall()
+        }
+        column_definitions = {
+            "type": "TEXT NOT NULL DEFAULT 'general'",
+            "photo_id": "INTEGER",
+            "body_text": "TEXT NOT NULL DEFAULT ''",
+        }
+        for column_name, definition in column_definitions.items():
+            if column_name not in columns:
+                connection.execute(f"ALTER TABLE guestbook_entries ADD COLUMN {column_name} {definition}")
         connection.execute(
             """
-            CREATE TABLE photos (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                filename TEXT NOT NULL UNIQUE,
-                original_name TEXT NOT NULL,
-                date_text TEXT NOT NULL,
-                location TEXT NOT NULL,
-                photographer TEXT NOT NULL,
-                created_at TEXT NOT NULL,
-                updated_at TEXT NOT NULL
-            )
+            CREATE INDEX IF NOT EXISTS idx_guestbook_entries_photo_id
+            ON guestbook_entries (photo_id, id)
             """
         )
-        connection.execute(
-            """
-            INSERT INTO photos (
-                id,
-                filename,
-                original_name,
-                date_text,
-                location,
-                photographer,
-                created_at,
-                updated_at
-            )
-            SELECT
-                id,
-                filename,
-                original_name,
-                date_text,
-                location,
-                photographer,
-                created_at,
-                updated_at
-            FROM photos_legacy
-            """
-        )
-        connection.execute("DROP TABLE photos_legacy")
 
     def has_admin(self) -> bool:
         with self.connection() as connection:
@@ -228,8 +258,21 @@ class Database:
         date_text: str,
         location: str,
         photographer: str,
+        year: str = "",
+        region: str = DEFAULT_REGION,
+        category_json: str = "[]",
+        place_id: str = "",
+        location_name: str = "",
+        lat: float | None = None,
+        lng: float | None = None,
+        description: str = "",
     ) -> dict:
         timestamp = utc_now_iso()
+        location_name = location_name or location
+        year = year or extract_year(date_text)
+        region = normalize_region(region)
+        place_id = place_id or stable_place_id(location_name)
+        category_json = category_json or categories_to_json([])
         with self.connection() as connection:
             cursor = connection.execute(
                 """
@@ -239,10 +282,18 @@ class Database:
                     date_text,
                     location,
                     photographer,
+                    year,
+                    region,
+                    category_json,
+                    place_id,
+                    location_name,
+                    lat,
+                    lng,
+                    description,
                     created_at,
                     updated_at
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     filename,
@@ -250,6 +301,14 @@ class Database:
                     date_text,
                     location,
                     photographer,
+                    year,
+                    region,
+                    category_json,
+                    place_id,
+                    location_name,
+                    lat,
+                    lng,
+                    description,
                     timestamp,
                     timestamp,
                 ),
@@ -265,6 +324,14 @@ class Database:
         date_text: str,
         location: str,
         photographer: str,
+        year: str = "",
+        region: str = DEFAULT_REGION,
+        category_json: str = "[]",
+        place_id: str = "",
+        location_name: str = "",
+        lat: float | None = None,
+        lng: float | None = None,
+        description: str = "",
         filename: str | None = None,
         original_name: str | None = None,
     ) -> dict | None:
@@ -275,6 +342,11 @@ class Database:
         timestamp = utc_now_iso()
         new_filename = filename or current["filename"]
         new_original_name = original_name or current["original_name"]
+        location_name = location_name or location
+        year = year or extract_year(date_text)
+        region = normalize_region(region)
+        place_id = place_id or stable_place_id(location_name)
+        category_json = category_json or categories_to_json([])
 
         with self.connection() as connection:
             connection.execute(
@@ -285,6 +357,14 @@ class Database:
                     date_text = ?,
                     location = ?,
                     photographer = ?,
+                    year = ?,
+                    region = ?,
+                    category_json = ?,
+                    place_id = ?,
+                    location_name = ?,
+                    lat = ?,
+                    lng = ?,
+                    description = ?,
                     updated_at = ?
                 WHERE id = ?
                 """,
@@ -294,6 +374,14 @@ class Database:
                     date_text,
                     location,
                     photographer,
+                    year,
+                    region,
+                    category_json,
+                    place_id,
+                    location_name,
+                    lat,
+                    lng,
+                    description,
                     timestamp,
                     photo_id,
                 ),
@@ -310,24 +398,61 @@ class Database:
             connection.execute("DELETE FROM photos WHERE id = ?", (photo_id,))
         return current
 
-    def list_guestbook_entries(self, *, limit: int = 200) -> list[dict]:
+    def list_guestbook_entries(
+        self,
+        *,
+        limit: int = 200,
+        photo_id: int | None = None,
+        entry_type: str | None = None,
+    ) -> list[dict]:
         safe_limit = max(1, min(int(limit), 200))
+        clauses: list[str] = []
+        params: list[object] = []
+        if photo_id is not None:
+            clauses.append("photo_id = ?")
+            params.append(photo_id)
+        if entry_type:
+            clauses.append("type = ?")
+            params.append(entry_type)
+        where_sql = f"WHERE {' AND '.join(clauses)}" if clauses else ""
         with self.connection() as connection:
             rows = connection.execute(
-                """
-                SELECT id, affiliation, name, created_at
+                f"""
+                SELECT id,
+                       type,
+                       photo_id AS photoId,
+                       affiliation,
+                       name,
+                       body_text AS text,
+                       created_at AS createdAt
                 FROM guestbook_entries
+                {where_sql}
                 ORDER BY id DESC
                 LIMIT ?
                 """,
-                (safe_limit,),
+                (*params, safe_limit),
             ).fetchall()
         return [dict(row) for row in rows]
 
-    def get_guestbook_count(self) -> int:
+    def get_guestbook_count(
+        self,
+        *,
+        photo_id: int | None = None,
+        entry_type: str | None = None,
+    ) -> int:
+        clauses: list[str] = []
+        params: list[object] = []
+        if photo_id is not None:
+            clauses.append("photo_id = ?")
+            params.append(photo_id)
+        if entry_type:
+            clauses.append("type = ?")
+            params.append(entry_type)
+        where_sql = f"WHERE {' AND '.join(clauses)}" if clauses else ""
         with self.connection() as connection:
             row = connection.execute(
-                "SELECT COUNT(*) AS total FROM guestbook_entries",
+                f"SELECT COUNT(*) AS total FROM guestbook_entries {where_sql}",
+                params,
             ).fetchone()
         return int(row["total"]) if row else 0
 
@@ -360,19 +485,33 @@ class Database:
             ).fetchone()
         return int(row["count"]) if row else self.get_visit_count()
 
-    def create_guestbook_entry(self, *, affiliation: str, name: str) -> dict:
+    def create_guestbook_entry(
+        self,
+        *,
+        entry_type: str,
+        photo_id: int | None,
+        affiliation: str,
+        name: str,
+        text: str,
+    ) -> dict:
         timestamp = utc_now_iso()
         with self.connection() as connection:
             cursor = connection.execute(
                 """
-                INSERT INTO guestbook_entries (affiliation, name, created_at)
-                VALUES (?, ?, ?)
+                INSERT INTO guestbook_entries (type, photo_id, affiliation, name, body_text, created_at)
+                VALUES (?, ?, ?, ?, ?, ?)
                 """,
-                (affiliation, name, timestamp),
+                (entry_type, photo_id, affiliation, name, text, timestamp),
             )
             row = connection.execute(
                 """
-                SELECT id, affiliation, name, created_at
+                SELECT id,
+                       type,
+                       photo_id AS photoId,
+                       affiliation,
+                       name,
+                       body_text AS text,
+                       created_at AS createdAt
                 FROM guestbook_entries
                 WHERE id = ?
                 """,

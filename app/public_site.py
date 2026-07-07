@@ -12,6 +12,7 @@ from .image_variants import (
     ensure_lightbox_variants,
     lightbox_variant_relative_path,
 )
+from .photo_metadata import categories_from_json
 from .security import iter_security_headers
 
 
@@ -57,10 +58,35 @@ def serialize_public_photo(photo: dict, uploads_dir: Path, *, prefer_lightbox_va
         "originalName": photo["original_name"],
         "date": photo["date_text"],
         "location": photo["location"],
+        "year": photo.get("year", ""),
+        "region": photo.get("region", ""),
+        "category": categories_from_json(photo.get("category_json", "[]")),
+        "placeId": photo.get("place_id", ""),
+        "locationName": photo.get("location_name") or photo["location"],
+        "lat": photo.get("lat"),
+        "lng": photo.get("lng"),
+        "description": photo.get("description", ""),
         "photographer": photo["photographer"],
         "createdAt": photo["created_at"],
         "updatedAt": photo["updated_at"],
     }
+
+
+def _copy_tree(source_dir: Path, destination_dir: Path) -> None:
+    if not source_dir.exists():
+        return
+    for source_file in source_dir.rglob("*"):
+        if not source_file.is_file():
+            continue
+        relative_path = source_file.relative_to(source_dir)
+        destination = destination_dir / relative_path
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source_file, destination)
+
+
+def _copy_public_javascript(static_dir: Path, output_dir: Path) -> None:
+    shutil.copy2(static_dir / "js" / "exhibition.js", output_dir / "static" / "js" / "exhibition.js")
+    _copy_tree(static_dir / "js" / "modules", output_dir / "static" / "js" / "modules")
 
 
 def build_public_payload(database: Database, uploads_dir: Path, *, prefer_lightbox_variant: bool = False) -> dict:
@@ -92,6 +118,7 @@ def export_static_site(
     (output_dir / "static" / "og").mkdir(parents=True, exist_ok=True)
     (output_dir / "static" / "qr").mkdir(parents=True, exist_ok=True)
     (output_dir / "static" / "icons").mkdir(parents=True, exist_ok=True)
+    (output_dir / "static" / "vendor").mkdir(parents=True, exist_ok=True)
     (output_dir / "uploads").mkdir(parents=True, exist_ok=True)
     (output_dir / "data").mkdir(parents=True, exist_ok=True)
 
@@ -100,31 +127,12 @@ def export_static_site(
         encoding="utf-8",
     )
     shutil.copy2(static_dir / "css" / "site.css", output_dir / "static" / "css" / "site.css")
-    shutil.copy2(static_dir / "js" / "exhibition.js", output_dir / "static" / "js" / "exhibition.js")
-
-    audio_dir = static_dir / "audio"
-    if audio_dir.exists():
-        for audio_file in audio_dir.iterdir():
-            if audio_file.is_file():
-                shutil.copy2(audio_file, output_dir / "static" / "audio" / audio_file.name)
-
-    og_dir = static_dir / "og"
-    if og_dir.exists():
-        for og_file in og_dir.iterdir():
-            if og_file.is_file():
-                shutil.copy2(og_file, output_dir / "static" / "og" / og_file.name)
-
-    qr_dir = static_dir / "qr"
-    if qr_dir.exists():
-        for qr_file in qr_dir.iterdir():
-            if qr_file.is_file():
-                shutil.copy2(qr_file, output_dir / "static" / "qr" / qr_file.name)
-
-    icons_dir = static_dir / "icons"
-    if icons_dir.exists():
-        for icon_file in icons_dir.iterdir():
-            if icon_file.is_file():
-                shutil.copy2(icon_file, output_dir / "static" / "icons" / icon_file.name)
+    _copy_public_javascript(static_dir, output_dir)
+    _copy_tree(static_dir / "audio", output_dir / "static" / "audio")
+    _copy_tree(static_dir / "og", output_dir / "static" / "og")
+    _copy_tree(static_dir / "qr", output_dir / "static" / "qr")
+    _copy_tree(static_dir / "icons", output_dir / "static" / "icons")
+    _copy_tree(static_dir / "vendor", output_dir / "static" / "vendor")
 
     photos_data = database.list_photos()
     filenames = [photo["filename"] for photo in photos_data]
@@ -163,7 +171,7 @@ def export_static_site(
             "  Cache-Control: public, max-age=31536000, immutable",
             "",
             "/static/js/*",
-            "  Cache-Control: public, max-age=31536000, immutable",
+            "  Cache-Control: public, max-age=0, must-revalidate",
             "",
             "/static/audio/*",
             "  Cache-Control: public, max-age=31536000, immutable",
@@ -175,6 +183,9 @@ def export_static_site(
             "  Cache-Control: public, max-age=31536000, immutable",
             "",
             "/static/icons/*",
+            "  Cache-Control: public, max-age=31536000, immutable",
+            "",
+            "/static/vendor/*",
             "  Cache-Control: public, max-age=31536000, immutable",
             "",
             "/uploads/*",

@@ -11,16 +11,14 @@
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="MoMent">
   <meta name="twitter:description" content="&#xACE0;&#xACE0;&#xBBF8;&#xC220;&#xC0AC;&#xD559;&#xACFC; &#xC0AC;&#xC9C4;&#xB2F5;&#xC0AC; &#xB3D9;&#xC544;&#xB9AC; MoMent">
-  <meta property="og:url" content="https://moment-exhibition.pages.dev/">
-  <meta property="og:image" content="https://moment-exhibition.pages.dev/static/og/moment-share.png">
+  <meta property="og:image" content="/static/og/moment-share.png">
   <meta property="og:image:alt" content="MoMent">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta name="twitter:image" content="https://moment-exhibition.pages.dev/static/og/moment-share.png">
-  <link rel="canonical" href="https://moment-exhibition.pages.dev/">
+  <meta name="twitter:image" content="/static/og/moment-share.png">
 
-  <link rel="stylesheet" href="/static/css/site.css?v=18b66a08ca4a566c-4b67">
-  <script src="/static/js/exhibition.js?v=18b66a05fb348480-7265" defer></script>
+  <link rel="stylesheet" href="/static/css/site.css?v=18c00be11b49a97c-5c67">
+  <script type="module" src="/static/js/exhibition.js?v=ceb0bb01eaf46877"></script>
 </head>
 <body>
   <audio
@@ -98,6 +96,7 @@
         <p class="trace-title" id="traceCountText">지금까지 -개의 방명록이 남았습니다</p>
         <p class="trace-note">한 번 남긴 방명록은 지울 수 없으니 신중하게 적어주세요.</p>
         <form class="trace-form" id="traceForm">
+          <input type="hidden" name="type" value="general">
           <label class="trace-field">
             <span>소속</span>
             <input
@@ -120,10 +119,55 @@
               required
             >
           </label>
+          <label class="trace-field trace-field-wide">
+            <span>내용</span>
+            <textarea
+              class="trace-input trace-textarea"
+              name="text"
+              maxlength="500"
+              rows="3"
+              required
+            ></textarea>
+          </label>
           <button class="trace-submit" type="submit">남기기</button>
           <p class="trace-status" id="traceStatus" role="status" aria-live="polite"></p>
         </form>
         <div class="trace-list" id="traceList" aria-live="polite"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="filter-overlay info-overlay" id="filterOverlay" hidden>
+    <div
+      class="filter-panel info-panel"
+      id="filterPanel"
+      role="dialog"
+      aria-modal="true"
+      aria-label="필터"
+    >
+      <button class="trace-close" id="filterClose" type="button" aria-label="필터 닫기">×</button>
+      <div class="filter-lines info-lines">
+        <p class="trace-title" id="filterCountText">전체 사진을 보고 있습니다</p>
+        <div class="filter-grid" id="filterControls"></div>
+        <button class="trace-submit filter-reset" id="filterReset" type="button">필터 초기화</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="map-overlay info-overlay" id="mapOverlay" hidden>
+    <div
+      class="map-panel info-panel"
+      id="mapPanel"
+      role="dialog"
+      aria-modal="true"
+      aria-label="지도"
+    >
+      <button class="trace-close" id="mapClose" type="button" aria-label="지도 닫기">×</button>
+      <div class="map-lines info-lines">
+        <p class="trace-title">MoMent Map</p>
+        <p class="trace-note">좌표가 등록된 장소만 지도에 표시됩니다.</p>
+        <div class="moment-map" id="momentMap"></div>
+        <p class="trace-status" id="mapStatus" role="status" aria-live="polite"></p>
       </div>
     </div>
   </div>
@@ -156,6 +200,17 @@
             &#xBB38;&#xC758;
           </button>
           <span class="site-menu-separator" aria-hidden="true">&#x3163;</span>
+          <button
+            class="filter-trigger"
+            id="filterTrigger"
+            type="button"
+            aria-haspopup="dialog"
+            aria-controls="filterOverlay"
+            aria-expanded="false"
+          >
+            필터
+          </button>
+          <span class="site-menu-separator" aria-hidden="true">&#x3163;</span>
         </div>
 
         <div class="site-brand">
@@ -166,6 +221,17 @@
           <span class="site-menu-separator" aria-hidden="true">&#x3163;</span>
           <span class="site-visitor-count" id="visitorCount" hidden>방문자 -</span>
           <span class="site-menu-separator site-visitor-separator" aria-hidden="true" hidden>&#x3163;</span>
+          <button
+            class="map-trigger"
+            id="mapTrigger"
+            type="button"
+            aria-haspopup="dialog"
+            aria-controls="mapOverlay"
+            aria-expanded="false"
+          >
+            지도
+          </button>
+          <span class="site-menu-separator" aria-hidden="true">&#x3163;</span>
           <button
             class="trace-trigger"
             id="traceTrigger"
@@ -202,6 +268,7 @@
         <img class="lightbox-image lightbox-image-buffer" id="lightboxImageBuffer" alt="" aria-hidden="true">
       </div>
       <div class="lightbox-meta" id="lightboxMeta"></div>
+      <div class="lightbox-guestbook" id="lightboxGuestbook"></div>
     </div>
   </div>
 </body>

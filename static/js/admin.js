@@ -12,6 +12,17 @@ const statusToast = document.getElementById("statusToast");
 const MAX_IMAGE_DIMENSION = 2400;
 const OPTIMIZE_THRESHOLD_BYTES = 4 * 1024 * 1024;
 const PUBLISH_REMINDER = "\uACF5\uAC1C \uC0AC\uC774\uD2B8 \uBC18\uC601\uC740 export-static \uD6C4 \uD478\uC2DC\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.";
+const REGION_OPTIONS = [
+  "\uC11C\uC6B8\u00B7\uACBD\uAE30\uAD8C",
+  "\uAC15\uC6D0\uAD8C",
+  "\uCDA9\uCCAD\uAD8C",
+  "\uC804\uB77C\uAD8C",
+  "\uACBD\uC0C1\uAD8C",
+  "\uACBD\uC8FC\uAD8C",
+  "\uC81C\uC8FC\uAD8C",
+  "\uD574\uC678",
+  "\uAE30\uD0C0",
+];
 
 let currentPhotos = [];
 
@@ -159,8 +170,19 @@ async function optimizeImageFile(file) {
 async function buildPhotoFormData(form, { requireImage }) {
   const formData = new FormData();
 
-  ["date", "location", "photographer"].forEach((fieldName) => {
-    formData.append(fieldName, form.elements[fieldName].value);
+  [
+    "date",
+    "location",
+    "locationName",
+    "photographer",
+    "year",
+    "region",
+    "placeId",
+    "lat",
+    "lng",
+    "description",
+  ].forEach((fieldName) => {
+    formData.append(fieldName, form.elements[fieldName]?.value || "");
   });
 
   const fileInput = form.elements.photo;
@@ -178,10 +200,17 @@ async function buildPhotoFormData(form, { requireImage }) {
   return { formData, optimized };
 }
 
+function renderRegionOptions(selectedRegion) {
+  const selected = selectedRegion || "\uAE30\uD0C0";
+  return REGION_OPTIONS.map((region) => `
+    <option value="${escapeHtml(region)}" ${region === selected ? "selected" : ""}>${escapeHtml(region)}</option>
+  `).join("");
+}
+
 function renderAdminPhoto(photo) {
   return `
     <article class="photo-card" data-photo-id="${photo.id}">
-      <img class="photo-preview" src="${photo.imageUrl}" alt="${escapeHtml(photo.location)}, ${escapeHtml(photo.date)}">
+      <img class="photo-preview" src="${photo.imageUrl}" alt="${escapeHtml(photo.locationName || photo.location)}, ${escapeHtml(photo.date)}">
       <form class="photo-editor" data-update-form="${photo.id}">
         <div class="photo-editor-topbar">
           <div class="editor-filename">${escapeHtml(photo.originalName)}</div>
@@ -196,8 +225,36 @@ function renderAdminPhoto(photo) {
             <input type="text" name="location" value="${escapeHtml(photo.location)}" required>
           </label>
           <label class="field">
+            <span>\uD45C\uC2DC \uC7A5\uC18C\uBA85</span>
+            <input type="text" name="locationName" value="${escapeHtml(photo.locationName || photo.location)}">
+          </label>
+          <label class="field">
             <span>\uCD2C\uC601</span>
             <input type="text" name="photographer" value="${escapeHtml(photo.photographer)}" required>
+          </label>
+          <label class="field">
+            <span>\uC5F0\uB3C4</span>
+            <input type="text" name="year" value="${escapeHtml(photo.year || "")}" pattern="(19|20)[0-9]{2}">
+          </label>
+          <label class="field">
+            <span>\uAD8C\uC5ED</span>
+            <select name="region">${renderRegionOptions(photo.region)}</select>
+          </label>
+          <label class="field">
+            <span>placeId</span>
+            <input type="text" name="placeId" value="${escapeHtml(photo.placeId || "")}">
+          </label>
+          <label class="field">
+            <span>\uC704\uB3C4</span>
+            <input type="number" name="lat" value="${photo.lat ?? ""}" step="any" min="-90" max="90">
+          </label>
+          <label class="field">
+            <span>\uACBD\uB3C4</span>
+            <input type="number" name="lng" value="${photo.lng ?? ""}" step="any" min="-180" max="180">
+          </label>
+          <label class="field field-wide">
+            <span>\uC124\uBA85</span>
+            <textarea name="description" rows="3" maxlength="1000">${escapeHtml(photo.description || "")}</textarea>
           </label>
           <label class="field">
             <span>\uC774\uBBF8\uC9C0 \uAD50\uCCB4</span>
