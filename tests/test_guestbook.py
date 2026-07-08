@@ -53,6 +53,11 @@ class GuestbookTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             normalize_guestbook_fields({"type": "photo", "photoId": 1, "affiliation": "A", "name": "B", "text": ""})
 
+        with self.assertRaises(ValueError):
+            normalize_guestbook_fields(
+                {"type": "photo", "photoId": 88, "affiliation": "테스트", "name": "테스트", "text": "테스트"}
+            )
+
     def test_guestbook_delete_password_requires_hash_env(self):
         password_hash = sha256(b"delete-password").hexdigest()
         with patch.dict("os.environ", {"MOMENT_TRACE_DELETE_PASSWORD_HASH": password_hash}, clear=True):

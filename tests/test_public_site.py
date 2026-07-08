@@ -53,6 +53,9 @@ class PublicSiteTests(unittest.TestCase):
 
         self.assertIn('id="lightboxPhotoMeta"', index_html)
         self.assertIn("lightbox-photo-meta-list", lightbox_js)
+        self.assertIn("dataset.activeTab", lightbox_js)
+        self.assertIn("photo-guestbook-grid", lightbox_js)
+        self.assertIn("photo-guestbook-actions", lightbox_js)
         self.assertIn('data-lightbox-tab="map"', lightbox_js)
         self.assertNotIn("지도에서 보기", lightbox_js)
         self.assertNotIn("대표 사진", map_js)

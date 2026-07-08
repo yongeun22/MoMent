@@ -78,27 +78,31 @@ export function createLightbox({
       ? photoEntries.map(renderPhotoEntry).join("")
       : `<p class="trace-empty">이 사진에 남겨진 방명록이 아직 없습니다.</p>`;
     return `
-      <div class="lightbox-tab-panel">
+      <div class="lightbox-tab-panel photo-guestbook-panel">
         <p class="photo-guestbook-summary">이 사진에 ${photoCount}개의 방명록이 달렸습니다.</p>
-        <form class="trace-form photo-guestbook-form" id="photoGuestbookForm">
-          <input type="hidden" name="type" value="photo">
-          <input type="hidden" name="photoId" value="${photo.id}">
-          <label class="trace-field">
-            <span>소속</span>
-            <input class="trace-input" type="text" name="affiliation" maxlength="80" autocomplete="organization" required>
-          </label>
-          <label class="trace-field">
-            <span>이름</span>
-            <input class="trace-input" type="text" name="name" maxlength="40" autocomplete="name" required>
-          </label>
-          <label class="trace-field trace-field-wide">
-            <span>내용</span>
-            <textarea class="trace-input trace-textarea" name="text" maxlength="500" rows="3" required></textarea>
-          </label>
-          <button class="trace-submit" type="submit">남기기</button>
-          <p class="trace-status" id="photoGuestbookStatus" role="status" aria-live="polite"></p>
-        </form>
-        <div class="photo-guestbook-list">${entriesMarkup}</div>
+        <div class="photo-guestbook-grid">
+          <form class="trace-form photo-guestbook-form" id="photoGuestbookForm">
+            <input type="hidden" name="type" value="photo">
+            <input type="hidden" name="photoId" value="${photo.id}">
+            <label class="trace-field">
+              <span>소속</span>
+              <input class="trace-input" type="text" name="affiliation" maxlength="80" autocomplete="organization" required>
+            </label>
+            <label class="trace-field">
+              <span>이름</span>
+              <input class="trace-input" type="text" name="name" maxlength="40" autocomplete="name" required>
+            </label>
+            <label class="trace-field trace-field-wide">
+              <span>내용</span>
+              <textarea class="trace-input trace-textarea" name="text" maxlength="500" rows="3" required></textarea>
+            </label>
+            <div class="photo-guestbook-actions">
+              <button class="trace-submit" type="submit">남기기</button>
+              <p class="trace-status" id="photoGuestbookStatus" role="status" aria-live="polite"></p>
+            </div>
+          </form>
+          <div class="photo-guestbook-list" aria-live="polite">${entriesMarkup}</div>
+        </div>
       </div>
     `;
   }
@@ -108,6 +112,7 @@ export function createLightbox({
       return;
     }
 
+    lightboxContent.dataset.activeTab = activeTab;
     const hasMap = isCoordinatePair(openPhoto);
     const hasInfoPanel = Boolean(openPhoto.description);
     const panelMarkup = activeTab === "guestbook"
@@ -269,6 +274,7 @@ export function createLightbox({
         lightboxPhotoMeta.innerHTML = "";
       }
       lightboxMeta.innerHTML = "";
+      delete lightboxContent.dataset.activeTab;
       openPhoto = null;
       photoEntries = [];
       photoCount = 0;

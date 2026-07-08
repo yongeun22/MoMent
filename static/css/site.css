@@ -760,35 +760,53 @@ img {
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.32);
 }
 
+.moment-map .leaflet-popup-content-wrapper {
+  border-radius: 0.9rem;
+}
+
+.moment-map .leaflet-popup-content {
+  width: min(14rem, calc(100vw - 5rem)) !important;
+  margin: 0.78rem;
+}
+
 .map-popup {
+  display: grid;
+  gap: 0.56rem;
   color: #111111;
   font-family: var(--meta-font);
 }
 
 .map-popup-title {
-  margin: 0 0 0.28rem;
+  margin: 0;
+  font-size: 1rem;
   font-weight: 700;
+  line-height: 1.28;
+  word-break: keep-all;
 }
 
 .map-popup-note {
-  margin: 0 0 0.5rem;
+  margin: 0;
 }
 
 .map-popup-thumbs {
-  display: flex;
-  gap: 0.25rem;
-  margin-bottom: 0.5rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(3.4rem, 4.2rem));
+  gap: 0.36rem;
+  justify-content: start;
 }
 
 .map-popup-thumbs img {
-  width: 3.4rem;
-  height: 3.4rem;
+  width: 4.2rem;
+  height: 4.2rem;
+  min-width: 0;
   object-fit: cover;
+  border-radius: 0.34rem;
 }
 
 .map-popup-button {
   display: inline-flex;
   justify-content: center;
+  justify-self: start;
   background: #111111;
   color: #ffffff;
 }
@@ -905,6 +923,8 @@ img {
   place-items: center;
   padding: 2rem;
   background: rgba(0, 0, 0, 0.96);
+  overflow: auto;
+  overscroll-behavior: contain;
   opacity: 0;
   transition: opacity 320ms ease;
   will-change: opacity;
@@ -919,11 +939,16 @@ img {
   max-width: min(92vw, 1280px);
   max-height: calc(100vh - 4rem);
   display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
   gap: 1rem;
   justify-items: stretch;
   opacity: 0;
   transition: opacity 180ms ease;
   will-change: opacity;
+}
+
+.lightbox-content[data-active-tab="guestbook"] {
+  width: min(92vw, 1180px);
 }
 
 .lightbox-image-shell {
@@ -932,10 +957,15 @@ img {
   justify-self: start;
   width: fit-content;
   max-width: 100%;
+  max-height: 100%;
   border-radius: var(--frame-radius);
   overflow: hidden;
   box-shadow: 0 24px 44px rgba(0, 0, 0, 0.5);
   transform: translateZ(0);
+}
+
+.lightbox-content[data-active-tab="guestbook"] .lightbox-image-shell {
+  justify-self: center;
 }
 
 .lightbox.is-visible .lightbox-content {
@@ -959,6 +989,10 @@ img {
   border-radius: 0;
   box-shadow: none;
   transform: none;
+}
+
+.lightbox-content[data-active-tab="guestbook"] .lightbox-image {
+  max-height: min(60dvh, 34rem);
 }
 
 .lightbox-image-buffer {
@@ -987,8 +1021,10 @@ img {
 .lightbox-meta {
   width: 100%;
   align-self: start;
-  max-height: min(36dvh, 24rem);
-  overflow: auto;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  max-height: min(40dvh, 24rem);
+  overflow: hidden;
   overscroll-behavior: contain;
   border-top: 1px solid var(--line);
   padding-top: 0.78rem;
@@ -1062,6 +1098,10 @@ img {
 .lightbox-tab-panel {
   display: grid;
   gap: 0.72rem;
+  min-height: 0;
+  overflow: auto;
+  padding: 0 0.2rem 0.1rem;
+  scrollbar-width: thin;
 }
 
 .lightbox-description {
@@ -1081,9 +1121,21 @@ img {
 
 .photo-guestbook-form {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.48rem;
   align-items: end;
+}
+
+.photo-guestbook-panel {
+  align-content: start;
+}
+
+.photo-guestbook-grid {
+  display: grid;
+  grid-template-columns: minmax(18rem, 1fr) minmax(14rem, 0.82fr);
+  gap: 0.9rem;
+  align-items: start;
+  min-height: 0;
 }
 
 .photo-guestbook-form .trace-field {
@@ -1103,14 +1155,36 @@ img {
 }
 
 .photo-guestbook-form .trace-textarea {
-  min-height: 4.2rem;
+  min-height: 3.9rem;
+}
+
+.photo-guestbook-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 0;
+}
+
+.photo-guestbook-form .trace-submit {
+  justify-self: start;
+  flex: 0 0 auto;
+}
+
+.photo-guestbook-form .trace-status {
+  min-width: 0;
+  min-height: 0;
+  flex: 1 1 auto;
 }
 
 .photo-guestbook-list {
   display: grid;
   gap: 0.55rem;
-  max-height: 32vh;
+  align-content: start;
+  max-height: min(26dvh, 14rem);
   overflow: auto;
+  padding-right: 0.2rem;
+  scrollbar-width: thin;
 }
 
 .photo-guestbook-entry {
@@ -1260,8 +1334,12 @@ img {
   .lightbox-content {
     width: fit-content;
     max-width: 92vw;
-    max-height: calc(100vh - 2rem);
+    max-height: calc(100dvh - 2rem);
     gap: 0.8rem;
+  }
+
+  .lightbox-content[data-active-tab="guestbook"] {
+    width: min(92vw, 42rem);
   }
 
   .lightbox-image-shell {
@@ -1272,8 +1350,16 @@ img {
     max-height: calc(100dvh - 8.8rem);
   }
 
+  .lightbox-content[data-active-tab="guestbook"] .lightbox-image {
+    max-height: min(44dvh, 24rem);
+  }
+
   .lightbox-meta {
     max-height: min(30dvh, 18rem);
+  }
+
+  .lightbox-content[data-active-tab="guestbook"] .lightbox-meta {
+    max-height: min(48dvh, 24rem);
   }
 
   .lightbox-photo-meta {
@@ -1294,8 +1380,37 @@ img {
     overflow: auto;
   }
 
+  .photo-guestbook-grid {
+    grid-template-columns: 1fr;
+    gap: 0.62rem;
+  }
+
+  .photo-guestbook-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.42rem;
+  }
+
+  .photo-guestbook-actions {
+    align-items: center;
+    flex-direction: row;
+    gap: 0.5rem;
+  }
+
+  .photo-guestbook-form .trace-input {
+    padding: 0.5rem 0.62rem;
+    font-size: 0.78rem;
+  }
+
+  .photo-guestbook-form .trace-submit {
+    min-width: 6.2rem;
+  }
+
+  .photo-guestbook-form .trace-textarea {
+    min-height: 3rem;
+  }
+
   .photo-guestbook-list {
-    max-height: 18vh;
+    max-height: min(16vh, 9rem);
   }
 }
 

@@ -43,6 +43,7 @@ class CloudflareFunctionTests(unittest.TestCase):
         self.assertIn("MOMENT_TRACE_DELETE_PASSWORD_HASH", source)
         self.assertIn("DELETE_RATE_LIMIT_MAX_ATTEMPTS", source)
         self.assertIn("enforceDeleteRateLimit", source)
+        self.assertIn("\\uD14C\\uC2A4\\uD2B8", source)
         self.assertIn('return json({ error: "Not found." }, 404)', source)
 
     def test_status_update_post_requires_token_hash(self):

@@ -38,6 +38,10 @@ const REMOVED_GUESTBOOK_ENTRIES = [
     affiliation: "\uB3D9\uACE0\uBABD",
     name: "\uAC04\uC9C0\uB7FD\uB2E4",
   },
+  {
+    affiliation: "\uD14C\uC2A4\uD2B8",
+    name: "\uD14C\uC2A4\uD2B8",
+  },
 ];
 const MODERATION_ERROR = "\uB4F1\uB85D\uD560 \uC218 \uC5C6\uB294 \uD45C\uD604\uC774 \uD3EC\uD568\uB418\uC5B4 \uC788\uC2B5\uB2C8\uB2E4.";
 
