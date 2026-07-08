@@ -732,11 +732,11 @@
       "year": "2025",
       "region": "제주권",
       "category": [],
-      "placeId": "place_4fadc8e119d0",
-      "locationName": "제주도 소천지",
+      "placeId": "place_cc4fb109bf7e",
+      "locationName": "서귀포 소천지",
       "lat": 33.2434935,
       "lng": 126.6016838,
-      "description": "MoMent가 제주도 소천지에서 기록한 문화유산 답사 사진입니다.",
+      "description": "MoMent가 서귀포 소천지에서 기록한 자연 경관 답사 사진입니다.",
       "photographer": "24 김지원",
       "createdAt": "2026-05-24T17:40:40+00:00",
       "updatedAt": "2026-05-24T17:40:40+00:00"
@@ -1610,7 +1610,7 @@
       "locationName": "동국대학교 WISE캠퍼스",
       "lat": 35.8634577,
       "lng": 129.1934843,
-      "description": "MoMent가 동국대학교 WISE캠퍼스에서 기록한 문화유산 답사 사진입니다.",
+      "description": "MoMent가 동국대학교 WISE캠퍼스에서 기록한 답사 사진입니다.",
       "photographer": "26 전하늘",
       "createdAt": "2026-05-29T17:15:52+00:00",
       "updatedAt": "2026-05-29T17:15:52+00:00"

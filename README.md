@@ -20,7 +20,7 @@ Small exhibition teams often need a quiet online gallery that can be edited loca
 
 ## Live Demo
 
-Maintainer confirmation required: add the verified deployment URL here after confirming the current public site address.
+[https://moment-exhibition.pages.dev/](https://moment-exhibition.pages.dev/)
 
 ## Screenshots
 
