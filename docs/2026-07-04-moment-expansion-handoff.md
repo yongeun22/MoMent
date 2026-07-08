@@ -13,7 +13,7 @@
 - 상단 `방명록`은 전체/일반/사진 필터 없이 하나의 통합 방명록으로 표시한다. 사진별 방명록은 라이트박스의 `방명록 N` 탭에서 별도로 접근한다.
 - 권역 필터의 `경상권`은 공개 필터에서 `경상권(경주 제외)`로 표시한다. 데이터 값은 기존 호환성을 위해 `경상권`을 유지한다.
 - 공개 필터에서는 `기타` 권역을 표시하지 않는다. 현재 87장 기준 `기타` 분류는 없다.
-- 87장 모두 `description`, `lat`, `lng`, `year`, `region`, `locationName`, `placeId`가 채워져 있고, 지도는 55개 장소 핀으로 묶인다.
+- 87장 모두 `lat`, `lng`, `year`, `region`, `locationName`, `placeId`가 채워져 있고, 지도는 55개 장소 핀으로 묶인다. `description`은 실제 캡션이 없으면 비워둔다.
 - 운영 URL은 GitHub 저장소 메타데이터와 HTTP 응답 기준 `https://moment-exhibition.pages.dev/`이며, 2026-07-08 확인 시 배포본의 사진 데이터는 로컬 `dist/data/photos.json`과 의미상 동일했다.
 - 방명록 삭제, 사진 설명, 대표 좌표 운영 기준은 `docs/operating-policy.md`에 정리했다.
 
