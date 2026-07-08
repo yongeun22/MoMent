@@ -35,6 +35,14 @@ class CloudflareFunctionTests(unittest.TestCase):
         self.assertIn('url.searchParams.get("photoId")', source)
         self.assertIn("photo_id AS photoId", source)
 
+    def test_traces_function_uses_hidden_guestbook_delete_policy(self):
+        source = Path("functions/api/traces.js").read_text(encoding="utf-8")
+
+        self.assertIn("export async function onRequestDelete", source)
+        self.assertIn("TRACE_DELETE_PASSWORD_HASH", source)
+        self.assertIn("MOMENT_TRACE_DELETE_PASSWORD_HASH", source)
+        self.assertIn('return json({ error: "Not found." }, 404)', source)
+
 
 if __name__ == "__main__":
     unittest.main()

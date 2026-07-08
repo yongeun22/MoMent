@@ -85,6 +85,8 @@ Uploaded originals are stored in `uploads/`. Metadata is stored in `data/moment.
 
 Photo metadata includes the original date/location/photographer fields plus year, region, display place name, `placeId`, optional latitude/longitude, and an optional description. If `placeId` is left blank, MoMent generates a stable internal place id from the display place name.
 
+Operational rules for guestbook deletion, photo descriptions, and representative map coordinates are documented in `docs/operating-policy.md`.
+
 ## Static Export
 
 Export the public exhibition:
@@ -164,6 +166,7 @@ Copy `.env.example` to `.env` for local overrides. Do not commit `.env`.
 - `static/`: public and admin frontend assets.
 - `functions/api/`: Cloudflare Pages Functions for public APIs.
 - `dist/`: generated static site currently used for deployment.
+- `docs/operating-policy.md`: guestbook, description, and map coordinate operating policy.
 - `docs/original-specification.md`: preserved original project specification.
 - `tests/`: automated tests.
 

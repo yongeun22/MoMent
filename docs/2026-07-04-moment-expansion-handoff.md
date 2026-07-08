@@ -15,6 +15,7 @@
 - 공개 필터에서는 `기타` 권역을 표시하지 않는다. 현재 87장 기준 `기타` 분류는 없다.
 - 87장 모두 `description`, `lat`, `lng`, `year`, `region`, `locationName`, `placeId`가 채워져 있고, 지도는 55개 장소 핀으로 묶인다.
 - 운영 URL은 GitHub 저장소 메타데이터와 HTTP 응답 기준 `https://moment-exhibition.pages.dev/`이며, 2026-07-08 확인 시 배포본의 사진 데이터는 로컬 `dist/data/photos.json`과 의미상 동일했다.
+- 방명록 삭제, 사진 설명, 대표 좌표 운영 기준은 `docs/operating-policy.md`에 정리했다.
 
 ## 목적
 

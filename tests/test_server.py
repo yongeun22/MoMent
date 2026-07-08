@@ -5,9 +5,11 @@ import threading
 import unittest
 import urllib.error
 import urllib.request
+from hashlib import sha256
 from io import BytesIO
 from http.server import ThreadingHTTPServer
 from pathlib import Path
+from unittest.mock import patch
 
 from PIL import Image
 
@@ -366,6 +368,89 @@ class ServerTests(unittest.TestCase):
         self.assertEqual(filter_status, 200)
         self.assertEqual(filter_payload["count"], 1)
         self.assertEqual(filter_payload["entries"][0]["text"], "이 사진이 좋습니다.")
+
+    def test_guestbook_hidden_delete_flow_removes_general_and_photo_entries(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            config = make_config(Path(temp_dir))
+            database = Database(config.db_path)
+            database.initialize()
+            photo = database.create_photo(
+                filename="photo.png",
+                original_name="photo.png",
+                date_text="2026",
+                location="Seoul",
+                photographer="MoMent",
+            )
+            password = "delete-password"
+            password_hash = sha256(password.encode("utf-8")).hexdigest()
+
+            with TestServer(config, database) as server, patch.dict(
+                "os.environ",
+                {"MOMENT_TRACE_DELETE_PASSWORD_HASH": password_hash},
+                clear=True,
+            ):
+                _, _, general_payload = self.post_json(
+                    f"{server.base_url}/api/traces",
+                    {
+                        "type": "general",
+                        "affiliation": "MoMent",
+                        "name": "Admin",
+                        "text": "운영 확인용 일반 방명록입니다.",
+                    },
+                )
+                _, _, photo_payload = self.post_json(
+                    f"{server.base_url}/api/traces",
+                    {
+                        "type": "photo",
+                        "photoId": photo["id"],
+                        "affiliation": "MoMent",
+                        "name": "Admin",
+                        "text": "운영 확인용 사진 방명록입니다.",
+                    },
+                )
+                wrong_status, _, wrong_payload = self.request(
+                    f"{server.base_url}/api/traces",
+                    method="DELETE",
+                    data=json.dumps(
+                        {
+                            "id": general_payload["entry"]["id"],
+                            "password": "wrong-password",
+                        }
+                    ).encode("utf-8"),
+                    headers={"Content-Type": "application/json", "Accept": "application/json"},
+                )
+                general_delete_status, _, general_delete_payload = self.request(
+                    f"{server.base_url}/api/traces",
+                    method="DELETE",
+                    data=json.dumps(
+                        {
+                            "id": general_payload["entry"]["id"],
+                            "password": password,
+                        }
+                    ).encode("utf-8"),
+                    headers={"Content-Type": "application/json", "Accept": "application/json"},
+                )
+                photo_delete_status, _, photo_delete_payload = self.request(
+                    f"{server.base_url}/api/traces",
+                    method="DELETE",
+                    data=json.dumps(
+                        {
+                            "id": photo_payload["entry"]["id"],
+                            "password": password,
+                        }
+                    ).encode("utf-8"),
+                    headers={"Content-Type": "application/json", "Accept": "application/json"},
+                )
+
+        self.assertEqual(wrong_status, 404)
+        self.assertEqual(wrong_payload["error"], "Not found.")
+        self.assertEqual(general_delete_status, 200)
+        self.assertTrue(general_delete_payload["deleted"])
+        self.assertEqual(general_delete_payload["count"], 1)
+        self.assertEqual(general_delete_payload["entries"][0]["id"], photo_payload["entry"]["id"])
+        self.assertEqual(photo_delete_status, 200)
+        self.assertTrue(photo_delete_payload["deleted"])
+        self.assertEqual(photo_delete_payload["count"], 0)
 
     def test_invalid_negative_content_length_returns_bad_request(self):
         with tempfile.TemporaryDirectory() as temp_dir:
