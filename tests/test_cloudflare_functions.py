@@ -16,6 +16,9 @@ class CloudflareFunctionTests(unittest.TestCase):
         self.assertIn('"X-Content-Type-Options": "nosniff"', helper)
         self.assertIn('"Referrer-Policy": "strict-origin-when-cross-origin"', helper)
         self.assertIn('"X-Frame-Options": "DENY"', helper)
+        self.assertIn('"Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=()"', helper)
+        self.assertIn('"Content-Security-Policy"', helper)
+        self.assertIn("frame-ancestors 'none'", helper)
         self.assertIn('"Content-Type": "application/json; charset=utf-8"', helper)
         self.assertIn('"Cache-Control": "no-store"', helper)
 
