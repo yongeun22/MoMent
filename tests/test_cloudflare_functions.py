@@ -41,6 +41,17 @@ class CloudflareFunctionTests(unittest.TestCase):
         self.assertIn("export async function onRequestDelete", source)
         self.assertIn("TRACE_DELETE_PASSWORD_HASH", source)
         self.assertIn("MOMENT_TRACE_DELETE_PASSWORD_HASH", source)
+        self.assertIn("DELETE_RATE_LIMIT_MAX_ATTEMPTS", source)
+        self.assertIn("enforceDeleteRateLimit", source)
+        self.assertIn('return json({ error: "Not found." }, 404)', source)
+
+    def test_status_update_post_requires_token_hash(self):
+        source = Path("functions/api/status-update.js").read_text(encoding="utf-8")
+
+        self.assertIn("STATUS_UPDATE_TOKEN_HASH", source)
+        self.assertIn("MOMENT_STATUS_UPDATE_TOKEN_HASH", source)
+        self.assertIn("verifyStatusUpdateToken", source)
+        self.assertIn('authorization.toLowerCase().startsWith("bearer ")', source)
         self.assertIn('return json({ error: "Not found." }, 404)', source)
 
 

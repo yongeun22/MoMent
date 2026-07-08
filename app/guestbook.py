@@ -12,6 +12,8 @@ MAX_TEXT_LENGTH = 500
 MAX_GUESTBOOK_BODY_BYTES = 2 * 1024
 GUESTBOOK_RATE_LIMIT_WINDOW_SECONDS = 15 * 60
 GUESTBOOK_RATE_LIMIT_MAX_SUBMISSIONS = 12
+GUESTBOOK_DELETE_RATE_LIMIT_WINDOW_SECONDS = 15 * 60
+GUESTBOOK_DELETE_RATE_LIMIT_MAX_ATTEMPTS = 5
 TRACE_DELETE_HASH_ENV_NAMES = (
     "MOMENT_TRACE_DELETE_PASSWORD_HASH",
     "TRACE_DELETE_PASSWORD_HASH",
@@ -131,11 +133,29 @@ def guestbook_rate_limit_key(client_ip: str, user_agent: str) -> str:
     return sha256(identity.encode("utf-8")).hexdigest()
 
 
-def record_guestbook_submission(timestamps: list[float], now: float) -> bool:
-    cutoff = now - GUESTBOOK_RATE_LIMIT_WINDOW_SECONDS
+def _record_limited_event(timestamps: list[float], now: float, *, window_seconds: int, max_events: int) -> bool:
+    cutoff = now - window_seconds
     timestamps[:] = [timestamp for timestamp in timestamps if timestamp >= cutoff]
-    if len(timestamps) >= GUESTBOOK_RATE_LIMIT_MAX_SUBMISSIONS:
+    if len(timestamps) >= max_events:
         return False
 
     timestamps.append(now)
     return True
+
+
+def record_guestbook_submission(timestamps: list[float], now: float) -> bool:
+    return _record_limited_event(
+        timestamps,
+        now,
+        window_seconds=GUESTBOOK_RATE_LIMIT_WINDOW_SECONDS,
+        max_events=GUESTBOOK_RATE_LIMIT_MAX_SUBMISSIONS,
+    )
+
+
+def record_guestbook_delete_attempt(timestamps: list[float], now: float) -> bool:
+    return _record_limited_event(
+        timestamps,
+        now,
+        window_seconds=GUESTBOOK_DELETE_RATE_LIMIT_WINDOW_SECONDS,
+        max_events=GUESTBOOK_DELETE_RATE_LIMIT_MAX_ATTEMPTS,
+    )

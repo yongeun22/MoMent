@@ -20,6 +20,7 @@ from .guestbook import (
     MAX_GUESTBOOK_BODY_BYTES,
     guestbook_rate_limit_key,
     normalize_guestbook_fields,
+    record_guestbook_delete_attempt,
     record_guestbook_submission,
     verify_guestbook_delete_password,
 )
@@ -27,7 +28,7 @@ from .html_templates import render_html_template
 from .http_utils import normalize_photo_fields, parse_multipart_form, read_json, safe_relative_path
 from .image_validation import detect_image_extension
 from .image_variants import ensure_display_variant, display_variant_path, lightbox_variant_path
-from .public_site import build_public_payload, serialize_public_photo
+from .public_site import build_public_payload, serialize_admin_photo
 from .rate_limit import (
     LOGIN_IP_RATE_LIMIT_MAX_FAILURES,
     LOGIN_RATE_LIMIT_MAX_FAILURES,
@@ -84,6 +85,7 @@ def bootstrap_admin(config: AppConfig, database: Database) -> None:
 
 def build_handler(config: AppConfig, database: Database, secret_key: bytes):
     guestbook_submission_times: dict[str, list[float]] = {}
+    guestbook_delete_attempt_times: dict[str, list[float]] = {}
     login_rate_limiter = WindowRateLimiter(
         max_failures=LOGIN_RATE_LIMIT_MAX_FAILURES,
         window_seconds=LOGIN_RATE_LIMIT_WINDOW_SECONDS,
@@ -165,7 +167,7 @@ def build_handler(config: AppConfig, database: Database, secret_key: bytes):
                 if not admin:
                     return
 
-                photos = [serialize_public_photo(photo, config.uploads_dir) for photo in database.list_photos()]
+                photos = [serialize_admin_photo(photo, config.uploads_dir) for photo in database.list_photos()]
                 self._send_json({"photos": photos, "username": admin["username"]})
                 return
 
@@ -526,7 +528,7 @@ def build_handler(config: AppConfig, database: Database, secret_key: bytes):
                 self._delete_upload_variants(stored_filename)
                 raise
 
-            self._send_json({"photo": serialize_public_photo(photo, config.uploads_dir)}, status=HTTPStatus.CREATED)
+            self._send_json({"photo": serialize_admin_photo(photo, config.uploads_dir)}, status=HTTPStatus.CREATED)
 
         def _handle_photo_update(self, raw_photo_id: str) -> None:
             try:
@@ -600,7 +602,7 @@ def build_handler(config: AppConfig, database: Database, secret_key: bytes):
                     old_path.unlink()
                 self._delete_upload_variants(old_filename)
 
-            self._send_json({"photo": serialize_public_photo(photo, config.uploads_dir)})
+            self._send_json({"photo": serialize_admin_photo(photo, config.uploads_dir)})
 
         def _handle_photo_delete(self, raw_photo_id: str) -> None:
             try:
@@ -644,6 +646,13 @@ def build_handler(config: AppConfig, database: Database, secret_key: bytes):
             key = guestbook_rate_limit_key(client_ip, user_agent)
             timestamps = guestbook_submission_times.setdefault(key, [])
             return record_guestbook_submission(timestamps, time.monotonic())
+
+        def _allow_guestbook_delete_attempt(self) -> bool:
+            client_ip = self.client_address[0] if self.client_address else ""
+            user_agent = self.headers.get("User-Agent", "")
+            key = guestbook_rate_limit_key(client_ip, f"delete|{user_agent}")
+            timestamps = guestbook_delete_attempt_times.setdefault(key, [])
+            return record_guestbook_delete_attempt(timestamps, time.monotonic())
 
         def _handle_guestbook_create(self) -> None:
             if not self._is_json_request():
@@ -694,6 +703,10 @@ def build_handler(config: AppConfig, database: Database, secret_key: bytes):
         def _handle_guestbook_delete(self) -> None:
             if not self._is_json_request():
                 self._send_json({"error": "Invalid JSON payload."}, status=HTTPStatus.UNSUPPORTED_MEDIA_TYPE)
+                return
+
+            if not self._allow_guestbook_delete_attempt():
+                self._send_json({"error": "Not found."}, status=HTTPStatus.NOT_FOUND)
                 return
 
             body = self._read_body(max_bytes=MAX_GUESTBOOK_BODY_BYTES)

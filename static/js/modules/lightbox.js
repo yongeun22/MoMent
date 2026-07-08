@@ -6,6 +6,7 @@ export function createLightbox({
   lightboxContent,
   lightboxImage,
   lightboxImageBuffer,
+  lightboxPhotoMeta,
   lightboxMeta,
   gallery,
   onTraceChange,
@@ -22,31 +23,40 @@ export function createLightbox({
     lightboxImageBuffer?.removeAttribute("src");
   }
 
-  function renderMetaList(photo) {
+  function renderPhotoMeta(photo) {
     const location = displayLocation(photo);
+    const items = [
+      ["날짜", photo.date],
+      ["장소", location],
+      ["촬영", photo.photographer],
+      ["권역", photo.region],
+    ].filter(([, value]) => String(value || "").trim());
+
+    if (!items.length) {
+      return "";
+    }
+
     return `
-      <dl class="lightbox-meta-list">
-        <div class="lightbox-meta-item">
-          <dt class="lightbox-meta-term">날짜</dt>
-          <dd class="lightbox-meta-value">${escapeHtml(photo.date)}</dd>
-        </div>
-        <div class="lightbox-meta-item">
-          <dt class="lightbox-meta-term">장소</dt>
-          <dd class="lightbox-meta-value">${escapeHtml(location)}</dd>
-        </div>
-        <div class="lightbox-meta-item">
-          <dt class="lightbox-meta-term">촬영</dt>
-          <dd class="lightbox-meta-value">${escapeHtml(photo.photographer)}</dd>
-        </div>
-        ${photo.region ? `
-          <div class="lightbox-meta-item">
-            <dt class="lightbox-meta-term">권역</dt>
-            <dd class="lightbox-meta-value">${escapeHtml(photo.region)}</dd>
+      <dl class="lightbox-photo-meta-list">
+        ${items.map(([term, value]) => `
+          <div class="lightbox-photo-meta-item">
+            <dt class="lightbox-photo-meta-term">${escapeHtml(term)}</dt>
+            <dd class="lightbox-photo-meta-value">${escapeHtml(value)}</dd>
           </div>
-        ` : ""}
+        `).join("")}
       </dl>
-      ${photo.description ? `<p class="lightbox-description">${escapeHtml(photo.description)}</p>` : ""}
-      ${isCoordinatePair(photo) ? `<button class="trace-submit" type="button" data-map-photo="${photo.id}">지도에서 보기</button>` : ""}
+    `;
+  }
+
+  function renderInfoPanel(photo) {
+    if (!photo.description) {
+      return "";
+    }
+
+    return `
+      <div class="lightbox-tab-panel">
+        <p class="lightbox-description">${escapeHtml(photo.description)}</p>
+      </div>
     `;
   }
 
@@ -98,16 +108,26 @@ export function createLightbox({
       return;
     }
 
+    const hasMap = isCoordinatePair(openPhoto);
+    const hasInfoPanel = Boolean(openPhoto.description);
+    const panelMarkup = activeTab === "guestbook"
+      ? renderGuestbookPanel(openPhoto)
+      : renderInfoPanel(openPhoto);
     lightboxMeta.innerHTML = `
-      <div class="lightbox-tabs" role="tablist" aria-label="사진 정보">
+      <div class="lightbox-tabs ${activeTab === "info" && !hasInfoPanel ? "is-compact" : ""}" role="tablist" aria-label="사진 정보">
         <button class="lightbox-tab ${activeTab === "info" ? "is-active" : ""}" type="button" data-lightbox-tab="info">정보</button>
         <button class="lightbox-tab ${activeTab === "guestbook" ? "is-active" : ""}" type="button" data-lightbox-tab="guestbook">방명록 ${photoCount}</button>
+        ${hasMap ? `<button class="lightbox-tab" type="button" data-lightbox-tab="map">지도</button>` : ""}
       </div>
-      ${activeTab === "info" ? renderMetaList(openPhoto) : renderGuestbookPanel(openPhoto)}
+      ${panelMarkup}
     `;
 
     lightboxMeta.querySelectorAll("[data-lightbox-tab]").forEach((button) => {
       button.addEventListener("click", () => {
+        if (button.dataset.lightboxTab === "map") {
+          onShowMap(openPhoto);
+          return;
+        }
         activeTab = button.dataset.lightboxTab;
         renderPanel();
         if (activeTab === "guestbook") {
@@ -116,9 +136,6 @@ export function createLightbox({
       });
     });
 
-    lightboxMeta.querySelector("[data-map-photo]")?.addEventListener("click", () => {
-      onShowMap(openPhoto);
-    });
     lightboxMeta.querySelector("#photoGuestbookForm")?.addEventListener("submit", submitPhotoGuestbook);
   }
 
@@ -221,6 +238,9 @@ export function createLightbox({
     if (lightboxImageBuffer) {
       lightboxImageBuffer.alt = `${location}, ${photo.date}`;
     }
+    if (lightboxPhotoMeta) {
+      lightboxPhotoMeta.innerHTML = renderPhotoMeta(photo);
+    }
     renderPanel();
     lightbox.hidden = false;
     document.body.classList.add("is-lightbox-open");
@@ -245,6 +265,9 @@ export function createLightbox({
       lightbox.hidden = true;
       lightboxImage.removeAttribute("src");
       resetBuffer();
+      if (lightboxPhotoMeta) {
+        lightboxPhotoMeta.innerHTML = "";
+      }
       lightboxMeta.innerHTML = "";
       openPhoto = null;
       photoEntries = [];

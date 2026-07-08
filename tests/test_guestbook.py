@@ -3,10 +3,13 @@ from hashlib import sha256
 from unittest.mock import patch
 
 from app.guestbook import (
+    GUESTBOOK_DELETE_RATE_LIMIT_MAX_ATTEMPTS,
+    GUESTBOOK_DELETE_RATE_LIMIT_WINDOW_SECONDS,
     GUESTBOOK_RATE_LIMIT_MAX_SUBMISSIONS,
     GUESTBOOK_RATE_LIMIT_WINDOW_SECONDS,
     guestbook_rate_limit_key,
     normalize_guestbook_fields,
+    record_guestbook_delete_attempt,
     record_guestbook_submission,
     verify_guestbook_delete_password,
 )
@@ -74,6 +77,21 @@ class GuestbookTests(unittest.TestCase):
 
         self.assertFalse(record_guestbook_submission(timestamps, now))
         self.assertTrue(record_guestbook_submission(timestamps, now + GUESTBOOK_RATE_LIMIT_WINDOW_SECONDS + 1))
+
+    def test_guestbook_delete_rate_limit_blocks_after_attempt_limit(self):
+        timestamps = []
+        now = 1000.0
+
+        for _ in range(GUESTBOOK_DELETE_RATE_LIMIT_MAX_ATTEMPTS):
+            self.assertTrue(record_guestbook_delete_attempt(timestamps, now))
+
+        self.assertFalse(record_guestbook_delete_attempt(timestamps, now))
+        self.assertTrue(
+            record_guestbook_delete_attempt(
+                timestamps,
+                now + GUESTBOOK_DELETE_RATE_LIMIT_WINDOW_SECONDS + 1,
+            )
+        )
 
 
 if __name__ == "__main__":

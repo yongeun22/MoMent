@@ -22,6 +22,7 @@ export function createGallery({
   filterControls,
   filterCountText,
   filterReset,
+  filterTrigger,
   hoverQuery,
   onOpenLightbox,
 }) {
@@ -141,6 +142,10 @@ export function createGallery({
   }
 
   function renderFilterCount() {
+    const hasActiveFilter = Object.values(filters).some((value) => String(value || "").trim());
+    filterTrigger?.classList.toggle("is-filtered", hasActiveFilter);
+    filterTrigger?.setAttribute("aria-label", hasActiveFilter ? "필터 적용됨" : "필터");
+
     if (!filterCountText) {
       return;
     }

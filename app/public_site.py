@@ -55,7 +55,6 @@ def serialize_public_photo(photo: dict, uploads_dir: Path, *, prefer_lightbox_va
         "id": photo["id"],
         "imageUrl": image_url,
         "lightboxUrl": lightbox_url,
-        "originalName": photo["original_name"],
         "date": photo["date_text"],
         "location": photo["location"],
         "year": photo.get("year", ""),
@@ -67,9 +66,19 @@ def serialize_public_photo(photo: dict, uploads_dir: Path, *, prefer_lightbox_va
         "lng": photo.get("lng"),
         "description": photo.get("description", ""),
         "photographer": photo["photographer"],
-        "createdAt": photo["created_at"],
-        "updatedAt": photo["updated_at"],
     }
+
+
+def serialize_admin_photo(photo: dict, uploads_dir: Path) -> dict:
+    payload = serialize_public_photo(photo, uploads_dir)
+    payload.update(
+        {
+            "originalName": photo["original_name"],
+            "createdAt": photo["created_at"],
+            "updatedAt": photo["updated_at"],
+        }
+    )
+    return payload
 
 
 def _copy_tree(source_dir: Path, destination_dir: Path) -> None:

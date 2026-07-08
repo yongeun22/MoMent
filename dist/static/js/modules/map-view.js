@@ -67,12 +67,11 @@ function popupMarkup(place) {
       <p class="map-popup-note">${place.photos.length}장의 사진</p>
       <div class="map-popup-thumbs">${thumbs}</div>
       <button class="map-popup-button" type="button" data-map-filter-place="${escapeHtml(place.name)}">사진 보기</button>
-      <button class="map-popup-button" type="button" data-map-open-photo="${place.photos[0].id}">대표 사진</button>
     </div>
   `;
 }
 
-export function createMapView({ mapElement, mapStatus, getPhotos, onOpenLightbox, onFilterPlace }) {
+export function createMapView({ mapElement, mapStatus, getPhotos, onFilterPlace }) {
   let map = null;
   let markerLayer = null;
   let places = [];
@@ -99,9 +98,6 @@ export function createMapView({ mapElement, mapStatus, getPhotos, onOpenLightbox
       }).addTo(map);
       markerLayer = L.layerGroup().addTo(map);
       map.on("popupopen", () => {
-        mapElement.querySelectorAll("[data-map-open-photo]").forEach((button) => {
-          button.addEventListener("click", () => onOpenLightbox(button.dataset.mapOpenPhoto, button));
-        });
         mapElement.querySelectorAll("[data-map-filter-place]").forEach((button) => {
           button.addEventListener("click", () => onFilterPlace(button.dataset.mapFilterPlace));
         });

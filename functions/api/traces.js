@@ -7,6 +7,8 @@ const MAX_TEXT_LENGTH = 500;
 const MAX_JSON_BODY_BYTES = 2 * 1024;
 const RATE_LIMIT_WINDOW_SECONDS = 15 * 60;
 const RATE_LIMIT_MAX_SUBMISSIONS = 12;
+const DELETE_RATE_LIMIT_WINDOW_SECONDS = 15 * 60;
+const DELETE_RATE_LIMIT_MAX_ATTEMPTS = 5;
 const BLOCKED_GUESTBOOK_TERMS = [
   "\uC2DC\uBC1C",
   "\uC2DC\uBE68",
@@ -298,16 +300,16 @@ async function readPayload(request) {
   }
 }
 
-function getClientIdentity(request) {
+function getClientIdentity(request, scope) {
   const forwardedFor = request.headers.get("CF-Connecting-IP") || request.headers.get("X-Forwarded-For") || "";
   const userAgent = request.headers.get("User-Agent") || "";
-  return `${forwardedFor.split(",")[0].trim()}|${userAgent.slice(0, 160)}`;
+  return `${scope}|${forwardedFor.split(",")[0].trim()}|${userAgent.slice(0, 160)}`;
 }
 
-async function enforceLooseRateLimit(db, request) {
-  const clientKey = await sha256Hex(getClientIdentity(request));
+async function enforceRateLimit(db, request, { scope, windowSeconds, maxAttempts }) {
+  const clientKey = await sha256Hex(getClientIdentity(request, scope));
   const now = new Date();
-  const cutoff = new Date(now.getTime() - RATE_LIMIT_WINDOW_SECONDS * 1000).toISOString();
+  const cutoff = new Date(now.getTime() - windowSeconds * 1000).toISOString();
 
   await db
     .prepare("DELETE FROM guestbook_rate_limits WHERE created_at < ?")
@@ -319,7 +321,7 @@ async function enforceLooseRateLimit(db, request) {
     .bind(clientKey, cutoff)
     .first();
 
-  if (Number(row?.total || 0) >= RATE_LIMIT_MAX_SUBMISSIONS) {
+  if (Number(row?.total || 0) >= maxAttempts) {
     return false;
   }
 
@@ -329,6 +331,22 @@ async function enforceLooseRateLimit(db, request) {
     .run();
 
   return true;
+}
+
+async function enforceLooseRateLimit(db, request) {
+  return enforceRateLimit(db, request, {
+    scope: "submit",
+    windowSeconds: RATE_LIMIT_WINDOW_SECONDS,
+    maxAttempts: RATE_LIMIT_MAX_SUBMISSIONS,
+  });
+}
+
+async function enforceDeleteRateLimit(db, request) {
+  return enforceRateLimit(db, request, {
+    scope: "delete",
+    windowSeconds: DELETE_RATE_LIMIT_WINDOW_SECONDS,
+    maxAttempts: DELETE_RATE_LIMIT_MAX_ATTEMPTS,
+  });
 }
 
 function buildEntryFilters(url) {
@@ -465,6 +483,10 @@ export async function onRequestDelete(context) {
     }
 
     await ensureSchema(db);
+    if (!(await enforceDeleteRateLimit(db, context.request))) {
+      return json({ error: "Not found." }, 404);
+    }
+
     const payload = await readPayload(context.request);
     const entryId = Number.parseInt(String(payload.id || ""), 10);
     if (!Number.isFinite(entryId) || entryId <= 0) {

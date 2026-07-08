@@ -8,7 +8,7 @@ from PIL import Image
 
 from app.database import Database
 from app.html_templates import asset_version, render_html_template
-from app.public_site import EXPORT_MARKER, export_static_site
+from app.public_site import EXPORT_MARKER, export_static_site, serialize_admin_photo
 
 
 def write_static_fixture(static_dir: Path) -> None:
@@ -43,6 +43,27 @@ class PublicSiteTests(unittest.TestCase):
         self.assertNotIn("traceFilter", guestbook_js)
         self.assertNotIn("일반 방명록", guestbook_js)
         self.assertNotIn("사진 방명록", guestbook_js)
+
+    def test_lightbox_and_map_keep_student_photo_actions_neutral(self):
+        root = Path(__file__).resolve().parents[1]
+        index_html = (root / "static" / "index.html").read_text(encoding="utf-8")
+        exhibition_js = (root / "static" / "js" / "exhibition.js").read_text(encoding="utf-8")
+        lightbox_js = (root / "static" / "js" / "modules" / "lightbox.js").read_text(encoding="utf-8")
+        map_js = (root / "static" / "js" / "modules" / "map-view.js").read_text(encoding="utf-8")
+
+        self.assertIn('id="lightboxPhotoMeta"', index_html)
+        self.assertIn("lightbox-photo-meta-list", lightbox_js)
+        self.assertIn('data-lightbox-tab="map"', lightbox_js)
+        self.assertNotIn("지도에서 보기", lightbox_js)
+        self.assertNotIn("대표 사진", map_js)
+        self.assertNotIn("data-map-open-photo", map_js)
+        self.assertIn(
+            "onFilterPlace: (placeName) => {\n"
+            "    gallery.applyPlaceFilter(placeName);\n"
+            "    closeMapOverlay();\n"
+            "  },",
+            exhibition_js,
+        )
 
     def test_exhibition_js_version_includes_module_files(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -112,6 +133,14 @@ class PublicSiteTests(unittest.TestCase):
             self.assertEqual(photo["lat"], 37.5)
             self.assertEqual(photo["lng"], 127.0)
             self.assertEqual(photo["description"], "Public description")
+            self.assertNotIn("originalName", photo)
+            self.assertNotIn("createdAt", photo)
+            self.assertNotIn("updatedAt", photo)
+
+            admin_photo = serialize_admin_photo(database.list_photos()[0], uploads_dir)
+            self.assertEqual(admin_photo["originalName"], "photo.png")
+            self.assertIn("createdAt", admin_photo)
+            self.assertIn("updatedAt", admin_photo)
             headers_text = (output_dir / "_headers").read_text(encoding="utf-8")
             self.assertIn("Content-Security-Policy", headers_text)
             self.assertIn("img-src 'self' data: blob:", headers_text)

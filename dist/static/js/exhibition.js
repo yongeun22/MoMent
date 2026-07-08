@@ -33,6 +33,7 @@ const lightbox = document.getElementById("lightbox");
 const lightboxContent = document.getElementById("lightboxContent");
 const lightboxImage = document.getElementById("lightboxImage");
 const lightboxImageBuffer = document.getElementById("lightboxImageBuffer");
+const lightboxPhotoMeta = document.getElementById("lightboxPhotoMeta");
 const lightboxMeta = document.getElementById("lightboxMeta");
 const historyTrigger = document.getElementById("historyTrigger");
 const historyOverlay = document.getElementById("historyOverlay");
@@ -442,6 +443,7 @@ gallery = createGallery({
   filterControls,
   filterCountText,
   filterReset,
+  filterTrigger,
   hoverQuery,
   onOpenLightbox: (photoId) => lightboxView.open(photoId),
 });
@@ -459,11 +461,9 @@ mapView = createMapView({
   mapElement: momentMap,
   mapStatus,
   getPhotos: () => gallery.getPhotos(),
-  onOpenLightbox: (photoId) => lightboxView.open(photoId),
   onFilterPlace: (placeName) => {
     gallery.applyPlaceFilter(placeName);
     closeMapOverlay();
-    openFilterOverlay();
   },
 });
 
@@ -472,6 +472,7 @@ lightboxView = createLightbox({
   lightboxContent,
   lightboxImage,
   lightboxImageBuffer,
+  lightboxPhotoMeta,
   lightboxMeta,
   gallery,
   onTraceChange: (entries, count) => {

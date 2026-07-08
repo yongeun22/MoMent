@@ -13,6 +13,7 @@ Small exhibition teams often need a quiet online gallery that can be edited loca
 - Photo upload, expanded metadata editing, deletion, and generated display/lightbox image variants.
 - Gallery filtering by year, region, photographer, and place.
 - Integrated public guestbook, with photo-specific entries also shown in each lightbox.
+- Photo lightbox with compact metadata over the image and `정보`, `방명록`, and `지도` actions below the image.
 - Lazy-loaded MoMent Map using self-hosted Leaflet assets and OpenStreetMap tiles for photos with coordinates.
 - SQLite storage for the local admin app.
 - Static export for Cloudflare Pages or another static host.
@@ -124,10 +125,11 @@ The admin page is not exported. Admin editing remains local in the Python app.
    - Build output directory: `dist`
 5. Bind a D1 database named `VISITS_DB` if you want public visits, latest update, and guestbook APIs to work.
 6. Set `TRACE_DELETE_PASSWORD_HASH` in Cloudflare Pages if hidden trace deletion is needed. Use a SHA-256 hash, not the raw password.
+7. Set `STATUS_UPDATE_TOKEN_HASH` in Cloudflare Pages if `POST /api/status-update` is used. Send the raw token only in the request header, for example `Authorization: Bearer <token>`.
 
 After each exhibition change, export again and redeploy the updated `dist/`.
 
-The map view requests OpenStreetMap raster tiles from `https://tile.openstreetmap.org` only when a visitor opens the `지도` panel. The static export CSP allows that tile host in `img-src`.
+The map view requests OpenStreetMap raster tiles from `https://tile.openstreetmap.org` only when a visitor opens the `지도` panel. Map popups group photos by place; `사진 보기` applies that place filter and returns to the gallery without selecting a representative student photograph. The static export CSP allows that tile host in `img-src`.
 
 ## Environment Variables
 
@@ -145,6 +147,7 @@ Copy `.env.example` to `.env` for local overrides. Do not commit `.env`.
 | `MOMENT_PUBLIC_URL` | empty | Optional canonical public URL used in generated metadata. |
 | `MOMENT_ADMIN_URL` | empty | Optional admin server URL used only for secure cookie auto-detection. |
 | `MOMENT_TRACE_DELETE_PASSWORD_HASH` | empty | Local SHA-256 hash for hidden trace deletion. |
+| `MOMENT_STATUS_UPDATE_TOKEN_HASH` | empty | Optional SHA-256 hash accepted by the Cloudflare status-update Function as an alias for `STATUS_UPDATE_TOKEN_HASH`. |
 | `MOMENT_ADMIN_USERNAME` | empty | Optional first-run bootstrap admin username. |
 | `MOMENT_ADMIN_PASSWORD` | empty | Optional first-run bootstrap admin password. Do not use in shared files. |
 
@@ -177,8 +180,9 @@ Copy `.env.example` to `.env` for local overrides. Do not commit `.env`.
 - The admin path can reduce casual discovery, but real protection comes from authentication, signed sessions, and not exposing the admin server publicly.
 - Session cookies are `HttpOnly` and `SameSite=Strict`; set `MOMENT_ADMIN_URL=https://...` or `MOMENT_SECURE_COOKIES=true` when the admin server is served through HTTPS.
 - Admin login failures are rate-limited for 15 minutes by both IP+username pairs (5 failures) and the source IP overall (20 failures).
+- Public photo JSON omits local original filenames and internal created/updated timestamps; those fields are only returned to the local admin API.
 - The static export includes Cloudflare `_headers` for basic browser security, long-lived asset caching for stable assets, and revalidation for JavaScript modules.
-- The guestbook is public. It has basic validation and rate limiting, not full moderation tooling.
+- The guestbook is public. It has basic validation and rate limiting, not full moderation tooling. Hidden guestbook deletion attempts are rate-limited separately.
 
 ## Contributing
 

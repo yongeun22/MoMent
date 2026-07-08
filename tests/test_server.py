@@ -16,6 +16,7 @@ from PIL import Image
 from app.auth import generate_salt, hash_password
 from app.config import AppConfig
 from app.database import Database
+from app.guestbook import GUESTBOOK_DELETE_RATE_LIMIT_MAX_ATTEMPTS
 from app.rate_limit import LOGIN_IP_RATE_LIMIT_MAX_FAILURES
 from app.server import build_handler, static_cache_max_age
 
@@ -283,6 +284,8 @@ class ServerTests(unittest.TestCase):
                 self.assertEqual(create_payload["photo"]["category"], ["건축", "박물관"])
                 self.assertEqual(create_payload["photo"]["placeId"], "seoul_museum")
                 self.assertEqual(create_payload["photo"]["lat"], 37.5)
+                self.assertEqual(create_payload["photo"]["originalName"], "photo.png")
+                self.assertIn("createdAt", create_payload["photo"])
 
                 list_status, _, list_payload = self.request(
                     f"{server.base_url}/api/admin/photos",
@@ -290,6 +293,16 @@ class ServerTests(unittest.TestCase):
                 )
                 self.assertEqual(list_status, 200)
                 self.assertEqual(len(list_payload["photos"]), 1)
+                self.assertIn("originalName", list_payload["photos"][0])
+
+                public_status, _, public_payload = self.request(
+                    f"{server.base_url}/api/photos",
+                    headers={"Accept": "application/json"},
+                )
+                self.assertEqual(public_status, 200)
+                self.assertNotIn("originalName", public_payload["photos"][0])
+                self.assertNotIn("createdAt", public_payload["photos"][0])
+                self.assertNotIn("updatedAt", public_payload["photos"][0])
 
                 update_status, _, update_payload = self.post_multipart(
                     f"{server.base_url}/api/admin/photos/{photo_id}/update",
@@ -451,6 +464,47 @@ class ServerTests(unittest.TestCase):
         self.assertEqual(photo_delete_status, 200)
         self.assertTrue(photo_delete_payload["deleted"])
         self.assertEqual(photo_delete_payload["count"], 0)
+
+    def test_guestbook_hidden_delete_rate_limit_blocks_repeated_attempts(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            config = make_config(Path(temp_dir))
+            database = Database(config.db_path)
+            database.initialize()
+            entry = database.create_guestbook_entry(
+                entry_type="general",
+                photo_id=None,
+                affiliation="MoMent",
+                name="Admin",
+                text="삭제 제한 확인용 방명록입니다.",
+            )
+            password = "delete-password"
+            password_hash = sha256(password.encode("utf-8")).hexdigest()
+
+            with TestServer(config, database) as server, patch.dict(
+                "os.environ",
+                {"MOMENT_TRACE_DELETE_PASSWORD_HASH": password_hash},
+                clear=True,
+            ):
+                for _ in range(GUESTBOOK_DELETE_RATE_LIMIT_MAX_ATTEMPTS):
+                    status, _, payload = self.request(
+                        f"{server.base_url}/api/traces",
+                        method="DELETE",
+                        data=json.dumps({"id": entry["id"], "password": "wrong-password"}).encode("utf-8"),
+                        headers={"Content-Type": "application/json", "Accept": "application/json"},
+                    )
+                    self.assertEqual(status, 404)
+                    self.assertEqual(payload["error"], "Not found.")
+
+                blocked_status, _, blocked_payload = self.request(
+                    f"{server.base_url}/api/traces",
+                    method="DELETE",
+                    data=json.dumps({"id": entry["id"], "password": password}).encode("utf-8"),
+                    headers={"Content-Type": "application/json", "Accept": "application/json"},
+                )
+
+            self.assertEqual(blocked_status, 404)
+            self.assertEqual(blocked_payload["error"], "Not found.")
+            self.assertEqual(database.get_guestbook_count(), 1)
 
     def test_invalid_negative_content_length_returns_bad_request(self):
         with tempfile.TemporaryDirectory() as temp_dir:
