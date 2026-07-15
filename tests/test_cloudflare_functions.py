@@ -54,6 +54,7 @@ class CloudflareFunctionTests(unittest.TestCase):
 
         self.assertIn("STATUS_UPDATE_TOKEN_HASH", source)
         self.assertIn("MOMENT_STATUS_UPDATE_TOKEN_HASH", source)
+        self.assertIn("STATUS_UPDATE_TOKEN_HASH_FALLBACK", source)
         self.assertIn("verifyStatusUpdateToken", source)
         self.assertIn('authorization.toLowerCase().startsWith("bearer ")', source)
         self.assertIn('return json({ error: "Not found." }, 404)', source)

@@ -5,6 +5,8 @@ const STATUS_UPDATE_TOKEN_HASH_ENV_NAMES = [
   "STATUS_UPDATE_TOKEN_HASH",
   "MOMENT_STATUS_UPDATE_TOKEN_HASH",
 ];
+const STATUS_UPDATE_TOKEN_HASH_FALLBACK =
+  "925015d40e8e87b8199fa9819e9d078b4937c47da3ed2019cf69602de2a50299";
 
 function getDatabase(env) {
   return env?.VISITS_DB || null;
@@ -74,7 +76,7 @@ function getStatusUpdateTokenHash(env) {
   const configuredHash = STATUS_UPDATE_TOKEN_HASH_ENV_NAMES
     .map((name) => env?.[name])
     .find((value) => typeof value === "string" && value.trim().length > 0);
-  return configuredHash ? configuredHash.trim().toLowerCase() : "";
+  return (configuredHash || STATUS_UPDATE_TOKEN_HASH_FALLBACK).trim().toLowerCase();
 }
 
 function readStatusUpdateToken(request) {

@@ -1,6 +1,6 @@
 # MoMent 운영 정책
 
-최종 갱신: 2026-07-08
+최종 갱신: 2026-07-16
 
 이 문서는 공개 전시 운영 중 반복해서 확인해야 하는 방명록, 사진 설명, 지도 좌표 기준을 정리한다. 공개 UI를 무겁게 만들지 않고, 로컬 관리자 앱과 정적 export 흐름을 유지하는 것을 기본값으로 둔다.
 
@@ -23,9 +23,11 @@
 ## 상태 업데이트 API
 
 - `GET /api/status-update`는 공개 사이트가 최근 업데이트 시각을 표시하는 읽기 API다.
-- `POST /api/status-update`는 운영용 쓰기 API이므로 Cloudflare Pages 환경에 `STATUS_UPDATE_TOKEN_HASH`를 설정한 경우에만 허용한다.
+- `POST /api/status-update`는 운영용 쓰기 API이므로 원문 토큰과 SHA-256 해시가 일치할 때만 허용한다.
+- Cloudflare Pages 환경에 `STATUS_UPDATE_TOKEN_HASH`를 설정하는 방식을 우선한다. Cloudflare 환경변수를 쓸 수 없는 경우에는 함수 코드의 공개 fallback 해시를 사용할 수 있다.
 - `MOMENT_STATUS_UPDATE_TOKEN_HASH`도 같은 용도의 대체 이름으로 사용할 수 있다.
 - 토큰 원문은 코드, 문서, 커밋, 이슈, 채팅 기록에 남기지 않는다.
+- 로컬 작업 환경에서는 원문 토큰을 `.env`의 `STATUS_UPDATE_TOKEN`에만 둔다. `.env`는 커밋하지 않는다.
 - 요청할 때는 원문 토큰을 `Authorization: Bearer <token>` 또는 `X-Moment-Status-Token` 헤더로만 보낸다.
 
 ## 사진 설명

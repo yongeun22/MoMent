@@ -125,7 +125,7 @@ The admin page is not exported. Admin editing remains local in the Python app.
    - Build output directory: `dist`
 5. Bind a D1 database named `VISITS_DB` if you want public visits, latest update, and guestbook APIs to work.
 6. Set `TRACE_DELETE_PASSWORD_HASH` in Cloudflare Pages if hidden trace deletion is needed. Use a SHA-256 hash, not the raw password.
-7. Set `STATUS_UPDATE_TOKEN_HASH` in Cloudflare Pages if `POST /api/status-update` is used. Send the raw token only in the request header, for example `Authorization: Bearer <token>`.
+7. Set `STATUS_UPDATE_TOKEN_HASH` in Cloudflare Pages if `POST /api/status-update` is used. If Cloudflare environment variables are unavailable, the Function can fall back to the committed SHA-256 hash. Send the raw token only in the request header, for example `Authorization: Bearer <token>`.
 
 After each exhibition change, export again and redeploy the updated `dist/`.
 
@@ -148,6 +148,7 @@ Copy `.env.example` to `.env` for local overrides. Do not commit `.env`.
 | `MOMENT_ADMIN_URL` | empty | Optional admin server URL used only for secure cookie auto-detection. |
 | `MOMENT_TRACE_DELETE_PASSWORD_HASH` | empty | Local SHA-256 hash for hidden trace deletion. |
 | `MOMENT_STATUS_UPDATE_TOKEN_HASH` | empty | Optional SHA-256 hash accepted by the Cloudflare status-update Function as an alias for `STATUS_UPDATE_TOKEN_HASH`. |
+| `STATUS_UPDATE_TOKEN` | empty | Local-only raw token used by operator scripts to call `POST /api/status-update`. Do not commit or share it. |
 | `MOMENT_ADMIN_USERNAME` | empty | Optional first-run bootstrap admin username. |
 | `MOMENT_ADMIN_PASSWORD` | empty | Optional first-run bootstrap admin password. Do not use in shared files. |
 
