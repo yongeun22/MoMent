@@ -1,3 +1,4 @@
+import { enforceRateLimit } from "../_shared/rate-limit.js";
 import { json } from "../_shared/response.js";
 
 const STATUS_UPDATE_ID = "moment-status-report";
@@ -5,22 +6,11 @@ const STATUS_UPDATE_TOKEN_HASH_ENV_NAMES = [
   "STATUS_UPDATE_TOKEN_HASH",
   "MOMENT_STATUS_UPDATE_TOKEN_HASH",
 ];
-const STATUS_UPDATE_TOKEN_HASH_FALLBACK =
-  "925015d40e8e87b8199fa9819e9d078b4937c47da3ed2019cf69602de2a50299";
+const STATUS_RATE_LIMIT_WINDOW_SECONDS = 15 * 60;
+const STATUS_RATE_LIMIT_MAX_ATTEMPTS = 5;
 
 function getDatabase(env) {
   return env?.VISITS_DB || null;
-}
-
-async function ensureSchema(db) {
-  await db
-    .prepare(`
-      CREATE TABLE IF NOT EXISTS site_status_updates (
-        id TEXT PRIMARY KEY,
-        updated_at TEXT NOT NULL
-      )
-    `)
-    .run();
 }
 
 async function readStatusUpdate(db) {
@@ -64,7 +54,6 @@ function constantTimeEqual(left, right) {
   if (left.byteLength !== right.byteLength) {
     return false;
   }
-
   let difference = 0;
   for (let index = 0; index < left.byteLength; index += 1) {
     difference |= left[index] ^ right[index];
@@ -76,7 +65,7 @@ function getStatusUpdateTokenHash(env) {
   const configuredHash = STATUS_UPDATE_TOKEN_HASH_ENV_NAMES
     .map((name) => env?.[name])
     .find((value) => typeof value === "string" && value.trim().length > 0);
-  return (configuredHash || STATUS_UPDATE_TOKEN_HASH_FALLBACK).trim().toLowerCase();
+  return configuredHash ? configuredHash.trim().toLowerCase() : "";
 }
 
 function readStatusUpdateToken(request) {
@@ -92,12 +81,10 @@ async function verifyStatusUpdateToken(request, env) {
   if (!/^[a-f0-9]{64}$/.test(expectedHash)) {
     return false;
   }
-
   const token = readStatusUpdateToken(request);
-  if (!token) {
+  if (token.length < 32) {
     return false;
   }
-
   const candidateHash = await sha256Hex(token);
   return constantTimeEqual(hexToBytes(candidateHash), hexToBytes(expectedHash));
 }
@@ -108,8 +95,6 @@ export async function onRequestGet(context) {
     if (!db) {
       return json({ error: "Status update is unavailable." }, 503);
     }
-
-    await ensureSchema(db);
     return json({ updatedAt: await readStatusUpdate(db) });
   } catch (error) {
     console.error("Failed to read status update", error);
@@ -119,16 +104,24 @@ export async function onRequestGet(context) {
 
 export async function onRequestPost(context) {
   try {
-    if (!(await verifyStatusUpdateToken(context.request, context.env))) {
-      return json({ error: "Not found." }, 404);
-    }
-
     const db = getDatabase(context.env);
     if (!db) {
       return json({ error: "Status update is unavailable." }, 503);
     }
 
-    await ensureSchema(db);
+    const allowed = await enforceRateLimit(db, context.request, {
+      scope: "status-update",
+      windowSeconds: STATUS_RATE_LIMIT_WINDOW_SECONDS,
+      maxAttempts: STATUS_RATE_LIMIT_MAX_ATTEMPTS,
+    });
+    if (!allowed) {
+      return json({ error: "Not found." }, 404, { "Retry-After": "900" });
+    }
+
+    if (!(await verifyStatusUpdateToken(context.request, context.env))) {
+      return json({ error: "Not found." }, 404);
+    }
+
     return json({ updatedAt: await recordStatusUpdate(db) }, 201);
   } catch (error) {
     console.error("Failed to record status update", error);

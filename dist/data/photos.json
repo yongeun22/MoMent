@@ -1391,6 +1391,22 @@
       "lng": 129.2279662,
       "description": "",
       "photographer": "24 신용은"
+    },
+    {
+      "id": 109,
+      "imageUrl": "/uploads/display/73ced9b660b9405eae5d1d75981820b8.webp",
+      "lightboxUrl": "/uploads/lightbox/73ced9b660b9405eae5d1d75981820b8.webp",
+      "date": "2026.07.06.",
+      "location": "경주 동궁과 월지",
+      "year": "2026",
+      "region": "경주권",
+      "category": [],
+      "placeId": "place_6b397d8a5f69",
+      "locationName": "경주 동궁과 월지",
+      "lat": 35.8347003,
+      "lng": 129.2264375,
+      "description": "",
+      "photographer": "24 신용은"
     }
   ]
 }

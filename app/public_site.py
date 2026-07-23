@@ -135,6 +135,7 @@ def export_static_site(
         render_html_template(static_dir / "index.html", static_dir, public_url=public_url),
         encoding="utf-8",
     )
+    shutil.copy2(static_dir / "404.html", output_dir / "404.html")
     shutil.copy2(static_dir / "css" / "site.css", output_dir / "static" / "css" / "site.css")
     _copy_public_javascript(static_dir, output_dir)
     _copy_tree(static_dir / "audio", output_dir / "static" / "audio")

@@ -16,6 +16,7 @@
   <script type="module" src="/static/js/exhibition.js?v={{EXHIBITION_JS_VERSION}}"></script>
 </head>
 <body>
+  <a class="skip-link" id="skipToGallery" href="#photoStream">사진 갤러리로 건너뛰기</a>
   <audio
     id="backgroundAudio"
     preload="none"
@@ -31,7 +32,7 @@
       </div>
       <div class="intro-guide">
         <p class="intro-instructions">사진을 클릭해 감상하세요.</p>
-        <button class="intro-enter" id="introEnter" type="button">입장&gt;</button>
+        <button class="intro-enter" id="introEnter" type="button">전시 입장</button>
         <p class="intro-updated" id="statusUpdated" hidden>최근 업데이트 --/-- --시:--분</p>
       </div>
     </div>
@@ -44,7 +45,9 @@
       role="dialog"
       aria-modal="true"
       aria-label="&#xC5F0;&#xD601;"
+      tabindex="-1"
     >
+      <button class="trace-close" id="historyClose" type="button" aria-label="연혁 닫기">×</button>
       <div class="history-lines info-lines">
         <p class="history-heading info-heading">&#xACE0;&#xACE0;&#xBBF8;&#xC220;&#xC0AC;&#xD559;&#xACFC; &#xBB38;&#xD654;&#xC720;&#xC0B0; &#xC0AC;&#xC9C4;&#xB2F5;&#xC0AC; &#xB3D9;&#xC544;&#xB9AC; MoMent</p>
         <p class="history-line info-line">2023 &#xD68C;&#xC7A5; 19&#xC11C;&#xB3D9;&#xC9C4;</p>
@@ -62,7 +65,9 @@
       role="dialog"
       aria-modal="true"
       aria-label="&#xBB38;&#xC758;"
+      tabindex="-1"
     >
+      <button class="trace-close" id="contactClose" type="button" aria-label="문의 닫기">×</button>
       <div class="contact-lines info-lines">
         <a
           class="contact-link"
@@ -85,6 +90,7 @@
       role="dialog"
       aria-modal="true"
       aria-label="방명록"
+      tabindex="-1"
     >
       <button class="trace-close" id="traceClose" type="button" aria-label="방명록 닫기">×</button>
       <div class="trace-lines info-lines">
@@ -139,6 +145,7 @@
       role="dialog"
       aria-modal="true"
       aria-label="필터"
+      tabindex="-1"
     >
       <button class="trace-close" id="filterClose" type="button" aria-label="필터 닫기">×</button>
       <div class="filter-lines info-lines">
@@ -156,13 +163,16 @@
       role="dialog"
       aria-modal="true"
       aria-label="지도"
+      tabindex="-1"
     >
       <button class="trace-close" id="mapClose" type="button" aria-label="지도 닫기">×</button>
       <div class="map-lines info-lines">
         <p class="trace-title">MoMent Map</p>
         <p class="trace-note">좌표가 등록된 장소만 지도에 표시됩니다.</p>
+        <div class="map-region-controls" id="mapRegionControls" aria-label="지도 권역 필터"></div>
         <div class="moment-map" id="momentMap"></div>
         <p class="trace-status" id="mapStatus" role="status" aria-live="polite"></p>
+        <div class="map-place-list" id="mapPlaceList" aria-label="지도 장소 목록"></div>
       </div>
     </div>
   </div>
@@ -214,7 +224,7 @@
 
         <div class="site-actions">
           <span class="site-menu-separator" aria-hidden="true">&#x3163;</span>
-          <span class="site-visitor-count" id="visitorCount" hidden>방문자 -</span>
+          <span class="site-visitor-count" id="visitorCount" hidden>전시 방문 -</span>
           <span class="site-menu-separator site-visitor-separator" aria-hidden="true" hidden>&#x3163;</span>
           <button
             class="map-trigger"
@@ -245,7 +255,8 @@
       </div>
     </header>
 
-    <section class="exhibition-stream" id="photoStream" aria-live="polite"></section>
+    <p class="sr-only" id="galleryStatus" role="status" aria-live="polite"></p>
+    <section class="exhibition-stream" id="photoStream" tabindex="-1"></section>
 
     <p class="empty-state" id="emptyState" hidden>&#xC804;&#xC2DC; &#xC900;&#xBE44; &#xC911;&#xC785;&#xB2C8;&#xB2E4;.</p>
   </main>
@@ -257,14 +268,20 @@
       role="dialog"
       aria-modal="true"
       aria-label="&#xC0AC;&#xC9C4; &#xD06C;&#xAC8C; &#xBCF4;&#xAE30;"
+      tabindex="-1"
     >
+      <button class="lightbox-close" id="lightboxClose" type="button" aria-label="사진 상세 닫기">×</button>
       <div class="lightbox-image-shell" id="lightboxImageShell">
         <img class="lightbox-image" id="lightboxImage" alt="">
         <img class="lightbox-image lightbox-image-buffer" id="lightboxImageBuffer" alt="" aria-hidden="true">
         <div class="lightbox-photo-meta" id="lightboxPhotoMeta"></div>
       </div>
       <div class="lightbox-meta" id="lightboxMeta"></div>
-      <div class="lightbox-guestbook" id="lightboxGuestbook"></div>
+      <div class="lightbox-navigation" aria-label="사진 이동">
+        <button class="lightbox-nav-button" id="lightboxPrevious" type="button" aria-label="이전 사진">이전</button>
+        <span class="lightbox-position" id="lightboxPosition" aria-live="polite"></span>
+        <button class="lightbox-nav-button" id="lightboxNext" type="button" aria-label="다음 사진">다음</button>
+      </div>
     </div>
   </div>
 </body>

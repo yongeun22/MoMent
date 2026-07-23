@@ -4,7 +4,9 @@ import tempfile
 import threading
 import unittest
 import urllib.error
+import urllib.parse
 import urllib.request
+from dataclasses import replace
 from hashlib import sha256
 from io import BytesIO
 from http.server import ThreadingHTTPServer
@@ -18,7 +20,7 @@ from app.config import AppConfig
 from app.database import Database
 from app.guestbook import GUESTBOOK_DELETE_RATE_LIMIT_MAX_ATTEMPTS
 from app.rate_limit import LOGIN_IP_RATE_LIMIT_MAX_FAILURES
-from app.server import build_handler, static_cache_max_age
+from app.server import build_handler, static_cache_max_age, validate_admin_bind
 
 
 def make_config(root: Path, *, secure_cookies: bool = False) -> AppConfig:
@@ -78,10 +80,42 @@ class TestServer:
 
 
 class ServerTests(unittest.TestCase):
+    def test_admin_bind_requires_explicit_network_opt_in(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            config = make_config(Path(temp_dir))
+
+            validate_admin_bind(config)
+            with self.assertRaises(RuntimeError):
+                validate_admin_bind(replace(config, host="0.0.0.0"))
+            validate_admin_bind(replace(config, host="0.0.0.0", allow_network_admin=True))
+
     def test_static_js_assets_revalidate(self):
         self.assertEqual(static_cache_max_age("js/exhibition.js"), 0)
         self.assertEqual(static_cache_max_age("js/modules/utils.js"), 0)
         self.assertGreater(static_cache_max_age("css/site.css"), 0)
+
+    def test_admin_mutation_rejects_cross_origin_request_and_hides_python_version(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            config = make_config(Path(temp_dir))
+            database = self.create_database_with_admin(config)
+
+            with TestServer(config, database) as server:
+                session_status, session_headers, _ = self.request(f"{server.base_url}/api/admin/session")
+                status, _, payload = self.request(
+                    f"{server.base_url}/api/admin/login",
+                    method="POST",
+                    data=json.dumps({"username": "admin", "password": "correct-password"}).encode("utf-8"),
+                    headers={
+                        "Content-Type": "application/json",
+                        "Accept": "application/json",
+                        "Origin": "https://attacker.example",
+                    },
+                )
+
+            self.assertEqual(session_status, 200)
+            self.assertNotIn("Python", session_headers.get("Server", ""))
+            self.assertEqual(status, 403)
+            self.assertEqual(payload["error"], "Invalid request origin.")
 
     def create_database_with_admin(self, config: AppConfig) -> Database:
         database = Database(config.db_path)
@@ -91,10 +125,14 @@ class ServerTests(unittest.TestCase):
         return database
 
     def post_json(self, url: str, payload: dict):
+        headers = {"Content-Type": "application/json", "Accept": "application/json"}
+        if "/api/admin/" in url:
+            parsed = urllib.parse.urlsplit(url)
+            headers["Origin"] = f"{parsed.scheme}://{parsed.netloc}"
         request = urllib.request.Request(
             url,
             data=json.dumps(payload).encode("utf-8"),
-            headers={"Content-Type": "application/json", "Accept": "application/json"},
+            headers=headers,
             method="POST",
         )
         try:
@@ -107,7 +145,11 @@ class ServerTests(unittest.TestCase):
                 error.close()
 
     def request(self, url: str, *, method: str = "GET", data: bytes | None = None, headers: dict | None = None):
-        request = urllib.request.Request(url, data=data, headers=headers or {}, method=method)
+        request_headers = dict(headers or {})
+        if method != "GET" and "/api/admin/" in url and "Origin" not in request_headers:
+            parsed = urllib.parse.urlsplit(url)
+            request_headers["Origin"] = f"{parsed.scheme}://{parsed.netloc}"
+        request = urllib.request.Request(url, data=data, headers=request_headers, method=method)
         try:
             with urllib.request.urlopen(request, timeout=5) as response:
                 body = response.read().decode("utf-8")
@@ -394,12 +436,12 @@ class ServerTests(unittest.TestCase):
                 location="Seoul",
                 photographer="MoMent",
             )
-            password = "delete-password"
-            password_hash = sha256(password.encode("utf-8")).hexdigest()
+            token = "d" * 43
+            token_hash = sha256(token.encode("utf-8")).hexdigest()
 
             with TestServer(config, database) as server, patch.dict(
                 "os.environ",
-                {"MOMENT_TRACE_DELETE_PASSWORD_HASH": password_hash},
+                {"MOMENT_TRACE_DELETE_TOKEN_HASH": token_hash},
                 clear=True,
             ):
                 _, _, general_payload = self.post_json(
@@ -427,7 +469,7 @@ class ServerTests(unittest.TestCase):
                     data=json.dumps(
                         {
                             "id": general_payload["entry"]["id"],
-                            "password": "wrong-password",
+                            "token": "wrong-token",
                         }
                     ).encode("utf-8"),
                     headers={"Content-Type": "application/json", "Accept": "application/json"},
@@ -438,7 +480,7 @@ class ServerTests(unittest.TestCase):
                     data=json.dumps(
                         {
                             "id": general_payload["entry"]["id"],
-                            "password": password,
+                            "token": token,
                         }
                     ).encode("utf-8"),
                     headers={"Content-Type": "application/json", "Accept": "application/json"},
@@ -449,7 +491,7 @@ class ServerTests(unittest.TestCase):
                     data=json.dumps(
                         {
                             "id": photo_payload["entry"]["id"],
-                            "password": password,
+                            "token": token,
                         }
                     ).encode("utf-8"),
                     headers={"Content-Type": "application/json", "Accept": "application/json"},
@@ -477,19 +519,19 @@ class ServerTests(unittest.TestCase):
                 name="Admin",
                 text="삭제 제한 확인용 방명록입니다.",
             )
-            password = "delete-password"
-            password_hash = sha256(password.encode("utf-8")).hexdigest()
+            token = "d" * 43
+            token_hash = sha256(token.encode("utf-8")).hexdigest()
 
             with TestServer(config, database) as server, patch.dict(
                 "os.environ",
-                {"MOMENT_TRACE_DELETE_PASSWORD_HASH": password_hash},
+                {"MOMENT_TRACE_DELETE_TOKEN_HASH": token_hash},
                 clear=True,
             ):
                 for _ in range(GUESTBOOK_DELETE_RATE_LIMIT_MAX_ATTEMPTS):
                     status, _, payload = self.request(
                         f"{server.base_url}/api/traces",
                         method="DELETE",
-                        data=json.dumps({"id": entry["id"], "password": "wrong-password"}).encode("utf-8"),
+                        data=json.dumps({"id": entry["id"], "token": "wrong-token"}).encode("utf-8"),
                         headers={"Content-Type": "application/json", "Accept": "application/json"},
                     )
                     self.assertEqual(status, 404)
@@ -498,7 +540,7 @@ class ServerTests(unittest.TestCase):
                 blocked_status, _, blocked_payload = self.request(
                     f"{server.base_url}/api/traces",
                     method="DELETE",
-                    data=json.dumps({"id": entry["id"], "password": password}).encode("utf-8"),
+                    data=json.dumps({"id": entry["id"], "token": token}).encode("utf-8"),
                     headers={"Content-Type": "application/json", "Accept": "application/json"},
                 )
 

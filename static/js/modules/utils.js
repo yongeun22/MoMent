@@ -37,6 +37,33 @@ export function shufflePhotos(source) {
   return items;
 }
 
+export function stableShufflePhotos(source, storageKey = "moment-photo-order-v1") {
+  const photos = [...source];
+  const byId = new Map(photos.map((photo) => [String(photo.id), photo]));
+  let savedIds = [];
+  try {
+    const parsed = JSON.parse(window.sessionStorage.getItem(storageKey) || "[]");
+    if (Array.isArray(parsed)) {
+      savedIds = parsed.map(String).filter((id) => byId.has(id));
+    }
+  } catch (error) {
+    savedIds = [];
+  }
+
+  const seen = new Set(savedIds);
+  const newPhotos = shufflePhotos(photos.filter((photo) => !seen.has(String(photo.id))));
+  const ordered = [
+    ...savedIds.map((id) => byId.get(id)),
+    ...newPhotos,
+  ];
+  try {
+    window.sessionStorage.setItem(storageKey, JSON.stringify(ordered.map((photo) => String(photo.id))));
+  } catch (error) {
+    // Session storage is optional; the current in-memory order remains stable.
+  }
+  return ordered;
+}
+
 export function formatKoreanUpdateTime(value) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {

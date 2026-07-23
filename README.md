@@ -8,13 +8,13 @@ Small exhibition teams often need a quiet online gallery that can be edited loca
 
 ## Features
 
-- Minimal public photography exhibition with intro overlay, responsive layout, hover/tap metadata, lightbox viewing, and optional background audio.
+- Minimal public photography exhibition with intro overlay, a two-row mobile navigation that keeps the logo separate from controls, hover/tap metadata, keyboard- and swipe-enabled lightbox viewing, and user-controlled background audio.
 - Local-only administrator interface for one admin account.
 - Photo upload, expanded metadata editing, deletion, and generated display/lightbox image variants.
-- Gallery filtering by year, region, photographer, and place.
+- Gallery filtering by year, region, photographer, and place, with filters and the open photo reflected in the shareable URL.
 - Integrated public guestbook, with photo-specific entries also shown in each lightbox.
-- Photo lightbox with compact metadata over the image and `정보`, `방명록`, and `지도` actions below the image.
-- Lazy-loaded MoMent Map using self-hosted Leaflet assets and OpenStreetMap tiles for photos with coordinates.
+- Photo lightbox with compact metadata, previous/next controls, real `정보`/`방명록` tabs, and a separate map action.
+- Lazy-loaded MoMent Map using self-hosted Leaflet assets and OpenStreetMap tiles, with marker clustering, region chips, and a keyboard-friendly place list.
 - SQLite storage for the local admin app.
 - Static export for Cloudflare Pages or another static host.
 - Public visit counter, latest-update marker, and guestbook APIs through Cloudflare Pages Functions and a D1 binding.
@@ -72,7 +72,7 @@ py -3.13 run.py
 
 Open the printed local URL, then open the configured admin path. The default admin path is `/admin`.
 
-The admin app is intended for local or private-network use. Do not expose the Python admin server directly to the public internet.
+The admin app binds to loopback by default. MoMent refuses non-loopback binds unless `MOMENT_ALLOW_NETWORK_ADMIN=true` is explicitly set. Use that exception only on a trusted private network, and never expose the Python admin server directly to the public internet.
 
 ## Managing Photos
 
@@ -81,6 +81,8 @@ The admin app is intended for local or private-network use. Do not expose the Py
 3. Log in with the account created by `init-admin`.
 4. Add, edit, or delete photographs and metadata.
 5. Run a static export before publishing public changes.
+
+The collection manager includes local search, collapsed photo editors, unsaved-change warnings, advanced location fields, and a publish checklist. These helpers do not deploy automatically; the export and deployment steps remain explicit.
 
 Uploaded originals are stored in `uploads/`. Metadata is stored in `data/moment.db`. Both are local runtime data and are ignored by git except for `uploads/.gitkeep`.
 
@@ -99,6 +101,7 @@ py -3.13 manage.py export-static
 By default this writes to `dist/`. The export contains:
 
 - `index.html`
+- `404.html` for real not-found responses instead of SPA soft 404s
 - `static/css/site.css`
 - `static/js/exhibition.js`
 - `static/js/modules/`
@@ -124,8 +127,9 @@ The admin page is not exported. Admin editing remains local in the Python app.
    - Build command: leave empty when `dist/` is already committed
    - Build output directory: `dist`
 5. Bind a D1 database named `VISITS_DB` if you want public visits, latest update, and guestbook APIs to work.
-6. Set `TRACE_DELETE_PASSWORD_HASH` in Cloudflare Pages if hidden trace deletion is needed. Use a SHA-256 hash, not the raw password.
-7. Set `STATUS_UPDATE_TOKEN_HASH` in Cloudflare Pages if `POST /api/status-update` is used. If Cloudflare environment variables are unavailable, the Function can fall back to the committed SHA-256 hash. Send the raw token only in the request header, for example `Authorization: Bearer <token>`.
+6. Back up the D1 database, then apply `migrations/0001_initial_schema.sql` before deploying the matching Functions. See `migrations/README.md`.
+7. Generate a high-entropy deletion token with `py -3.13 manage.py generate-operator-token --purpose trace-delete`, save the raw token in a password manager, and set its printed verifier as the Cloudflare secret `TRACE_DELETE_TOKEN_HASH`.
+8. Generate a separate status token with `py -3.13 manage.py generate-operator-token --purpose status-update` and set its printed verifier as `STATUS_UPDATE_TOKEN_HASH`. There is no committed fallback. Send the raw token only in the request header, for example `Authorization: Bearer <token>`.
 
 After each exhibition change, export again and redeploy the updated `dist/`.
 
@@ -138,6 +142,7 @@ Copy `.env.example` to `.env` for local overrides. Do not commit `.env`.
 | Variable | Default | Purpose |
 | --- | --- | --- |
 | `MOMENT_HOST` | `127.0.0.1` | Local server bind host. Use `0.0.0.0` only for trusted local network sharing. |
+| `MOMENT_ALLOW_NETWORK_ADMIN` | `false` | Required explicit opt-in for any non-loopback bind. This does not make public exposure safe. |
 | `MOMENT_PORT` | `8000` | Local server port. |
 | `MOMENT_MAX_UPLOAD_BYTES` | `104857600` | Maximum request body size for uploads. |
 | `MOMENT_ADMIN_PATH` | `/admin` | Local admin route. This is not a substitute for authentication. |
@@ -146,7 +151,7 @@ Copy `.env.example` to `.env` for local overrides. Do not commit `.env`.
 | `MOMENT_SECURE_COOKIES` | `auto` | Use `true` behind HTTPS, `false` for local HTTP, or `auto` to infer from `MOMENT_ADMIN_URL`. |
 | `MOMENT_PUBLIC_URL` | empty | Optional canonical public URL used in generated metadata. |
 | `MOMENT_ADMIN_URL` | empty | Optional admin server URL used only for secure cookie auto-detection. |
-| `MOMENT_TRACE_DELETE_PASSWORD_HASH` | empty | Local SHA-256 hash for hidden trace deletion. |
+| `MOMENT_TRACE_DELETE_TOKEN_HASH` | empty | Local SHA-256 verifier for a generated high-entropy hidden trace deletion token. |
 | `MOMENT_STATUS_UPDATE_TOKEN_HASH` | empty | Optional SHA-256 hash accepted by the Cloudflare status-update Function as an alias for `STATUS_UPDATE_TOKEN_HASH`. |
 | `STATUS_UPDATE_TOKEN` | empty | Local-only raw token used by operator scripts to call `POST /api/status-update`. Do not commit or share it. |
 | `MOMENT_ADMIN_USERNAME` | empty | Optional first-run bootstrap admin username. |
@@ -166,24 +171,30 @@ Copy `.env.example` to `.env` for local overrides. Do not commit `.env`.
 - `app/image_validation.py`: image content validation.
 - `app/image_variants.py`: display and lightbox image generation.
 - `app/guestbook.py`: public general/photo guestbook validation and local rate limiting.
+- `app/operator_tokens.py`: high-entropy operator token generation.
 - `app/public_site.py`: public payload serialization and static export.
 - `static/`: public and admin frontend assets.
 - `functions/api/`: Cloudflare Pages Functions for public APIs.
+- `migrations/`: versioned Cloudflare D1 schema and one-time maintenance SQL.
 - `dist/`: generated static site currently used for deployment.
 - `docs/operating-policy.md`: guestbook, description, and map coordinate operating policy.
+- `docs/2026-07-18-security-uiux-report.md`: security remediation status and UI/UX priority rationale.
 - `docs/original-specification.md`: preserved original project specification.
 - `tests/`: automated tests.
 
 ## Security And Deployment Notes
 
-- The Python admin server is a local management app, not a public production server.
+- The Python admin server is a local management app, not a public production server. Non-loopback binds require the explicit `MOMENT_ALLOW_NETWORK_ADMIN=true` exception.
 - Keep `.env`, `data/moment.db`, `data/secret.key`, logs, and original uploads out of commits.
 - The admin path can reduce casual discovery, but real protection comes from authentication, signed sessions, and not exposing the admin server publicly.
 - Session cookies are `HttpOnly` and `SameSite=Strict`; set `MOMENT_ADMIN_URL=https://...` or `MOMENT_SECURE_COOKIES=true` when the admin server is served through HTTPS.
 - Admin login failures are rate-limited for 15 minutes by both IP+username pairs (5 failures) and the source IP overall (20 failures).
 - Public photo JSON omits local original filenames and internal created/updated timestamps; those fields are only returned to the local admin API.
-- The static export includes Cloudflare `_headers` for basic browser security, long-lived asset caching for stable assets, and revalidation for JavaScript modules.
-- The guestbook is public. It has basic validation and rate limiting, not full moderation tooling. Hidden guestbook deletion attempts are rate-limited separately.
+- Admin mutation requests require a same-origin `Origin` or `Referer` header in addition to the signed session.
+- The static export includes Cloudflare `_headers`, HSTS, a restrictive CSP, a real `404.html`, long-lived asset caching for stable assets, and revalidation for JavaScript modules.
+- Cloudflare Functions require the committed D1 migration to be applied before deployment; they no longer run schema or moderation writes during public GET requests.
+- The guestbook is public. It has basic validation and atomic D1-backed rate limiting, not full moderation tooling. Hidden deletion uses a generated high-entropy token and a separate rate-limit bucket.
+- The visit counter deduplicates a long-lived anonymous browser token and rate-limits writes. It is still an approximate exhibition visit count, not an identity-verified unique-person metric.
 
 ## Contributing
 

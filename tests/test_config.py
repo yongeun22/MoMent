@@ -7,6 +7,13 @@ import app.config as config_module
 
 
 class ConfigTests(unittest.TestCase):
+    def test_loopback_host_detection_is_strict(self):
+        self.assertTrue(config_module.is_loopback_host("127.0.0.1"))
+        self.assertTrue(config_module.is_loopback_host("::1"))
+        self.assertTrue(config_module.is_loopback_host("localhost"))
+        self.assertFalse(config_module.is_loopback_host("0.0.0.0"))
+        self.assertFalse(config_module.is_loopback_host("192.168.0.20"))
+
     def test_load_config_uses_safe_defaults(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
@@ -48,6 +55,25 @@ class ConfigTests(unittest.TestCase):
         self.assertEqual(config.admin_path, "/private-admin")
         self.assertEqual(config.public_url, "https://example.com/exhibit")
         self.assertFalse(config.secure_cookies)
+        self.assertFalse(config.allow_network_admin)
+
+    def test_load_config_rejects_invalid_cookie_name_and_admin_path(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            env_path = root / ".env"
+            env_path.write_text("MOMENT_SESSION_COOKIE=bad cookie", encoding="utf-8")
+            with patch.object(config_module, "ROOT_DIR", root), patch.object(
+                config_module, "ENV_PATH", env_path
+            ), patch.dict("os.environ", {}, clear=True):
+                with self.assertRaises(ValueError):
+                    config_module.load_config()
+
+            env_path.write_text("MOMENT_ADMIN_PATH=/../admin", encoding="utf-8")
+            with patch.object(config_module, "ROOT_DIR", root), patch.object(
+                config_module, "ENV_PATH", env_path
+            ), patch.dict("os.environ", {}, clear=True):
+                with self.assertRaises(ValueError):
+                    config_module.load_config()
 
     def test_load_config_uses_admin_url_for_secure_cookie_auto_mode(self):
         with tempfile.TemporaryDirectory() as temp_dir:

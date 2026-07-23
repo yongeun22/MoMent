@@ -146,6 +146,32 @@ textarea {
   font-size: 0.92em;
 }
 
+.publish-checklist {
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--line);
+}
+
+.publish-checklist-title {
+  display: flex;
+  justify-content: space-between;
+  color: var(--text);
+}
+
+.publish-checklist label {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+}
+
+.publish-checklist input {
+  width: 1.1rem;
+  height: 1.1rem;
+  margin-top: 0.15rem;
+}
+
 .manager-label {
   margin: 0 0 0.2rem;
   font-size: 0.78rem;
@@ -196,6 +222,25 @@ textarea {
   color: var(--text);
 }
 
+.advanced-fields {
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--line);
+  background: rgba(0, 0, 0, 0.018);
+}
+
+.advanced-fields summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.advanced-fields-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
 .field textarea {
   min-height: 6rem;
   resize: vertical;
@@ -210,12 +255,24 @@ textarea {
 }
 
 .primary-button,
+.secondary-button,
 .ghost-button,
 .danger-button {
   padding: 0.88rem 1.15rem;
   border: 1px solid transparent;
   cursor: pointer;
   transition: background 180ms ease, color 180ms ease, border-color 180ms ease;
+}
+
+.secondary-button {
+  background: rgba(255, 255, 255, 0.62);
+  color: var(--text);
+  border-color: var(--line);
+}
+
+.secondary-button:hover,
+.secondary-button:focus-visible {
+  border-color: var(--line-strong);
 }
 
 .primary-button {
@@ -255,6 +312,26 @@ textarea {
   padding-bottom: 1rem;
 }
 
+.collection-toolbar {
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) auto auto auto;
+  align-items: end;
+  gap: 0.8rem;
+  margin-top: 1.25rem;
+}
+
+.collection-status {
+  margin: 0;
+  padding-bottom: 0.85rem;
+  color: var(--muted);
+  font-size: 0.84rem;
+  white-space: nowrap;
+}
+
+.collection-status.is-dirty {
+  color: #7e321f;
+}
+
 .photo-grid {
   display: grid;
   gap: 1rem;
@@ -262,11 +339,50 @@ textarea {
 }
 
 .photo-card {
-  display: grid;
-  grid-template-columns: minmax(220px, 320px) minmax(0, 1fr);
-  gap: 1.2rem;
   padding: 1rem 0;
   border-top: 1px solid var(--line);
+}
+
+.photo-card[hidden],
+.photo-card-body[hidden],
+.unsaved-indicator[hidden] {
+  display: none;
+}
+
+.photo-card.is-dirty {
+  border-left: 3px solid #9c503a;
+  padding-left: 0.9rem;
+}
+
+.photo-card-summary {
+  display: grid;
+  grid-template-columns: 104px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 1rem;
+}
+
+.photo-summary-copy {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.photo-summary-copy strong {
+  font-weight: 600;
+}
+
+.photo-summary-copy > span:not(.editor-filename) {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.unsaved-indicator {
+  color: #7e321f;
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+.photo-card-body {
+  margin: 1rem 0 0 120px;
 }
 
 .photo-card:first-child {
@@ -280,6 +396,11 @@ textarea {
   object-fit: cover;
   display: block;
   background: rgba(255, 255, 255, 0.45);
+}
+
+.photo-card-summary .photo-preview {
+  width: 104px;
+  height: 78px;
 }
 
 .photo-editor {
@@ -338,8 +459,34 @@ textarea {
 @media (max-width: 860px) {
   .upload-form,
   .editor-grid,
-  .photo-card {
+  .advanced-fields-grid,
+  .collection-toolbar {
     grid-template-columns: 1fr;
+  }
+
+  .collection-toolbar {
+    align-items: stretch;
+  }
+
+  .collection-status {
+    padding: 0;
+  }
+
+  .photo-card-summary {
+    grid-template-columns: 88px minmax(0, 1fr) auto;
+  }
+
+  .photo-card-summary .photo-preview {
+    width: 88px;
+    height: 66px;
+  }
+
+  .unsaved-indicator {
+    grid-column: 2 / -1;
+  }
+
+  .photo-card-body {
+    margin-left: 0;
   }
 
   .manager-toolbar {

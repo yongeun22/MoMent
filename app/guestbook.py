@@ -14,10 +14,11 @@ GUESTBOOK_RATE_LIMIT_WINDOW_SECONDS = 15 * 60
 GUESTBOOK_RATE_LIMIT_MAX_SUBMISSIONS = 12
 GUESTBOOK_DELETE_RATE_LIMIT_WINDOW_SECONDS = 15 * 60
 GUESTBOOK_DELETE_RATE_LIMIT_MAX_ATTEMPTS = 5
-TRACE_DELETE_HASH_ENV_NAMES = (
-    "MOMENT_TRACE_DELETE_PASSWORD_HASH",
-    "TRACE_DELETE_PASSWORD_HASH",
+TRACE_DELETE_TOKEN_HASH_ENV_NAMES = (
+    "MOMENT_TRACE_DELETE_TOKEN_HASH",
+    "TRACE_DELETE_TOKEN_HASH",
 )
+MIN_DELETE_TOKEN_LENGTH = 32
 BLOCKED_GUESTBOOK_TERMS = (
     "시발",
     "시빨",
@@ -116,24 +117,24 @@ def normalize_guestbook_fields(payload: dict) -> dict:
     }
 
 
-def verify_guestbook_delete_password(password: str) -> bool:
+def verify_guestbook_delete_token(token: str) -> bool:
     expected_hash = next(
         (
             os.getenv(env_name, "").strip().lower()
-            for env_name in TRACE_DELETE_HASH_ENV_NAMES
+            for env_name in TRACE_DELETE_TOKEN_HASH_ENV_NAMES
             if os.getenv(env_name, "").strip()
         ),
         "",
     )
-    if not expected_hash:
+    if not re.fullmatch(r"[0-9a-f]{64}", expected_hash) or len(token) < MIN_DELETE_TOKEN_LENGTH:
         return False
 
-    candidate_hash = sha256(str(password).encode("utf-8")).hexdigest()
+    candidate_hash = sha256(str(token).encode("utf-8")).hexdigest()
     return compare_digest(candidate_hash, expected_hash)
 
 
-def guestbook_rate_limit_key(client_ip: str, user_agent: str) -> str:
-    identity = f"{client_ip.strip()}|{user_agent.strip()[:160]}"
+def guestbook_rate_limit_key(client_ip: str, scope: str) -> str:
+    identity = f"{scope.strip()}|{client_ip.strip()}"
     return sha256(identity.encode("utf-8")).hexdigest()
 
 

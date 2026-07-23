@@ -2,6 +2,7 @@ export const SECURITY_HEADERS = {
   "X-Content-Type-Options": "nosniff",
   "Referrer-Policy": "strict-origin-when-cross-origin",
   "X-Frame-Options": "DENY",
+  "Strict-Transport-Security": "max-age=31536000",
   "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=()",
   "Content-Security-Policy": (
     "default-src 'self'; "
@@ -10,6 +11,8 @@ export const SECURITY_HEADERS = {
     + "img-src 'self' data: blob: https://tile.openstreetmap.org; "
     + "media-src 'self'; "
     + "connect-src 'self'; "
+    + "object-src 'none'; "
+    + "manifest-src 'self'; "
     + "base-uri 'self'; "
     + "form-action 'self'; "
     + "frame-ancestors 'none'"

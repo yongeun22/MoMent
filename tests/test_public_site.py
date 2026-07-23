@@ -21,6 +21,7 @@ def write_static_fixture(static_dir: Path) -> None:
         '<body><script src="/static/js/exhibition.js?v={{EXHIBITION_JS_VERSION}}"></script></body></html>',
         encoding="utf-8",
     )
+    (static_dir / "404.html").write_text("<!doctype html><title>Not found</title>", encoding="utf-8")
     (static_dir / "css" / "site.css").write_text("body { margin: 0; }", encoding="utf-8")
     (static_dir / "js" / "exhibition.js").write_text("console.log('ok');", encoding="utf-8")
     (static_dir / "js" / "modules" / "utils.js").write_text("export const ok = true;", encoding="utf-8")
@@ -33,6 +34,13 @@ def write_image(path: Path) -> None:
 
 
 class PublicSiteTests(unittest.TestCase):
+    def test_mobile_navigation_keeps_brand_on_its_own_row(self):
+        root = Path(__file__).resolve().parents[1]
+        site_css = (root / "static" / "css" / "site.css").read_text(encoding="utf-8")
+
+        self.assertIn('"brand brand"\n      "links actions"', site_css)
+        self.assertIn("min-height: 2.75rem", site_css)
+
     def test_public_guestbook_uses_integrated_list_without_type_filters(self):
         root = Path(__file__).resolve().parents[1]
         index_html = (root / "static" / "index.html").read_text(encoding="utf-8")
@@ -56,8 +64,9 @@ class PublicSiteTests(unittest.TestCase):
         self.assertIn("dataset.activeTab", lightbox_js)
         self.assertIn("photo-guestbook-grid", lightbox_js)
         self.assertIn("photo-guestbook-actions", lightbox_js)
-        self.assertIn('data-lightbox-tab="map"', lightbox_js)
-        self.assertNotIn("지도에서 보기", lightbox_js)
+        self.assertIn('role="tab"', lightbox_js)
+        self.assertIn('data-lightbox-map', lightbox_js)
+        self.assertIn("지도에서 장소 보기", lightbox_js)
         self.assertNotIn("대표 사진", map_js)
         self.assertNotIn("data-map-open-photo", map_js)
         self.assertIn(
@@ -67,6 +76,42 @@ class PublicSiteTests(unittest.TestCase):
             "  },",
             exhibition_js,
         )
+
+    def test_public_ui_has_dialog_navigation_and_restorable_url_state(self):
+        root = Path(__file__).resolve().parents[1]
+        index_html = (root / "static" / "index.html").read_text(encoding="utf-8")
+        exhibition_js = (root / "static" / "js" / "exhibition.js").read_text(encoding="utf-8")
+        dialog_js = (root / "static" / "js" / "modules" / "dialog.js").read_text(encoding="utf-8")
+        url_state_js = (root / "static" / "js" / "modules" / "url-state.js").read_text(encoding="utf-8")
+        utils_js = (root / "static" / "js" / "modules" / "utils.js").read_text(encoding="utf-8")
+
+        self.assertIn('id="skipToGallery"', index_html)
+        self.assertIn('id="lightboxPrevious"', index_html)
+        self.assertIn('id="lightboxNext"', index_html)
+        self.assertIn('id="lightboxPosition"', index_html)
+        self.assertNotIn('id="photoStream" aria-live=', index_html)
+        self.assertIn('mode === "push" ? "pushState" : "replaceState"', url_state_js)
+        self.assertIn("window.history[method]", url_state_js)
+        self.assertIn('window.addEventListener("popstate"', exhibition_js)
+        self.assertIn("stableShufflePhotos", utils_js)
+        self.assertIn('event.key !== "Tab"', dialog_js)
+        self.assertIn("syncBackgroundInert", dialog_js)
+
+    def test_map_and_admin_have_fallback_workflows(self):
+        root = Path(__file__).resolve().parents[1]
+        index_html = (root / "static" / "index.html").read_text(encoding="utf-8")
+        map_js = (root / "static" / "js" / "modules" / "map-view.js").read_text(encoding="utf-8")
+        admin_html = (root / "static" / "admin" / "index.html").read_text(encoding="utf-8")
+        admin_js = (root / "static" / "js" / "admin.js").read_text(encoding="utf-8")
+
+        self.assertIn('id="mapRegionControls"', index_html)
+        self.assertIn('id="mapPlaceList"', index_html)
+        self.assertIn("renderRegionControls", map_js)
+        self.assertIn("renderPlaceList", map_js)
+        self.assertIn('id="adminPhotoSearch"', admin_html)
+        self.assertIn('id="publishChecklist"', admin_html)
+        self.assertIn("filterAdminPhotos", admin_js)
+        self.assertIn("dirtyTracker.bind", admin_js)
 
     def test_exhibition_js_version_includes_module_files(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -123,6 +168,7 @@ class PublicSiteTests(unittest.TestCase):
             )
 
             self.assertTrue((output_dir / "index.html").exists())
+            self.assertTrue((output_dir / "404.html").exists())
             self.assertTrue((output_dir / "data" / "photos.json").exists())
             self.assertTrue((output_dir / "static" / "js" / "modules" / "utils.js").exists())
             self.assertTrue((output_dir / EXPORT_MARKER).exists())
@@ -146,6 +192,8 @@ class PublicSiteTests(unittest.TestCase):
             self.assertIn("updatedAt", admin_photo)
             headers_text = (output_dir / "_headers").read_text(encoding="utf-8")
             self.assertIn("Content-Security-Policy", headers_text)
+            self.assertIn("Strict-Transport-Security: max-age=31536000", headers_text)
+            self.assertIn("object-src 'none'", headers_text)
             self.assertIn("img-src 'self' data: blob:", headers_text)
             self.assertIn("/static/js/*\n  Cache-Control: public, max-age=0, must-revalidate", headers_text)
 

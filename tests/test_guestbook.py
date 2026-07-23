@@ -11,7 +11,7 @@ from app.guestbook import (
     normalize_guestbook_fields,
     record_guestbook_delete_attempt,
     record_guestbook_submission,
-    verify_guestbook_delete_password,
+    verify_guestbook_delete_token,
 )
 
 
@@ -58,20 +58,22 @@ class GuestbookTests(unittest.TestCase):
                 {"type": "photo", "photoId": 88, "affiliation": "테스트", "name": "테스트", "text": "테스트"}
             )
 
-    def test_guestbook_delete_password_requires_hash_env(self):
-        password_hash = sha256(b"delete-password").hexdigest()
-        with patch.dict("os.environ", {"MOMENT_TRACE_DELETE_PASSWORD_HASH": password_hash}, clear=True):
-            self.assertTrue(verify_guestbook_delete_password("delete-password"))
-            self.assertFalse(verify_guestbook_delete_password("wrong"))
+    def test_guestbook_delete_token_requires_high_entropy_token_and_hash_env(self):
+        token = "a" * 43
+        token_hash = sha256(token.encode("utf-8")).hexdigest()
+        with patch.dict("os.environ", {"MOMENT_TRACE_DELETE_TOKEN_HASH": token_hash}, clear=True):
+            self.assertTrue(verify_guestbook_delete_token(token))
+            self.assertFalse(verify_guestbook_delete_token("wrong"))
 
         with patch.dict("os.environ", {}, clear=True):
-            self.assertFalse(verify_guestbook_delete_password("delete-password"))
+            self.assertFalse(verify_guestbook_delete_token(token))
 
     def test_guestbook_rate_limit_key_is_hashed(self):
-        key = guestbook_rate_limit_key("127.0.0.1", "browser")
+        key = guestbook_rate_limit_key("127.0.0.1", "submit")
 
         self.assertNotIn("127.0.0.1", key)
-        self.assertEqual(key, guestbook_rate_limit_key(" 127.0.0.1 ", "browser"))
+        self.assertEqual(key, guestbook_rate_limit_key(" 127.0.0.1 ", "submit"))
+        self.assertNotEqual(key, guestbook_rate_limit_key("127.0.0.1", "delete"))
 
     def test_guestbook_rate_limit_blocks_after_window_limit(self):
         timestamps = []

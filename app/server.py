@@ -14,7 +14,7 @@ import traceback
 import uuid
 
 from .auth import create_session_token, generate_salt, hash_password, verify_password, verify_session_token
-from .config import AppConfig
+from .config import AppConfig, is_loopback_host
 from .database import Database
 from .guestbook import (
     MAX_GUESTBOOK_BODY_BYTES,
@@ -22,7 +22,7 @@ from .guestbook import (
     normalize_guestbook_fields,
     record_guestbook_delete_attempt,
     record_guestbook_submission,
-    verify_guestbook_delete_password,
+    verify_guestbook_delete_token,
 )
 from .html_templates import render_html_template
 from .http_utils import normalize_photo_fields, parse_multipart_form, read_json, safe_relative_path
@@ -99,6 +99,21 @@ def build_handler(config: AppConfig, database: Database, secret_key: bytes):
         protocol_version = "HTTP/1.1"
         server_version = "MoMentHTTP/1.1"
 
+        def version_string(self) -> str:
+            return self.server_version
+
+        def log_request(self, code="-", size="-") -> None:
+            client_ip = self.client_address[0] if self.client_address else "-"
+            safe_path = urlparse(getattr(self, "path", "")).path or "/"
+            LOGGER.info(
+                '%s "%s %s" %s %s',
+                client_ip,
+                getattr(self, "command", "-"),
+                safe_path,
+                code,
+                size,
+            )
+
         def do_GET(self) -> None:
             self._safe_dispatch(self._do_get_impl)
 
@@ -112,7 +127,11 @@ def build_handler(config: AppConfig, database: Database, secret_key: bytes):
             try:
                 super().handle()
             except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
-                LOGGER.info("Client disconnected during %s %s", getattr(self, "command", "-"), getattr(self, "path", "-"))
+                LOGGER.info(
+                    "Client disconnected during %s %s",
+                    getattr(self, "command", "-"),
+                    urlparse(getattr(self, "path", "")).path,
+                )
 
         def _do_get_impl(self) -> None:
             parsed = urlparse(self.path)
@@ -208,6 +227,9 @@ def build_handler(config: AppConfig, database: Database, secret_key: bytes):
             parsed = urlparse(self.path)
             path = parsed.path
 
+            if path.startswith("/api/admin/") and not self._require_same_origin():
+                return
+
             if path == "/api/admin/login":
                 self._handle_login()
                 return
@@ -250,6 +272,9 @@ def build_handler(config: AppConfig, database: Database, secret_key: bytes):
             parsed = urlparse(self.path)
             path = parsed.path
 
+            if path.startswith("/api/admin/") and not self._require_same_origin():
+                return
+
             if path == "/api/traces":
                 self._handle_guestbook_delete()
                 return
@@ -267,7 +292,7 @@ def build_handler(config: AppConfig, database: Database, secret_key: bytes):
             try:
                 handler()
             except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
-                LOGGER.info("Client disconnected during %s %s", self.command, self.path)
+                LOGGER.info("Client disconnected during %s %s", self.command, urlparse(self.path).path)
             except Exception as exc:  # noqa: BLE001
                 self._log_unexpected_error(exc)
                 if self.path.startswith("/api/"):
@@ -290,11 +315,35 @@ def build_handler(config: AppConfig, database: Database, secret_key: bytes):
         def _log_unexpected_error(self, exc: Exception) -> None:
             error_log_path = config.data_dir / "server-error.log"
             stack = "".join(traceback.format_exception(exc))
-            message = f"{self.command} {self.path}\n{stack}\n"
+            safe_path = urlparse(self.path).path
+            message = f"{self.command} {safe_path}\n{stack}\n"
             error_log_path.parent.mkdir(parents=True, exist_ok=True)
             with error_log_path.open("a", encoding="utf-8") as handle:
                 handle.write(message)
-            LOGGER.exception("Unhandled server error during %s %s", self.command, self.path)
+            LOGGER.exception("Unhandled server error during %s %s", self.command, safe_path)
+
+        def _require_same_origin(self) -> bool:
+            origin = (self.headers.get("Origin") or "").strip()
+            referer = (self.headers.get("Referer") or "").strip()
+            source = origin or referer
+            if not source or source == "null":
+                self._send_json({"error": "Invalid request origin."}, status=HTTPStatus.FORBIDDEN)
+                return False
+
+            source_url = urlparse(source)
+            source_origin = f"{source_url.scheme.casefold()}://{source_url.netloc.casefold()}"
+            if config.admin_url:
+                configured_url = urlparse(config.admin_url)
+                expected_origin = f"{configured_url.scheme.casefold()}://{configured_url.netloc.casefold()}"
+                matches_expected = source_origin == expected_origin
+            else:
+                host = (self.headers.get("Host") or "").strip().casefold()
+                matches_expected = source_url.scheme.casefold() in {"http", "https"} and source_url.netloc.casefold() == host
+
+            if not source_url.scheme or not source_url.netloc or not matches_expected:
+                self._send_json({"error": "Invalid request origin."}, status=HTTPStatus.FORBIDDEN)
+                return False
+            return True
 
         def _read_body(self, *, max_bytes: int | None = None) -> bytes | None:
             length_header = self.headers.get("Content-Length")
@@ -642,15 +691,13 @@ def build_handler(config: AppConfig, database: Database, secret_key: bytes):
 
         def _allow_guestbook_submission(self) -> bool:
             client_ip = self.client_address[0] if self.client_address else ""
-            user_agent = self.headers.get("User-Agent", "")
-            key = guestbook_rate_limit_key(client_ip, user_agent)
+            key = guestbook_rate_limit_key(client_ip, "submit")
             timestamps = guestbook_submission_times.setdefault(key, [])
             return record_guestbook_submission(timestamps, time.monotonic())
 
         def _allow_guestbook_delete_attempt(self) -> bool:
             client_ip = self.client_address[0] if self.client_address else ""
-            user_agent = self.headers.get("User-Agent", "")
-            key = guestbook_rate_limit_key(client_ip, f"delete|{user_agent}")
+            key = guestbook_rate_limit_key(client_ip, "delete")
             timestamps = guestbook_delete_attempt_times.setdefault(key, [])
             return record_guestbook_delete_attempt(timestamps, time.monotonic())
 
@@ -725,7 +772,7 @@ def build_handler(config: AppConfig, database: Database, secret_key: bytes):
                 self._send_json({"error": "Invalid trace id."}, status=HTTPStatus.BAD_REQUEST)
                 return
 
-            if not verify_guestbook_delete_password(str(payload.get("password", ""))):
+            if not verify_guestbook_delete_token(str(payload.get("token", ""))):
                 self._send_json({"error": "Not found."}, status=HTTPStatus.NOT_FOUND)
                 return
 
@@ -927,7 +974,22 @@ def build_handler(config: AppConfig, database: Database, secret_key: bytes):
     return MomentRequestHandler
 
 
+def validate_admin_bind(config: AppConfig) -> None:
+    if not is_loopback_host(config.host) and not config.allow_network_admin:
+        raise RuntimeError(
+            "Refusing to bind the local admin server to a non-loopback interface. "
+            "Use MOMENT_HOST=127.0.0.1 or explicitly set MOMENT_ALLOW_NETWORK_ADMIN=true "
+            "for a trusted private network."
+        )
+    if not is_loopback_host(config.host):
+        LOGGER.warning(
+            "Network admin access explicitly enabled on %s. Keep this server on a trusted private network.",
+            config.host,
+        )
+
+
 def run_server(config: AppConfig) -> None:
+    validate_admin_bind(config)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     database = Database(config.db_path)
     database.initialize()

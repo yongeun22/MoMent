@@ -4,6 +4,7 @@ import {
   escapeHtml,
   uniqueSorted,
 } from "./utils.js";
+import { normalizeFilters } from "./url-state.js";
 
 const EMPTY_FILTERS = {
   year: "",
@@ -23,12 +24,15 @@ export function createGallery({
   filterCountText,
   filterReset,
   filterTrigger,
+  galleryStatus,
   hoverQuery,
+  initialFilters = EMPTY_FILTERS,
+  onFiltersChange = null,
   onOpenLightbox,
 }) {
   let allPhotos = [];
   let visiblePhotos = [];
-  let filters = { ...EMPTY_FILTERS };
+  let filters = normalizeFilters(initialFilters);
   let activePhotoId = null;
 
   function supportsHover() {
@@ -147,6 +151,9 @@ export function createGallery({
     filterTrigger?.setAttribute("aria-label", hasActiveFilter ? "필터 적용됨" : "필터");
 
     if (!filterCountText) {
+      if (galleryStatus) {
+        galleryStatus.textContent = `${visiblePhotos.length}장의 사진`;
+      }
       return;
     }
     const total = allPhotos.length;
@@ -154,6 +161,11 @@ export function createGallery({
     filterCountText.textContent = visible === total
       ? `전체 ${total}장의 사진을 보고 있습니다`
       : `${total}장 중 ${visible}장의 사진을 보고 있습니다`;
+    if (galleryStatus) {
+      galleryStatus.textContent = visible === total
+        ? `전체 ${total}장의 사진`
+        : `필터 결과 ${visible}장의 사진`;
+    }
   }
 
   function render() {
@@ -227,19 +239,25 @@ export function createGallery({
 
     filterControls.querySelectorAll("[data-filter-key]").forEach((select) => {
       select.addEventListener("change", () => {
-        filters = {
-          ...filters,
-          [select.dataset.filterKey]: select.value,
-        };
-        render();
+        setFilters({ ...filters, [select.dataset.filterKey]: select.value });
       });
     });
   }
 
-  filterReset?.addEventListener("click", () => {
-    filters = { ...EMPTY_FILTERS };
+  function setFilters(nextFilters, { notify = true, scroll = false } = {}) {
+    filters = normalizeFilters(nextFilters);
     renderFilterControls();
     render();
+    if (scroll) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+    if (notify) {
+      onFiltersChange?.({ ...filters });
+    }
+  }
+
+  filterReset?.addEventListener("click", () => {
+    setFilters(EMPTY_FILTERS);
   });
   hoverQuery.addEventListener("change", clearActivePhoto);
 
@@ -255,15 +273,16 @@ export function createGallery({
     getVisiblePhotos() {
       return visiblePhotos;
     },
+    getFilters() {
+      return { ...filters };
+    },
+    setFilters,
     findPhoto(photoId) {
       return allPhotos.find((photo) => String(photo.id) === String(photoId)) || null;
     },
     clearActivePhoto,
     applyPlaceFilter(placeName) {
-      filters = { ...EMPTY_FILTERS, place: placeName };
-      renderFilterControls();
-      render();
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      setFilters({ ...EMPTY_FILTERS, place: placeName }, { scroll: true });
     },
   };
 }

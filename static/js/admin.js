@@ -1,3 +1,8 @@
+const moduleVersion = new URL(import.meta.url).searchParams.get("v") || "dev";
+const { bindPublishChecklist, createDirtyTracker, filterAdminPhotos } = await import(
+  `./modules/admin-workflow.js?v=${encodeURIComponent(moduleVersion)}`
+);
+
 const loginPanel = document.getElementById("loginPanel");
 const managerPanel = document.getElementById("managerPanel");
 const setupNote = document.getElementById("setupNote");
@@ -8,6 +13,12 @@ const photoList = document.getElementById("adminPhotoList");
 const sessionUsername = document.getElementById("sessionUsername");
 const logoutButton = document.getElementById("logoutButton");
 const statusToast = document.getElementById("statusToast");
+const photoSearch = document.getElementById("adminPhotoSearch");
+const photoCount = document.getElementById("adminPhotoCount");
+const dirtyStatus = document.getElementById("adminDirtyStatus");
+const toggleAllButton = document.getElementById("adminToggleAll");
+const publishChecklist = document.getElementById("publishChecklist");
+const publishChecklistStatus = document.getElementById("publishChecklistStatus");
 
 const MAX_IMAGE_DIMENSION = 2400;
 const OPTIMIZE_THRESHOLD_BYTES = 4 * 1024 * 1024;
@@ -25,6 +36,10 @@ const REGION_OPTIONS = [
 ];
 
 let currentPhotos = [];
+let allEditorsExpanded = false;
+const dirtyTracker = createDirtyTracker({ statusElement: dirtyStatus });
+
+bindPublishChecklist(publishChecklist, publishChecklistStatus);
 
 function escapeHtml(value) {
   return String(value)
@@ -210,11 +225,20 @@ function renderRegionOptions(selectedRegion) {
 function renderAdminPhoto(photo) {
   return `
     <article class="photo-card" data-photo-id="${photo.id}">
-      <img class="photo-preview" src="${photo.imageUrl}" alt="${escapeHtml(photo.locationName || photo.location)}, ${escapeHtml(photo.date)}">
-      <form class="photo-editor" data-update-form="${photo.id}">
-        <div class="photo-editor-topbar">
-          <div class="editor-filename">${escapeHtml(photo.originalName)}</div>
+      <div class="photo-card-summary">
+        <img class="photo-preview" src="${photo.imageUrl}" alt="${escapeHtml(photo.locationName || photo.location)}, ${escapeHtml(photo.date)}">
+        <div class="photo-summary-copy">
+          <strong>${escapeHtml(photo.locationName || photo.location)}</strong>
+          <span>${escapeHtml(photo.date)} · ${escapeHtml(photo.photographer)}</span>
+          <span class="editor-filename">${escapeHtml(photo.originalName)}</span>
         </div>
+        <span class="unsaved-indicator" data-unsaved-indicator hidden>저장되지 않음</span>
+        <button class="secondary-button editor-toggle" type="button" data-editor-toggle="${photo.id}" aria-expanded="${allEditorsExpanded}">
+          ${allEditorsExpanded ? "접기" : "수정"}
+        </button>
+      </div>
+      <div class="photo-card-body" data-editor-body="${photo.id}" ${allEditorsExpanded ? "" : "hidden"}>
+      <form class="photo-editor" data-update-form="${photo.id}">
         <div class="editor-grid">
           <label class="field">
             <span>\uB0A0\uC9DC</span>
@@ -240,18 +264,6 @@ function renderAdminPhoto(photo) {
             <span>\uAD8C\uC5ED</span>
             <select name="region">${renderRegionOptions(photo.region)}</select>
           </label>
-          <label class="field">
-            <span>placeId</span>
-            <input type="text" name="placeId" value="${escapeHtml(photo.placeId || "")}">
-          </label>
-          <label class="field">
-            <span>\uC704\uB3C4</span>
-            <input type="number" name="lat" value="${photo.lat ?? ""}" step="any" min="-90" max="90">
-          </label>
-          <label class="field">
-            <span>\uACBD\uB3C4</span>
-            <input type="number" name="lng" value="${photo.lng ?? ""}" step="any" min="-180" max="180">
-          </label>
           <label class="field field-wide">
             <span>\uC124\uBA85</span>
             <textarea name="description" rows="3" maxlength="1000">${escapeHtml(photo.description || "")}</textarea>
@@ -260,18 +272,37 @@ function renderAdminPhoto(photo) {
             <span>\uC774\uBBF8\uC9C0 \uAD50\uCCB4</span>
             <input type="file" name="photo" accept="image/jpeg,image/png,image/webp,image/gif">
           </label>
+          <details class="advanced-fields field-wide">
+            <summary>고급 위치 정보</summary>
+            <div class="advanced-fields-grid">
+              <label class="field">
+                <span>placeId</span>
+                <input type="text" name="placeId" value="${escapeHtml(photo.placeId || "")}">
+              </label>
+              <label class="field">
+                <span>위도</span>
+                <input type="number" name="lat" value="${photo.lat ?? ""}" step="any" min="-90" max="90">
+              </label>
+              <label class="field">
+                <span>경도</span>
+                <input type="number" name="lng" value="${photo.lng ?? ""}" step="any" min="-180" max="180">
+              </label>
+            </div>
+          </details>
         </div>
         <div class="photo-card-actions">
           <button class="primary-button" type="submit">\uBCC0\uACBD \uC800\uC7A5</button>
           <button class="danger-button" type="button" data-delete-id="${photo.id}">\uC0AD\uC81C</button>
         </div>
       </form>
+      </div>
     </article>
   `;
 }
 
 function bindPhotoEditorEvents() {
   document.querySelectorAll("[data-update-form]").forEach((form) => {
+    dirtyTracker.bind(form);
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
       const photoId = form.dataset.updateForm;
@@ -290,6 +321,23 @@ function bindPhotoEditorEvents() {
         await loadAdminPhotos();
       } catch (error) {
         showToast(error.message, true);
+      }
+    });
+  });
+
+  document.querySelectorAll("[data-editor-toggle]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const card = button.closest(".photo-card");
+      const body = card?.querySelector("[data-editor-body]");
+      if (!card || !body) {
+        return;
+      }
+      const shouldExpand = body.hidden;
+      body.hidden = !shouldExpand;
+      button.setAttribute("aria-expanded", String(shouldExpand));
+      button.textContent = shouldExpand ? "접기" : "수정";
+      if (shouldExpand) {
+        body.querySelector("input, select, textarea")?.focus();
       }
     });
   });
@@ -314,14 +362,51 @@ function bindPhotoEditorEvents() {
   });
 }
 
+function applyPhotoSearch() {
+  const matchedIds = new Set(
+    filterAdminPhotos(currentPhotos, photoSearch?.value).map((photo) => String(photo.id)),
+  );
+  photoList.querySelectorAll(".photo-card").forEach((card) => {
+    card.hidden = !matchedIds.has(card.dataset.photoId);
+  });
+
+  if (photoCount) {
+    const query = photoSearch?.value.trim();
+    photoCount.textContent = query
+      ? `${matchedIds.size}/${currentPhotos.length}개 표시`
+      : `전체 ${currentPhotos.length}개`;
+  }
+}
+
+function setAllEditorsExpanded(expanded) {
+  allEditorsExpanded = expanded;
+  photoList.querySelectorAll("[data-editor-body]").forEach((body) => {
+    body.hidden = !expanded;
+  });
+  photoList.querySelectorAll("[data-editor-toggle]").forEach((button) => {
+    button.setAttribute("aria-expanded", String(expanded));
+    button.textContent = expanded ? "접기" : "수정";
+  });
+  if (toggleAllButton) {
+    toggleAllButton.textContent = expanded ? "모두 접기" : "모두 펼치기";
+    toggleAllButton.setAttribute("aria-expanded", String(expanded));
+  }
+}
+
 function renderPhotoList() {
+  dirtyTracker.reset();
   if (!currentPhotos.length) {
     photoList.innerHTML = '<p class="empty-admin-state">\uC544\uC9C1 \uCD9C\uD488\uB41C \uC0AC\uC9C4\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.</p>';
+    if (photoCount) {
+      photoCount.textContent = "전체 0개";
+    }
     return;
   }
 
   photoList.innerHTML = currentPhotos.map(renderAdminPhoto).join("");
   bindPhotoEditorEvents();
+  setAllEditorsExpanded(allEditorsExpanded);
+  applyPhotoSearch();
 }
 
 async function loadAdminPhotos() {
@@ -444,5 +529,7 @@ loginForm.addEventListener("submit", handleLogin);
 uploadForm.addEventListener("submit", handleUpload);
 passwordForm.addEventListener("submit", handlePasswordChange);
 logoutButton.addEventListener("click", handleLogout);
+photoSearch?.addEventListener("input", applyPhotoSearch);
+toggleAllButton?.addEventListener("click", () => setAllEditorsExpanded(!allEditorsExpanded));
 
 initializeAdmin();

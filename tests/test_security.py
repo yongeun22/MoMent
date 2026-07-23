@@ -19,7 +19,9 @@ class SecurityTests(unittest.TestCase):
 
         self.assertEqual(headers["X-Content-Type-Options"], "nosniff")
         self.assertEqual(headers["X-Frame-Options"], "DENY")
+        self.assertEqual(headers["Strict-Transport-Security"], "max-age=31536000")
         self.assertIn("frame-ancestors 'none'", headers["Content-Security-Policy"])
+        self.assertIn("object-src 'none'", headers["Content-Security-Policy"])
         self.assertIn("img-src 'self' data: blob:", headers["Content-Security-Policy"])
         self.assertIn("https://tile.openstreetmap.org", headers["Content-Security-Policy"])
 

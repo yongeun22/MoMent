@@ -1,3 +1,4 @@
+import { enforceRateLimit } from "../_shared/rate-limit.js";
 import { json } from "../_shared/response.js";
 
 const MAX_ENTRIES = 200;
@@ -47,72 +48,6 @@ const MODERATION_ERROR = "\uB4F1\uB85D\uD560 \uC218 \uC5C6\uB294 \uD45C\uD604\uC
 
 function getDatabase(env) {
   return env?.VISITS_DB || null;
-}
-
-async function existingColumns(db, tableName) {
-  const result = await db.prepare(`PRAGMA table_info(${tableName})`).all();
-  return new Set((result.results || []).map((row) => row.name));
-}
-
-async function addColumnIfMissing(db, tableName, columns, columnName, definition) {
-  if (columns.has(columnName)) {
-    return;
-  }
-  await db.prepare(`ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${definition}`).run();
-  columns.add(columnName);
-}
-
-async function ensureSchema(db) {
-  await db
-    .prepare(`
-      CREATE TABLE IF NOT EXISTS guestbook_entries (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        type TEXT NOT NULL DEFAULT 'general',
-        photo_id INTEGER,
-        affiliation TEXT NOT NULL,
-        name TEXT NOT NULL,
-        body_text TEXT NOT NULL DEFAULT '',
-        created_at TEXT NOT NULL
-      )
-    `)
-    .run();
-
-  const guestbookColumns = await existingColumns(db, "guestbook_entries");
-  await addColumnIfMissing(db, "guestbook_entries", guestbookColumns, "type", "TEXT NOT NULL DEFAULT 'general'");
-  await addColumnIfMissing(db, "guestbook_entries", guestbookColumns, "photo_id", "INTEGER");
-  await addColumnIfMissing(db, "guestbook_entries", guestbookColumns, "body_text", "TEXT NOT NULL DEFAULT ''");
-
-  await db
-    .prepare(`
-      CREATE TABLE IF NOT EXISTS guestbook_rate_limits (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        client_key TEXT NOT NULL,
-        created_at TEXT NOT NULL
-      )
-    `)
-    .run();
-  await db
-    .prepare(`
-      CREATE INDEX IF NOT EXISTS idx_guestbook_rate_limits_client_created
-      ON guestbook_rate_limits (client_key, created_at)
-    `)
-    .run();
-  await db
-    .prepare(`
-      CREATE INDEX IF NOT EXISTS idx_guestbook_entries_photo_id
-      ON guestbook_entries (photo_id, id)
-    `)
-    .run();
-}
-
-async function removeModeratedEntries(db) {
-  await db.batch(
-    REMOVED_GUESTBOOK_ENTRIES.map((entry) =>
-      db
-        .prepare("DELETE FROM guestbook_entries WHERE affiliation = ? AND name = ?")
-        .bind(entry.affiliation, entry.name),
-    ),
-  );
 }
 
 function normalizeText(value) {
@@ -211,22 +146,24 @@ function constantTimeEqual(left, right) {
   return difference === 0;
 }
 
-function getDeletePasswordHash(env) {
+function getDeleteTokenHash(env) {
   const candidates = [
-    env?.TRACE_DELETE_PASSWORD_HASH,
-    env?.MOMENT_TRACE_DELETE_PASSWORD_HASH,
+    env?.TRACE_DELETE_TOKEN_HASH,
+    env?.MOMENT_TRACE_DELETE_TOKEN_HASH,
   ];
   const configuredHash = candidates.find((value) => typeof value === "string" && value.trim().length > 0);
   return configuredHash ? configuredHash.trim().toLowerCase() : "";
 }
 
-async function verifyDeletePassword(password, env) {
-  const expectedHash = getDeletePasswordHash(env);
+async function verifyDeleteToken(token, env) {
+  const expectedHash = getDeleteTokenHash(env);
   if (!/^[a-f0-9]{64}$/.test(expectedHash)) {
     return false;
   }
-
-  const candidateHash = await sha256Hex(password);
+  if (String(token || "").length < 32) {
+    return false;
+  }
+  const candidateHash = await sha256Hex(token);
   return constantTimeEqual(hexToBytes(candidateHash), hexToBytes(expectedHash));
 }
 
@@ -302,39 +239,6 @@ async function readPayload(request) {
     }
     throw new PayloadError("Invalid JSON payload.", 400);
   }
-}
-
-function getClientIdentity(request, scope) {
-  const forwardedFor = request.headers.get("CF-Connecting-IP") || request.headers.get("X-Forwarded-For") || "";
-  const userAgent = request.headers.get("User-Agent") || "";
-  return `${scope}|${forwardedFor.split(",")[0].trim()}|${userAgent.slice(0, 160)}`;
-}
-
-async function enforceRateLimit(db, request, { scope, windowSeconds, maxAttempts }) {
-  const clientKey = await sha256Hex(getClientIdentity(request, scope));
-  const now = new Date();
-  const cutoff = new Date(now.getTime() - windowSeconds * 1000).toISOString();
-
-  await db
-    .prepare("DELETE FROM guestbook_rate_limits WHERE created_at < ?")
-    .bind(cutoff)
-    .run();
-
-  const row = await db
-    .prepare("SELECT COUNT(*) AS total FROM guestbook_rate_limits WHERE client_key = ? AND created_at >= ?")
-    .bind(clientKey, cutoff)
-    .first();
-
-  if (Number(row?.total || 0) >= maxAttempts) {
-    return false;
-  }
-
-  await db
-    .prepare("INSERT INTO guestbook_rate_limits (client_key, created_at) VALUES (?, ?)")
-    .bind(clientKey, now.toISOString())
-    .run();
-
-  return true;
 }
 
 async function enforceLooseRateLimit(db, request) {
@@ -414,8 +318,6 @@ export async function onRequestGet(context) {
       return json({ error: "\uBC29\uBA85\uB85D\uC744 \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4." }, 503);
     }
 
-    await ensureSchema(db);
-    await removeModeratedEntries(db);
     return json(await readEntries(db, new URL(context.request.url)));
   } catch (error) {
     if (error instanceof PayloadError) {
@@ -434,8 +336,6 @@ export async function onRequestPost(context) {
       return json({ error: "\uBC29\uBA85\uB85D\uC744 \uB0A8\uAE30\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4." }, 503);
     }
 
-    await ensureSchema(db);
-    await removeModeratedEntries(db);
     const payload = await readPayload(context.request);
     const normalized = validatePayload(payload);
     if (normalized.error) {
@@ -486,7 +386,6 @@ export async function onRequestDelete(context) {
       return json({ error: "Not found." }, 404);
     }
 
-    await ensureSchema(db);
     if (!(await enforceDeleteRateLimit(db, context.request))) {
       return json({ error: "Not found." }, 404);
     }
@@ -497,7 +396,7 @@ export async function onRequestDelete(context) {
       return json({ error: "Not found." }, 404);
     }
 
-    if (!(await verifyDeletePassword(payload.password, context.env))) {
+    if (!(await verifyDeleteToken(payload.token, context.env))) {
       return json({ error: "Not found." }, 404);
     }
 

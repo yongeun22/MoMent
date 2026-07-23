@@ -7,6 +7,7 @@ from pathlib import Path
 from app.auth import generate_salt, hash_password
 from app.config import load_config
 from app.database import Database
+from app.operator_tokens import generate_operator_token
 from app.public_site import export_static_site
 
 
@@ -62,6 +63,15 @@ def export_static(output: str | None) -> int:
     return 0
 
 
+def print_operator_token(purpose: str) -> int:
+    token, token_hash = generate_operator_token()
+    env_name = "TRACE_DELETE_TOKEN_HASH" if purpose == "trace-delete" else "STATUS_UPDATE_TOKEN_HASH"
+    print("Store the raw token in a password manager. It will not be shown again by MoMent.")
+    print(f"Raw token: {token}")
+    print(f"Cloudflare secret {env_name}: {token_hash}")
+    return 0
+
+
 def main() -> int:
     parser = ArgumentParser(description="MoMent management commands")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -73,6 +83,17 @@ def main() -> int:
     export_static_parser = subparsers.add_parser("export-static", help="Export the public exhibition as a static site")
     export_static_parser.add_argument("--output", help="Output directory (defaults to ./dist)")
 
+    token_parser = subparsers.add_parser(
+        "generate-operator-token",
+        help="Generate a high-entropy token and SHA-256 verifier for an operator-only endpoint",
+    )
+    token_parser.add_argument(
+        "--purpose",
+        choices=("trace-delete", "status-update"),
+        required=True,
+        help="Endpoint that will use the generated token",
+    )
+
     args = parser.parse_args()
 
     if args.command == "init-admin":
@@ -80,6 +101,9 @@ def main() -> int:
 
     if args.command == "export-static":
         return export_static(args.output)
+
+    if args.command == "generate-operator-token":
+        return print_operator_token(args.purpose)
 
     parser.print_help()
     return 1

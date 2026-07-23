@@ -6,7 +6,7 @@
   <title>MoMent &#xAD00;&#xB9AC;&#xC790;</title>
   <meta name="robots" content="noindex, nofollow">
   <link rel="stylesheet" href="/static/css/admin.css?v={{ADMIN_CSS_VERSION}}">
-  <script src="/static/js/admin.js?v={{ADMIN_JS_VERSION}}" defer></script>
+  <script type="module" src="/static/js/admin.js?v={{ADMIN_JS_VERSION}}"></script>
 </head>
 <body>
   <main class="admin-shell">
@@ -48,6 +48,12 @@
       <section class="publish-note" aria-label="&#xBC30;&#xD3EC; &#xC548;&#xB0B4;">
         <p>&#xC0AC;&#xC9C4; &#xCD9C;&#xD488;, &#xC218;&#xC815;, &#xC0AD;&#xC81C;&#xB294; &#xB85C;&#xCEEC; &#xAD00;&#xB9AC;&#xC790;&#xC5D0; &#xBA3C;&#xC800; &#xC800;&#xC7A5;&#xB429;&#xB2C8;&#xB2E4;.</p>
         <p>&#xACF5;&#xAC1C; &#xC0AC;&#xC774;&#xD2B8;&#xC5D0; &#xBC18;&#xC601;&#xD558;&#xB824;&#xBA74; <code>py manage.py export-static</code> &#xC2E4;&#xD589; &#xD6C4; GitHub&#xC5D0; &#xD478;&#xC2DC;&#xD574; &#xC8FC;&#xC138;&#xC694;.</p>
+        <div class="publish-checklist" id="publishChecklist">
+          <p class="publish-checklist-title">게시 전 확인 <span id="publishChecklistStatus"></span></p>
+          <label><input type="checkbox"> 사진 정보와 미리보기를 확인했습니다.</label>
+          <label><input type="checkbox"> <code>py manage.py export-static</code>을 실행했습니다.</label>
+          <label><input type="checkbox"> 변경 파일과 배포 대상을 확인했습니다.</label>
+        </div>
       </section>
 
       <section class="card upload-card">
@@ -95,22 +101,27 @@
               <option value="&#xAE30;&#xD0C0;" selected>&#xAE30;&#xD0C0;</option>
             </select>
           </label>
-          <label class="field">
-            <span>placeId</span>
-            <input type="text" name="placeId" placeholder="&#xBE44;&#xC6CC;&#xB450;&#xBA74; &#xC790;&#xB3D9; &#xC0DD;&#xC131;">
-          </label>
-          <label class="field">
-            <span>&#xC704;&#xB3C4;</span>
-            <input type="number" name="lat" step="any" min="-90" max="90" placeholder="35.7900">
-          </label>
-          <label class="field">
-            <span>&#xACBD;&#xB3C4;</span>
-            <input type="number" name="lng" step="any" min="-180" max="180" placeholder="129.3320">
-          </label>
           <label class="field field-wide">
             <span>&#xC124;&#xBA85;</span>
             <textarea name="description" rows="3" maxlength="1000" placeholder="&#xC0AC;&#xC9C4; &#xC124;&#xBA85;"></textarea>
           </label>
+          <details class="advanced-fields field-wide">
+            <summary>&#xACE0;&#xAE09; &#xC704;&#xCE58; &#xC815;&#xBCF4;</summary>
+            <div class="advanced-fields-grid">
+              <label class="field">
+                <span>placeId</span>
+                <input type="text" name="placeId" placeholder="&#xBE44;&#xC6CC;&#xB450;&#xBA74; &#xC790;&#xB3D9; &#xC0DD;&#xC131;">
+              </label>
+              <label class="field">
+                <span>&#xC704;&#xB3C4;</span>
+                <input type="number" name="lat" step="any" min="-90" max="90" placeholder="35.7900">
+              </label>
+              <label class="field">
+                <span>&#xACBD;&#xB3C4;</span>
+                <input type="number" name="lng" step="any" min="-180" max="180" placeholder="129.3320">
+              </label>
+            </div>
+          </details>
           <button type="submit" class="primary-button">&#xCD9C;&#xD488;</button>
         </form>
       </section>
@@ -143,6 +154,16 @@
         <div class="section-heading">
           <h2>&#xCD9C;&#xD488; &#xAD00;&#xB9AC;</h2>
           <p>&#xC5C5;&#xB85C;&#xB4DC;&#xD55C; &#xC21C;&#xC11C;&#xB300;&#xB85C; &#xD45C;&#xC2DC;&#xB418;&#xBA70;, &#xC815;&#xBCF4; &#xC218;&#xC815;&#xACFC; &#xC774;&#xBBF8;&#xC9C0; &#xAD50;&#xCCB4;, &#xC0AD;&#xC81C;&#xB97C; &#xD560; &#xC218; &#xC788;&#xC2B5;&#xB2C8;&#xB2E4;.</p>
+        </div>
+
+        <div class="collection-toolbar">
+          <label class="field collection-search">
+            <span>사진 검색</span>
+            <input id="adminPhotoSearch" type="search" placeholder="장소, 촬영자, 날짜, 파일명" autocomplete="off">
+          </label>
+          <p class="collection-status" id="adminPhotoCount" role="status"></p>
+          <p class="collection-status" id="adminDirtyStatus"></p>
+          <button class="ghost-button" id="adminToggleAll" type="button" aria-expanded="false">모두 펼치기</button>
         </div>
 
         <div class="photo-grid" id="adminPhotoList"></div>
